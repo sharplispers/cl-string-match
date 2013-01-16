@@ -1,0 +1,11 @@
+CL-STRING-MATCH aims at providing robust implementations of string
+matching algorithms.
+
+Currently it provides implementations of the following string matching
+algorithms:
+
+* Brute-force (also known as naïve algorithm)
+
+Project home page:
+
+http://sourceforge.net/projects/clstringmatch/
