@@ -1,4 +1,4 @@
-;;; -*- package: CL-USER; Syntax: Common-lisp; Base: 10 -*-
+;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
 ;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
@@ -36,16 +36,25 @@
 ;;
 ;; http://icu-project.org/docs/papers/efficient_text_searching_in_java.html
 
+(in-package :cl-string-match)
+
+;; --------------------------------------------------------
+
 ;; Member variables for storing precomputed pattern data
 (defstruct bm
   (right)
   (pat))
 
+;; --------------------------------------------------------
+
 ;; Map a collation element to an array index
 (defun hash-bm (order)
   (round (mod (char-code order) 256)))
 
+;; --------------------------------------------------------
+
 (defun initialize-bm (pat)
+  (declare (type string pat))
   (let ((bm (make-bm
 	     :pat pat
 	     :right (make-array 256 :element-type 'integer
@@ -58,7 +67,10 @@
 		 j))
     bm))
 
+;; --------------------------------------------------------
+
 (defun search-bm (bm txt)
+  (declare (type string txt))
   "Search for pattern bm in txt."
   (let* ((txt-len (length txt))
 	 (pat-len (length (bm-pat bm)))
@@ -85,7 +97,11 @@
 	   (return-from search-bm i))))
     (return-from search-bm NIL)))
 
+;; --------------------------------------------------------
+
 (defun string-contains-bm (pat txt)
+  (declare (type string pat)
+	   (type string txt))
   (search-bm (initialize-bm pat) txt))
     
 ;; EOF
