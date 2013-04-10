@@ -1,4 +1,4 @@
-;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
+;;; -*- package: CL-USER; Syntax: Common-lisp; Base: 10 -*-
 
 ;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
@@ -25,33 +25,11 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(in-package :cl-string-match)
-
-;; --------------------------------------------------------
-
-(defun string-contains-brute (pat txt)
-  "A Brute-force substring search implementation.
-
-Brute-force substring search requires O(N x M) character compares to
-search for a pattern of length M in a text of length N, in the worst
-case.
-
-Algorithm described in: Chapter 5, p. 760 in
-  “Algorithms”, Robert Sedgewick and Kevin Wayne. 4th"
-
-  (declare (type simple-string pat)
-	   (type simple-string txt))
-  (let ((pat-len (length pat))
-	(txt-len (length txt)))
-    (loop :for txt-pos fixnum :from 0 :to (- txt-len pat-len)
-       :do
-       (loop :for pat-pos fixnum :from 0 :below pat-len
-	  :until (char/= (char txt (+ txt-pos pat-pos))
-			 (char pat pat-pos))
-	  :finally
-	  (when (= pat-pos pat-len)
-	    (return-from string-contains-brute txt-pos))))
-    NIL))
-
-
-;; EOF
+(defpackage :cl-string-match
+  (:use :common-lisp)
+  (:nicknames :sm)
+  (:export
+   :string-contains-brute
+   :string-contains-bm
+   :initialize-bm
+   :search-bm))
