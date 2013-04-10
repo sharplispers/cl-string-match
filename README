@@ -5,6 +5,7 @@ Currently it provides implementations of the following string matching
 algorithms:
 
 * Brute-force (also known as naïve algorithm)
+* Boyer-Moore (with mismatched character heuristic)
 
 Project home page:
 
