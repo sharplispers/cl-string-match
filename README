@@ -1,5 +1,10 @@
 CL-STRING-MATCH aims at providing robust implementations of string
-matching algorithms.
+matching algorithms. These algorithms are also called "substring
+search" algorithms.
+
+Corresponding article on Wikipedia is:
+
+http://en.wikipedia.org/wiki/String_searching_algorithm
 
 Currently it provides implementations of the following string matching
 algorithms:
@@ -10,3 +15,34 @@ algorithms:
 Project home page:
 
 http://sourceforge.net/projects/clstringmatch/
+
+TODO
+====
+
+The project still lacks some important features and is under
+development. Following tasks are still to be implemented:
+
+* Comprehensive unit test suite: test if the functions in this package
+  work properly
+
+* Rabin-Karp algorithm
+
+* Knuth-Morris-Pratt algorithm
+
+* Finite-State automaton algorithm
+
+* Boyer–Moore–Horspool algorithm
+
+* Commentz-Walter algorithm
+
+Algorithms with finite set of patterns:
+
+* Aho–Corasick string matching algorithm
+
+* Commentz-Walter algorithm
+
+* Rabin–Karp string search algorithm
+
+Additional algorithms:
+
+* Suffix tree and tree-based algorithms
