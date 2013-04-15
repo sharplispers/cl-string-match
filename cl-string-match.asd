@@ -37,11 +37,16 @@
 ;; --------------------------------------------------------
 
 (asdf:defsystem #:cl-string-match
+  :description
+  "Provides implementations of the standard sub-string search (string
+matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
+  :license "BSD"
   :components ((:module "src"
 			:serial T
 			:components
 			((:file "package")
 			 (:file "brute-force")
-			 (:file "boyer-moore")))))
+			 (:file "boyer-moore")
+			 (:file "rabin-karp")))))
 
 ;; EOF
