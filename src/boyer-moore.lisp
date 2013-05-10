@@ -77,7 +77,7 @@
 	 (delta (- txt-len pat-len))
 	 (skip 0))
 
-    (loop :for i = 0 :then (+ i skip) :while (< i delta) :do
+    (loop :for i = 0 :then (+ i skip) :while (<= i delta) :do
        (progn
 	 ;; Does the pattern match the text at position i ?
 	 (setf skip 0)
