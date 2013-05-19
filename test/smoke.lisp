@@ -72,9 +72,9 @@
 
 ;; --------------------------------------------------------
 
-(format t ">> result: ~a~%" (string-contains-rk "abc" "abcab_"))
-(format t ">> result: ~a~%" (string-contains-rk "abc" "_abcab_"))
-(format t ">> result: ~a~%" (string-contains-rk "abc" "ababc_"))
+;; (format t ">> result: ~a~%" (string-contains-rk "abc" "abcab_"))
+;; (format t ">> result: ~a~%" (string-contains-rk "abc" "_abcab_"))
+;; (format t ">> result: ~a~%" (string-contains-rk "abc" "ababc_"))
 
 (run-tests :all)
 

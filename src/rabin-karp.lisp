@@ -37,7 +37,7 @@
 
 (defparameter +big-prime+ 479001599)
 
-(defparameter +alph-size+ 256) ; CHAR-CODE-LIMIT
+(defparameter +alph-size+ CHAR-CODE-LIMIT) ; 256
 
 ;; --------------------------------------------------------
 
@@ -80,7 +80,7 @@ pattern and the text.)"
 	      :rm 1)))
 
     ;; Compute R^(M-1) % Q for use in removing leading digit.
-    (loop :for i :from 1 :to (- (length pat) 1) :do
+    (loop :for i :from 0 :below (- (length pat) 1) :do
        (setf (rk-rm idx)
 	     (mod
 	      (* (rk-alph-size idx) (rk-rm idx))
@@ -95,7 +95,6 @@ pattern and the text.)"
 
 ;; --------------------------------------------------------
 
-;; TODO: disfunctional, debug required
 (defun search-rk (idx txt)
   (declare (type string txt)
 	   (type rk idx))
@@ -113,35 +112,25 @@ pattern and the text.)"
 	 ;; Remove leading digit, add trailing digit, check for match.
 	 (when (= (rk-pat-hash idx)
 		  txt-hash)
-	   (format t "Pattern found at index ~a~%" i))
+	   (return-from search-rk i))
 
 	 ;; Calulate hash value for next window of text: Remove
 	 ;; leading digit, add trailing digit
 	 (when (< i (- txt-len M))
 	   ;; txtHash = (alphSize * (txtHash - txt[i]*RM) + txt[i+M]) % prime;
+	   
 	   (setf txt-hash
 		 (mod
-		  (* +alph-size+
-		     (+ 
-		      (- txt-hash
-			 (* (char-code (char txt i))
-			    (rk-rm idx)))
-		      (char-code (char txt (+ i m)))))
+		  (+ (* +alph-size+
+			(- txt-hash
+			   (* (char-code (char txt i))
+			      (rk-rm idx))))
+		     (char-code (char txt (+ i m))))
 		  +big-prime+))
-
+	   
 	   ;; We might get negative value of t, converting it to positive
 	   (when (< txt-hash 0)
-	     (setf txt-hash (+ txt-hash +big-prime+)))
-
-	   (format t "m: ~a i: ~a (i+m): ~a txt-len: ~a (rk-pat-hash idx): ~a txt-hash: ~a~%"
-		   m i (+ m i) txt-len
-		   (rk-pat-hash idx) txt-hash)
-
-	   (when (and (= (rk-pat-hash idx)
-			 txt-hash)
-		      (check-rk (+ (- i M)
-				   1)))
-	     (return-from search-rk i)))))
+	     (setf txt-hash (+ txt-hash +big-prime+))))))
     NIL))
 
 ;; --------------------------------------------------------
@@ -149,7 +138,6 @@ pattern and the text.)"
 (defun string-contains-rk (pat txt)
   (declare (type string pat)
 	   (type string txt))
-  (format t "pat: ~a txt: ~a~%" pat txt)
   (search-rk (initialize-rk pat) txt))
 
 ;; EOF
