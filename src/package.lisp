@@ -31,5 +31,6 @@
   (:export
    :string-contains-brute
    :string-contains-bm
+   :string-contains-rk
    :initialize-bm
    :search-bm))
