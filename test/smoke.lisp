@@ -1,4 +1,4 @@
-;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
+;;; -*- package: CL-STRING-MATCH-TEST; Syntax: Common-lisp; Base: 10 -*-
 
 ;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
@@ -35,8 +35,10 @@
 
 ;; --------------------------------------------------------
 
-(in-package :cl-string-match)
-(use-package :lisp-unit)
+(defpackage :cl-string-match-test
+  (:use :common-lisp :cl-string-match :lisp-unit))
+
+(in-package :cl-string-match-test)
 
 (setq *print-failures* t)
 
@@ -44,7 +46,8 @@
 
 (defparameter *funcs*
   '(string-contains-brute
-    string-contains-bm))
+    string-contains-bm
+    string-contains-rk))
 
 ;; --------------------------------------------------------
 
@@ -68,6 +71,10 @@
   (run-assertions 2 "abc" "ababc"))
 
 ;; --------------------------------------------------------
+
+(format t ">> result: ~a~%" (string-contains-rk "abc" "abcab_"))
+(format t ">> result: ~a~%" (string-contains-rk "abc" "_abcab_"))
+(format t ">> result: ~a~%" (string-contains-rk "abc" "ababc_"))
 
 (run-tests :all)
 

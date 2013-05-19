@@ -26,11 +26,18 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
+;; additional information can be found at:
+;;
+;; http://www.geeksforgeeks.org/searching-for-patterns-set-3-rabin-karp-algorithm/
+
+
 (in-package :cl-string-match)
 
 ;; --------------------------------------------------------
 
 (defparameter +big-prime+ 479001599)
+
+(defparameter +alph-size+ 256) ; CHAR-CODE-LIMIT
 
 ;; --------------------------------------------------------
 
@@ -38,8 +45,7 @@
   (pat)
   (pat-hash)
   (pat-len)
-  ;;  (alph-size 256)
-  (alph-size CHAR-CODE-LIMIT)
+  (alph-size +alph-size+)
   (rm 1))
 
 ;; --------------------------------------------------------
@@ -47,7 +53,7 @@
 (defun horner-hash (key end)
   "Horner hashing function implementation.
 
-Computes the hash function for an END-digit base- CHAR-CODE-LIMIT
+Computes the hash function for an END-digit base- +ALPH-SIZE+
 number represented as a char array in time proportional to END. (We
 pass END as an argu- ment so that we can use the function for both the
 pattern and the text.)"
@@ -57,7 +63,7 @@ pattern and the text.)"
   (let ((h 0))
     (loop :for j :from 0 :below end :do
        (setf h
-	     (mod (+ (* char-code-limit h)
+	     (mod (+ (* +alph-size+ h)
 		     (char-code (char key j)))
 		  +big-prime+)))
     h))
@@ -70,17 +76,15 @@ pattern and the text.)"
   (let ((idx (make-rk
 	      :pat pat	; saving patter is required only for Las-Vegas
 	      :pat-len (length pat)
+	      :pat-hash (horner-hash pat (length pat))
 	      :rm 1)))
 
     ;; Compute R^(M-1) % Q for use in removing leading digit.
-    (loop :for i :from 1 :below (length pat) :do
+    (loop :for i :from 1 :to (- (length pat) 1) :do
        (setf (rk-rm idx)
-	     (rem
+	     (mod
 	      (* (rk-alph-size idx) (rk-rm idx))
 	      +big-prime+)))
-
-    (setf (rk-pat-hash idx)
-	  (horner-hash pat (rk-pat-len idx)))
     idx))
 
 ;; --------------------------------------------------------
@@ -97,37 +101,55 @@ pattern and the text.)"
 	   (type rk idx))
 
   (let* ((txt-len (length txt))
-	 (txt-hash (horner-hash txt txt-len))
+	 (txt-hash (horner-hash txt (rk-pat-len idx)))
 	 (M (rk-pat-len idx)))
 
     ;; check for initial match
     (when (= txt-hash (rk-pat-hash idx))
       (return-from search-rk 0))
 
-    (loop :for i :from M :below txt-len :do
+    (loop :for i :from 0 :to (- txt-len (rk-pat-len idx)) :do
        (progn
 	 ;; Remove leading digit, add trailing digit, check for match.
+	 (when (= (rk-pat-hash idx)
+		  txt-hash)
+	   (format t "Pattern found at index ~a~%" i))
 
-	 ;; txtHash = (txtHash + Q - RM*txt.charAt(i-M) % Q) % Q;
-	 (setf txt-hash (mod (- (+ txt-hash +big-prime+)
-				(mod (* (rk-rm idx)
-					(char-code (char txt (- i M))))
-				     +big-prime+))
-			     +big-prime+))
-	 ;; txtHash = (txtHash*R + txt.charAt(i)) % Q
-	 (setf txt-hash
-	       (mod (+ (* txt-hash (rk-alph-size idx))
-		       (char-code (char txt i)))
-		    +big-prime+))
+	 ;; Calulate hash value for next window of text: Remove
+	 ;; leading digit, add trailing digit
+	 (when (< i (- txt-len M))
+	   ;; txtHash = (alphSize * (txtHash - txt[i]*RM) + txt[i+M]) % prime;
+	   (setf txt-hash
+		 (mod
+		  (* +alph-size+
+		     (+ 
+		      (- txt-hash
+			 (* (char-code (char txt i))
+			    (rk-rm idx)))
+		      (char-code (char txt (+ i m)))))
+		  +big-prime+))
 
-	 (when (and (= (rk-pat-hash idx)
-		       txt-hash)
-		    (check-rk (+ (- i M)
-				 1)))
-	   (return-from search-rk (+ (- i M)
-				     1)))))
+	   ;; We might get negative value of t, converting it to positive
+	   (when (< txt-hash 0)
+	     (setf txt-hash (+ txt-hash +big-prime+)))
+
+	   (format t "m: ~a i: ~a (i+m): ~a txt-len: ~a (rk-pat-hash idx): ~a txt-hash: ~a~%"
+		   m i (+ m i) txt-len
+		   (rk-pat-hash idx) txt-hash)
+
+	   (when (and (= (rk-pat-hash idx)
+			 txt-hash)
+		      (check-rk (+ (- i M)
+				   1)))
+	     (return-from search-rk i)))))
     NIL))
 
 ;; --------------------------------------------------------
+
+(defun string-contains-rk (pat txt)
+  (declare (type string pat)
+	   (type string txt))
+  (format t "pat: ~a txt: ~a~%" pat txt)
+  (search-rk (initialize-rk pat) txt))
 
 ;; EOF
