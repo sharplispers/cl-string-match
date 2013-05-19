@@ -33,4 +33,6 @@
    :string-contains-bm
    :string-contains-rk
    :initialize-bm
-   :search-bm))
+   :initialize-rk
+   :search-bm
+   :search-rk))
