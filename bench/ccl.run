@@ -1,5 +1,5 @@
 #!/bin/bash
 
-lx86cl --quiet --load "benchmark" --eval "(run-benchmarks)" --eval '(quit)'
+lx86cl --quiet --load "benchmark.lx32fsl" --eval "(run-benchmarks)" --eval '(quit)'
 
 # EOF

@@ -47,7 +47,8 @@
 (defparameter *funcs*
   '(sm:string-contains-brute
     sm:string-contains-bm
-    sm:string-contains-rk))
+    sm:string-contains-rk
+    sm:string-contains-kmp))
 
 ;; --------------------------------------------------------
 
