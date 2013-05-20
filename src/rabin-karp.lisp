@@ -35,9 +35,10 @@
 
 ;; --------------------------------------------------------
 
-(defparameter +big-prime+ 479001599)
 
-(defparameter +alph-size+ CHAR-CODE-LIMIT) ; 256
+(defconstant +big-prime+ 479001599)
+
+(defconstant +alph-size+ CHAR-CODE-LIMIT) ; 256
 
 ;; --------------------------------------------------------
 
@@ -96,6 +97,7 @@ pattern and the text.)"
 ;; --------------------------------------------------------
 
 (defun search-rk (idx txt)
+  "Implementation of the Rabin-Karp substring search algorithm."
   (declare (type string txt)
 	   (type rk idx))
 
