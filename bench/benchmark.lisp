@@ -41,7 +41,7 @@
 
 ;; --------------------------------------------------------
 
-(defun timer (N function &rest args)
+(defun bm-timer (N function &rest args)
   (declare (fixnum N) (function function))
   (time
    (dotimes (i N)
@@ -52,33 +52,33 @@
 
 (defun run-search ()
   (format t "~%Benchmarking standard system SEARCH~%")
-  (timer *times* #'search needle haystack))
+  (bm-timer *times* #'search needle haystack))
 
 ;; --------------------------------------------------------
 
 (defun run-brute-force ()
   (format t "~%Benchmarking BRUTE FORCE~%")
-  (timer *times* #'sm:string-contains-brute needle haystack))
+  (bm-timer *times* #'sm:string-contains-brute needle haystack))
 
 ;; --------------------------------------------------------
 
 (defun run-boyer-moore ()
   (format t "~%Benchmarking BOYER MOORE simple~%")
-  (timer *times* #'sm:string-contains-bm needle haystack)
+  (bm-timer *times* #'sm:string-contains-bm needle haystack)
 
   (format t "~%Benchmarking BOYER MOORE with index~%")
   (let ((idx (sm:initialize-bm needle)))
-    (timer *times* #'sm:search-bm idx haystack)))
+    (bm-timer *times* #'sm:search-bm idx haystack)))
 
 ;; --------------------------------------------------------
 
 (defun run-rabin-karp ()
   (format t "~%Benchmarking RABIN KARP simple~%")
-  (timer *times* #'sm:string-contains-rk needle haystack)
+  (bm-timer *times* #'sm:string-contains-rk needle haystack)
 
   (format t "~%Benchmarking RABIN KARP with index~%")
   (let ((idx (sm:initialize-rk needle)))
-    (timer *times* #'sm:search-rk idx haystack)))
+    (bm-timer *times* #'sm:search-rk idx haystack)))
 
 ;; --------------------------------------------------------
 

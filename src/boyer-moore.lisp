@@ -54,10 +54,13 @@
 ;; --------------------------------------------------------
 
 (defun initialize-bm (pat)
-  (declare (type string pat))
+  (declare (type string pat)
+	   #.*standard-optimize-settings*)
+
   (let ((bm (make-bm
 	     :pat pat
-	     :right (make-array 256 :element-type 'integer
+	     :right (make-array 256
+				:element-type 'integer
 				:initial-element -1)))
 	(pat-len (length pat)))
     
@@ -70,12 +73,19 @@
 ;; --------------------------------------------------------
 
 (defun search-bm (bm txt)
-  (declare (type string txt))
   "Search for pattern bm in txt."
+    
+  (declare (type string txt)
+	   #.*standard-optimize-settings*)
+
   (let* ((txt-len (length txt))
 	 (pat-len (length (bm-pat bm)))
 	 (delta (- txt-len pat-len))
 	 (skip 0))
+    (declare (fixnum txt-len)
+	     (fixnum pat-len)
+	     (fixnum delta)
+	     (fixnum skip))
 
     (loop :for i = 0 :then (+ i skip) :while (<= i delta) :do
        (progn
@@ -101,7 +111,9 @@
 
 (defun string-contains-bm (pat txt)
   (declare (type string pat)
-	   (type string txt))
+	   (type string txt)
+	   #.*standard-optimize-settings*)
+
   (search-bm (initialize-bm pat) txt))
     
 ;; EOF
