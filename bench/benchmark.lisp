@@ -82,10 +82,21 @@
 
 ;; --------------------------------------------------------
 
+(defun run-knuth-morris-pratt ()
+  (format t "~%Benchmarking KNUTH-MORRIS-PRATT simple~%")
+  (bm-timer *times* #'sm:string-contains-kmp needle haystack)
+
+  (format t "~%Benchmarking KNUTH-MORRIS-PRATT with index~%")
+  (let ((idx (sm:initialize-kmp needle)))
+    (bm-timer *times* #'sm:search-kmp idx haystack)))
+
+;; --------------------------------------------------------
+
 (defun run-benchmarks ()
   (run-search)
   (run-brute-force)
   (run-boyer-moore)
-  (run-rabin-karp))
+  (run-rabin-karp)
+  (run-knuth-morris-pratt))
 
 (format t "Eval: (run-benchmarks) to run all benchmarks~%")

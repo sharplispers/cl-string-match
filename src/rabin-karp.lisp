@@ -36,9 +36,9 @@
 ;; --------------------------------------------------------
 
 
-(defconstant +big-prime+ 479001599)
+(defconstant +big-prime+ (the fixnum 479001599))
 
-(defconstant +alph-size+ CHAR-CODE-LIMIT) ; 256
+(defconstant +alph-size+ (the fixnum CHAR-CODE-LIMIT)) ; 256
 
 ;; --------------------------------------------------------
 
@@ -59,13 +59,13 @@ number represented as a char array in time proportional to END. (We
 pass END as an argu- ment so that we can use the function for both the
 pattern and the text.)"
 
-  (declare (type string key)
+  (declare (type simple-string key)
 	   #.*standard-optimize-settings*)
 
   (let ((h 0))
     (declare (fixnum h))
 
-    (loop :for j :from 0 :below end :do
+    (loop :for j :of-type fixnum :from 0 :below end :do
        (setf h
 	     (mod (+ (* +alph-size+ h)
 		     (char-code (char key j)))
