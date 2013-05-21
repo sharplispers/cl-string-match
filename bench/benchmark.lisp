@@ -32,19 +32,20 @@
 ;; based on: Performing Lisp: Measure and Explore by Kenneth R. Anderson
 ;; see also: http://openmap.bbn.com/~kanderso/performance/
 
-(defparameter *times* 1000000)
-
-(defparameter needle "abcdef")
-(defparameter haystack "abcdeabcdeabcdeabcdeabcdeabcdeabcdefabcdeabcdeabcdeabcdeabcdeabcde")
-
 (ql:quickload "cl-string-match")
 
 ;; --------------------------------------------------------
 
-(defun bm-timer (N function &rest args)
-  (declare (fixnum N) (function function))
+(defconstant +times+ 1000000)
+(defparameter needle "abcdef")
+(defparameter haystack "abcdeabcdeabcdeabcdeabcdeabcdeabcdefabcdeabcdeabcdeabcdeabcdeabcde")
+
+;; --------------------------------------------------------
+
+(defun bm-timer (function &rest args)
+  (declare (function function))
   (time
-   (dotimes (i N)
+   (dotimes (i +times+)
      (declare (fixnum i))
      (apply function args))))
 
@@ -52,43 +53,43 @@
 
 (defun run-search ()
   (format t "~%Benchmarking standard system SEARCH~%")
-  (bm-timer *times* #'search needle haystack))
+  (bm-timer #'search needle haystack))
 
 ;; --------------------------------------------------------
 
 (defun run-brute-force ()
   (format t "~%Benchmarking BRUTE FORCE~%")
-  (bm-timer *times* #'sm:string-contains-brute needle haystack))
+  (bm-timer #'sm:string-contains-brute needle haystack))
 
 ;; --------------------------------------------------------
 
 (defun run-boyer-moore ()
   (format t "~%Benchmarking BOYER MOORE simple~%")
-  (bm-timer *times* #'sm:string-contains-bm needle haystack)
+  (bm-timer #'sm:string-contains-bm needle haystack)
 
   (format t "~%Benchmarking BOYER MOORE with index~%")
   (let ((idx (sm:initialize-bm needle)))
-    (bm-timer *times* #'sm:search-bm idx haystack)))
+    (bm-timer #'sm:search-bm idx haystack)))
 
 ;; --------------------------------------------------------
 
 (defun run-rabin-karp ()
   (format t "~%Benchmarking RABIN KARP simple~%")
-  (bm-timer *times* #'sm:string-contains-rk needle haystack)
+  (bm-timer #'sm:string-contains-rk needle haystack)
 
   (format t "~%Benchmarking RABIN KARP with index~%")
   (let ((idx (sm:initialize-rk needle)))
-    (bm-timer *times* #'sm:search-rk idx haystack)))
+    (bm-timer #'sm:search-rk idx haystack)))
 
 ;; --------------------------------------------------------
 
 (defun run-knuth-morris-pratt ()
   (format t "~%Benchmarking KNUTH-MORRIS-PRATT simple~%")
-  (bm-timer *times* #'sm:string-contains-kmp needle haystack)
+  (bm-timer #'sm:string-contains-kmp needle haystack)
 
   (format t "~%Benchmarking KNUTH-MORRIS-PRATT with index~%")
   (let ((idx (sm:initialize-kmp needle)))
-    (bm-timer *times* #'sm:search-kmp idx haystack)))
+    (bm-timer #'sm:search-kmp idx haystack)))
 
 ;; --------------------------------------------------------
 
