@@ -12,6 +12,7 @@ algorithms:
 * Brute-force (also known as naïve algorithm)
 * Boyer-Moore (with mismatched character heuristic)
 * Rabin-Karp algorithm
+* Knuth-Morris-Pratt algorithm
 
 Project home page:
 
@@ -28,8 +29,6 @@ development. Following tasks are still to be implemented:
 
 * Closre replication of the SEARCH function parameters, implement
   search on generic sequences, not just on strings
-
-* Knuth-Morris-Pratt algorithm
 
 * Finite-State automaton algorithm
 
