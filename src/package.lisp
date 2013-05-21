@@ -32,7 +32,12 @@
    :string-contains-brute
    :string-contains-bm
    :string-contains-rk
+   :string-contains-kmp
    :initialize-bm
    :initialize-rk
+   :initialize-kmp
    :search-bm
-   :search-rk))
+   :search-rk
+   :search-kmp))
+
+;; EOF

@@ -29,6 +29,19 @@
 
 ;; --------------------------------------------------------
 
+;; got idea from CL-PPCRE
+(defvar *standard-optimize-settings*
+  '(optimize
+    speed
+    (safety 0)
+    (space 0)
+    (debug 1)
+    (compilation-speed 0)
+    #+:lispworks (hcl:fixnum-safety 0))
+  "The standard optimize settings used by most declaration expressions.")
+
+;; --------------------------------------------------------
+
 (defun string-contains-brute (pat txt)
   "A Brute-force substring search implementation.
 
@@ -41,10 +54,11 @@ Algorithm described in: Chapter 5, p. 760 in
 
   (declare (type simple-string pat)
 	   (type simple-string txt))
+
   (let ((pat-len (length pat))
 	(txt-len (length txt)))
-    (loop :for txt-pos fixnum :from 0 :to (- txt-len pat-len)
-       :do
+    
+    (loop :for txt-pos fixnum :from 0 :to (- txt-len pat-len) :do
        (loop :for pat-pos fixnum :from 0 :below pat-len
 	  :until (char/= (char txt (+ txt-pos pat-pos))
 			 (char pat pat-pos))
@@ -52,6 +66,5 @@ Algorithm described in: Chapter 5, p. 760 in
 	  (when (= pat-pos pat-len)
 	    (return-from string-contains-brute txt-pos))))
     NIL))
-
 
 ;; EOF

@@ -1,6 +1,6 @@
 CL-STRING-MATCH aims at providing robust implementations of string
 matching algorithms. These algorithms are also called "substring
-search" algorithms.
+search" or "subsequence search" algorithms.
 
 Corresponding article on Wikipedia is:
 
@@ -12,6 +12,7 @@ algorithms:
 * Brute-force (also known as naïve algorithm)
 * Boyer-Moore (with mismatched character heuristic)
 * Rabin-Karp algorithm
+* Knuth-Morris-Pratt algorithm
 
 Project home page:
 
@@ -26,7 +27,8 @@ development. Following tasks are still to be implemented:
 * Comprehensive unit test suite: test if the functions in this package
   work properly
 
-* Knuth-Morris-Pratt algorithm
+* Closre replication of the SEARCH function parameters, implement
+  search on generic sequences, not just on strings
 
 * Finite-State automaton algorithm
 
@@ -45,3 +47,6 @@ Algorithms with finite set of patterns:
 Additional algorithms:
 
 * Suffix tree and tree-based algorithms
+
+
+;; EOF

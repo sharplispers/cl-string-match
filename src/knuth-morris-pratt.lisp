@@ -28,92 +28,101 @@
 
 ;; The following implementation is based on algorithm described in:
 ;;
-;; Algorithm described in: Chapter 5, p. 772 in
+;; Algorithm described in: Chapter 5, p. 768 in
 ;;  “Algorithms”, Robert Sedgewick and Kevin Wayne. 4th
 ;;
-;; ``Efficient Text Searching in Java'' By Laura Werner.
-;; (appeared in Java Report, February 1999)
-;;
-;; http://icu-project.org/docs/papers/efficient_text_searching_in_java.html
+;; Based on implementation by:
+;;  “Knuth-Morris-Pratt vs. Boyer–Moore in LISP.” by ZBR
+;;   http://www.ioremap.net/archive/other/lisp/optimized-bm-kmp-string-test.lisp
 
 (in-package :cl-string-match)
 
 ;; --------------------------------------------------------
 
-;; Member variables for storing precomputed pattern data
-(defstruct bm
-  (right)
-  (pat))
+(defstruct kmp
+  (pat     "" :type simple-string)
+  (pat-len 0  :type fixnum)
+  (table   (make-array 0 :element-type 'fixnum)
+	   :type (simple-array fixnum)))
 
 ;; --------------------------------------------------------
 
-;; Map a collation element to an array index
-(defun hash-bm (order)
-  (round (mod (char-code order) 256)))
-
-;; --------------------------------------------------------
-
-(defun initialize-bm (pat)
-  (declare (type string pat)
+(defun initialize-kmp (pat)
+  (declare (type simple-string pat)
 	   #.*standard-optimize-settings*)
 
-  (let ((bm (make-bm
-	     :pat pat
-	     :right (make-array 256
-				:element-type 'integer
-				:initial-element -1)))
-	(pat-len (length pat)))
-    
-    (loop :for j :from 0 :below pat-len
-       :do (setf (aref (bm-right bm)
-		       (hash-bm (char pat j)))
-		 j))
-    bm))
+  (let* ((idx (make-kmp
+	       :pat pat
+	       :pat-len (length pat)
+	       :table (make-array (length pat)
+				  :element-type 'fixnum)))
+	 (pos 2)
+	 (cnd 0))
+    (declare (fixnum pos cnd))
+
+    (setf (aref (kmp-table idx) 0) -1)
+
+    (when (> (length pat) 1)
+      (setf (aref (kmp-table idx) 1) 0))
+
+    (do ()
+	((>= pos (length pat)))
+      (cond
+	((char= (char pat (1- pos))
+		(char pat cnd))
+	 (setf (aref (kmp-table idx) pos)
+	       (1+ cnd))
+	 (incf pos)
+	 (incf cnd))
+	
+	((> cnd 0)
+	 (setf cnd (aref (kmp-table idx) cnd)))
+
+	(t
+	 (setf (aref (kmp-table idx) pos) 0)
+	 (incf pos))))
+    idx))
 
 ;; --------------------------------------------------------
 
-(defun search-bm (bm txt)
-  "Search for pattern bm in txt."
-    
-  (declare (type string txt)
+(defun search-kmp (idx txt)
+  (declare (type simple-string txt)
 	   #.*standard-optimize-settings*)
 
-  (let* ((txt-len (length txt))
-	 (pat-len (length (bm-pat bm)))
-	 (delta (- txt-len pat-len))
-	 (skip 0))
-    (declare (fixnum txt-len)
-	     (fixnum pat-len)
-	     (fixnum delta)
-	     (fixnum skip))
+  (let* ((m 0)
+	 (i 0)
+	 (txt-len (length txt)))
+    (declare (fixnum m i txt-len))
 
-    (loop :for i = 0 :then (+ i skip) :while (<= i delta) :do
-       (progn
-	 ;; Does the pattern match the text at position i ?
-	 (setf skip 0)
-	 (loop
-	    :for j :downfrom (- pat-len 1) :downto 0
-	    :when (char/= (char (bm-pat bm) j)
-			  (char txt (+ i j))) :do
-	    (progn
-	      (setf skip
-		    (- j (aref (bm-right bm)
-			       (hash-bm (char txt (+ i j))))))
-	      (when (< skip 1)
-		(setf skip 1))
-	      (loop-finish)))
-	 ;; found
-	 (when (= skip 0)
-	   (return-from search-bm i))))
-    (return-from search-bm NIL)))
+    (do ((w (aref (kmp-pat idx) i)
+	    (aref (kmp-pat idx) i))
+	 (s (char txt (+ m i))))
+	((>= (+ m i) txt-len))
+      
+      (cond
+	((char= w s)
+	 (incf i)
+	 (when (= i (kmp-pat-len idx))
+	   (return-from search-kmp m)))
+	(t
+	 (let ((ti (elt (kmp-table idx) i)))
+	   (setf m (- (+ m i) ti))
+	   (when (> i 0)
+	     (setf i ti)))))
+
+      (let ((mi (+ m i)))
+        (when (< mi txt-len)
+          (setf s (elt txt mi))))))
+  NIL)
 
 ;; --------------------------------------------------------
 
-(defun string-contains-bm (pat txt)
+(defun string-contains-kmp (pat txt)
   (declare (type string pat)
 	   (type string txt)
 	   #.*standard-optimize-settings*)
 
-  (search-bm (initialize-bm pat) txt))
-    
+  (search-kmp (initialize-kmp pat) txt))
+
+
 ;; EOF
