@@ -45,9 +45,10 @@
 ;; --------------------------------------------------------
 
 (defparameter *funcs*
-  '(string-contains-brute
-    string-contains-bm
-    string-contains-rk))
+  '(sm:string-contains-brute
+    sm:string-contains-bm
+    sm:string-contains-rk
+    sm:string-contains-kmp))
 
 ;; --------------------------------------------------------
 
@@ -71,10 +72,6 @@
   (run-assertions 2 "abc" "ababc"))
 
 ;; --------------------------------------------------------
-
-;; (format t ">> result: ~a~%" (string-contains-rk "abc" "abcab_"))
-;; (format t ">> result: ~a~%" (string-contains-rk "abc" "_abcab_"))
-;; (format t ">> result: ~a~%" (string-contains-rk "abc" "ababc_"))
 
 (run-tests :all)
 

@@ -35,9 +35,10 @@
 
 ;; --------------------------------------------------------
 
-(defparameter +big-prime+ 479001599)
 
-(defparameter +alph-size+ CHAR-CODE-LIMIT) ; 256
+(defconstant +big-prime+ (the fixnum 479001599))
+
+(defconstant +alph-size+ (the fixnum CHAR-CODE-LIMIT)) ; 256
 
 ;; --------------------------------------------------------
 
@@ -58,20 +59,26 @@ number represented as a char array in time proportional to END. (We
 pass END as an argu- ment so that we can use the function for both the
 pattern and the text.)"
 
-  (declare (type string key))
+  (declare (type simple-string key)
+	   #.*standard-optimize-settings*)
 
   (let ((h 0))
-    (loop :for j :from 0 :below end :do
+    (declare (fixnum h))
+
+    (loop :for j :of-type fixnum :from 0 :below end :do
        (setf h
 	     (mod (+ (* +alph-size+ h)
 		     (char-code (char key j)))
 		  +big-prime+)))
     h))
 
+(declaim (inline horner-hash))
+
 ;; --------------------------------------------------------
 
 (defun initialize-rk (pat)
-  (declare (type string pat))
+  (declare (type string pat)
+	   #.*standard-optimize-settings*)
 
   (let ((idx (make-rk
 	      :pat pat	; saving patter is required only for Las-Vegas
@@ -93,15 +100,21 @@ pattern and the text.)"
   (declare (ignore i))
   T)
 
+(declaim (inline check-rk))
+
 ;; --------------------------------------------------------
 
 (defun search-rk (idx txt)
+  "Implementation of the Rabin-Karp substring search algorithm."
   (declare (type string txt)
-	   (type rk idx))
+	   (type rk idx)
+	   #.*standard-optimize-settings*)
 
   (let* ((txt-len (length txt))
 	 (txt-hash (horner-hash txt (rk-pat-len idx)))
 	 (M (rk-pat-len idx)))
+    
+    (declare (fixnum txt-len txt-hash M))
 
     ;; check for initial match
     (when (= txt-hash (rk-pat-hash idx))
@@ -137,7 +150,9 @@ pattern and the text.)"
 
 (defun string-contains-rk (pat txt)
   (declare (type string pat)
-	   (type string txt))
+	   (type string txt)
+	   #.*standard-optimize-settings*)
+
   (search-rk (initialize-rk pat) txt))
 
 ;; EOF

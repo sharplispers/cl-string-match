@@ -47,6 +47,7 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
 			((:file "package")
 			 (:file "brute-force")
 			 (:file "boyer-moore")
-			 (:file "rabin-karp")))))
+			 (:file "rabin-karp")
+			 (:file "knuth-morris-pratt")))))
 
 ;; EOF

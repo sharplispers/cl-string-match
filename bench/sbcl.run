@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sbcl --noinform --load "benchmark.fasl" --eval "(run-benchmarks)" --quit
+
+# EOF
