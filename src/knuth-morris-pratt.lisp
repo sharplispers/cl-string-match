@@ -42,7 +42,8 @@
 (defstruct kmp
   (pat     "" :type simple-string)
   (pat-len 0  :type fixnum)
-  (table   (make-array 0)   :type simple-array))
+  (table   (make-array 0 :element-type 'fixnum)
+	   :type (simple-array fixnum)))
 
 ;; --------------------------------------------------------
 
@@ -97,8 +98,7 @@
 	    (aref (kmp-pat idx) i))
 	 (s (char txt (+ m i))))
 	((>= (+ m i) txt-len))
-      (declare (fixnum w s))
-
+      
       (cond
 	((char= w s)
 	 (incf i)
