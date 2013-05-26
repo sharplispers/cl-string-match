@@ -31,12 +31,15 @@
   (:export
    :string-contains-brute
    :string-contains-bm
+   :string-contains-bmh
    :string-contains-rk
    :string-contains-kmp
    :initialize-bm
+   :initialize-bmh
    :initialize-rk
    :initialize-kmp
    :search-bm
+   :search-bmh
    :search-rk
    :search-kmp))
 
