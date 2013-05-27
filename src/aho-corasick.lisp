@@ -148,13 +148,37 @@ Data: 1  Children: (2 3 4 5)
 
 (defun build-trie (patterns)
   "Builds a Trie based on the given list of patterns."
-  (flet ((EMPTY-TRIE ()
+  (labels ((EMPTY-TRIE ()
 	   (make-tree nil))
-	 (ADD-TRIE-NODE (trie label mark)
-	   (add-child trie (cons label mark))
-	   )
+
+	 (ADD-TRIE-CHILD (trie label mark)
+	   (add-child trie (cons label mark)))
+
+	 (FIND-TRIE-CHILD (trie label)
+	   (let ((node (first-child trie)))
+	     (loop :while node
+		:until (eql (first (data node)) label)
+		:do (setf node (next-sibling node)))))
+
 	 (ADD-KEYWORD (trie kw idx)
-	   
+	   ;; Starting at the root, follow the path labeled by chars
+	   ;; of Pi
+	   ;; 
+	   ;; If the path ends before Pi, continue it by adding new
+	   ;; edges and nodes for the remaining characters of Pi
+	   ;;
+	   ;; Store identifier i of Pi at the terminal node of the
+	   ;; path
+
+	   (loop
+	      :for node = trie
+	      :for c :across kw
+	      :for child-node = (find-trie-child node c) :then (find-trie-child node c)
+	      :if (not (null child-node)) :do (setf node child-node)
+	      :else :do (add-trie-child node c nil)
+	      :finally (setf (data child-node)
+			     (cons c idx))
+	      )
 	   ))
     
     (let ((trie (empty-trie)))
