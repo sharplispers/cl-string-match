@@ -11,6 +11,7 @@ algorithms:
 
 * Brute-force (also known as naïve algorithm)
 * Boyer-Moore (with mismatched character heuristic)
+* Boyer-Moore-Horspool algorithm
 * Rabin-Karp algorithm
 * Knuth-Morris-Pratt algorithm
 
@@ -31,8 +32,6 @@ development. Following tasks are still to be implemented:
   search on generic sequences, not just on strings
 
 * Finite-State automaton algorithm
-
-* Boyer–Moore–Horspool algorithm
 
 * Commentz-Walter algorithm
 
