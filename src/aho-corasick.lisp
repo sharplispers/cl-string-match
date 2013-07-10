@@ -35,161 +35,120 @@
 ;;
 ;; Downloaded from: http://www.cs.uku.fi/~kilpelai/BSA05/lectures/slides04.pdf
 ;;
-;;
-;; Ideas and code for the tries implementation are borrowed from:
-;; Jorge Gajon
-;; http://gajon.org/trees-linked-lists-common-lisp/
 
 (in-package :cl-string-match)
 
 ;; --------------------------------------------------------
 
-(defun make-tree (data)
-  "Creates a new node that contains 'data' as its data.
+(defstruct (trie-data)
+  children
+  label
+  mark)
 
-@author{gajon.org}"
-  (cons (cons data nil) nil))
-
-;; --------------------------------------------------------
-
-(defun add-child (tree child)
-  "Takes two nodes created with 'make-tree' and adds the
-  second node as a child of the first. Returns the first node,
-  which will be modified.
-
-@author{gajon.org}"
-  
-  (nconc (car tree) child)
-  tree)
-
-;; --------------------------------------------------------
-
-(defun first-child (tree)
-  "Returns a reference to the first child of the node passed in,
-or nil if this node does not have children.
-
-@author{gajon.org}"
-
-  (when (listp tree)
-    (cdr (car tree))))
+(defun traverse-trie (trie &optional (padding 0))
+  ""
+  (when trie
+    (format t "~&~v@TData: ~A ~A" padding (trie-data-label trie)
+	    (trie-data-mark trie))
+    (when (trie-data-children trie)
+      (format t "~&~v@T  Children: ~%" padding)
+      (map nil #'(lambda (x)
+		   (traverse-trie x (+ padding 3)))
+	   (trie-data-children trie)))
+    (format t "~%")))
 
 ;; --------------------------------------------------------
 
-(defun next-sibling (tree)
-  "Returns a reference to the next sibling of the node passed in,
-  or nil if this node does not have any siblings.
+(defun find-trie-child (trie label)
+  ;;(format t "find-trie-child: ~a ~a~%" (trie-data-label trie)  label)
+  (let ((node (find-if #'(lambda (x)
+			   (eql (trie-data-label x) label))
+		       (trie-data-children trie))))
+    ;;(format t "find-trie-child: found: ~a~%" node)
+    node))
 
-@author{gajon.org}"
-  (cdr tree))
+(defun trie-contains (trie s)
+  "Returns T if the given Trie contains the given string."
 
-;; --------------------------------------------------------
-
-(defun data (tree)
-  "Returns the information contained in this node.
-
-@author{gajon.org}"
-
-  (car (car tree)))
-
-;; --------------------------------------------------------
-
-(defun traverse (tree &optional (padding 0))
-  "@author{gajon.org}"
-
-  (when tree
-    (format t "~&~v@TData: ~A" padding (data tree))
-    (when (first-child tree)
-      (format t "  Children: ~A"
-              (maplist #'(lambda (x) (data x))
-                       (first-child tree))))
-    (traverse (first-child tree) (+ padding 3))
-    (traverse (next-sibling tree) padding)))
-
-;; --------------------------------------------------------
-
-(defun test-trees ()
-  "Expected output:
-
-Data: 1  Children: (2 3 4 5)
-   Data: 2  Children: (6 7 8)
-      Data: 6
-      Data: 7
-      Data: 8
-   Data: 3
-   Data: 4  Children: (9)
-      Data: 9  Children: (12)
-         Data: 12
-   Data: 5  Children: (10 11)
-      Data: 10
-      Data: 11
- ((1 (2 (6) (7) (8)) (3) (4 (9 (12))) (5 (10) (11))))
-"
-  (let ((one    (make-tree 1))
-	(two    (make-tree 2))
-	(four   (make-tree 4))
-	(five   (make-tree 5)))
-    (add-child one two)
-    (add-child one (make-tree 3))
-    (add-child one four)
-    (add-child one five)
-    (add-child two (make-tree 6))
-    (add-child two (make-tree 7))
-    (add-child two (make-tree 8))
-    (add-child four (add-child (make-tree 9) (make-tree 12)))
-    (add-child five (make-tree 10))
-    (add-child five (make-tree 11))
-
-    ;; Print the contents of the tree,
-    (traverse one)
-    ;; and return it.
-    one))
+  (loop
+     :for c :across s
+     :for node = trie :then (find-trie-child node c)
+     :while node
+     :finally (return
+		(when node
+		  (trie-data-mark node)))))
 
 ;; --------------------------------------------------------
 
 (defun build-trie (patterns)
   "Builds a Trie based on the given list of patterns."
   (labels ((EMPTY-TRIE ()
-	   (make-tree nil))
+	     (make-trie-data :children nil :label nil :mark nil))
 
-	 (ADD-TRIE-CHILD (trie label mark)
-	   (add-child trie (cons label mark)))
+	   (ADD-TRIE-CHILD (trie label mark)
+	     ;; (format t "add-trie-child: ~a ~a ~a~%" (trie-data-label trie) label mark)
+	     (let ((child (make-trie-data :label label
+					  :mark mark
+					  :children nil)))
+	       (push child (trie-data-children trie))
+	       child))
 
-	 (FIND-TRIE-CHILD (trie label)
-	   (let ((node (first-child trie)))
-	     (loop :while node
-		:until (eql (first (data node)) label)
-		:do (setf node (next-sibling node)))))
+	   (ADD-KEYWORD (trie kw idx)
+	     ;; Starting at the root, follow the path labeled by chars
+	     ;; of Pi
+	     ;;
+	     ;; If the path ends before Pi, continue it by adding new
+	     ;; edges and nodes for the remaining characters of Pi
+	     ;;
+	     ;; Store identifier i of Pi at the terminal node of the
+	     ;; path
+	     (loop
+		:with node = trie
+		:for c :across kw
+		:for child-node = (find-trie-child node c)
+		:do (if (null child-node)
+			;; found a place where the path ends, add new node here
+			(setf node (add-trie-child node c nil))
+			;; the path continues further
+			(setf node child-node))
+		;; store the keyword index
+		:finally (setf (trie-data-mark node) idx))
 
-	 (ADD-KEYWORD (trie kw idx)
-	   ;; Starting at the root, follow the path labeled by chars
-	   ;; of Pi
-	   ;; 
-	   ;; If the path ends before Pi, continue it by adding new
-	   ;; edges and nodes for the remaining characters of Pi
-	   ;;
-	   ;; Store identifier i of Pi at the terminal node of the
-	   ;; path
+	     ))
 
-	   (loop
-	      :for node = trie
-	      :for c :across kw
-	      :for child-node = (find-trie-child node c) :then (find-trie-child node c)
-	      :if (not (null child-node)) :do (setf node child-node)
-	      :else :do (add-trie-child node c nil)
-	      :finally (setf (data child-node)
-			     (cons c idx))
-	      )
-	   ))
-    
     (let ((trie (empty-trie)))
       (loop :for pat :in patterns
 	 :count pat :into idx :do
-	 (add-keyword trie pat idx)))))
+	 (progn
+	   ;; (format t "~%~%adding kw: ~a~%" pat)
+	   (traverse-trie trie)
+	   (add-keyword trie pat idx)))
+      trie)))
+
+;; --------------------------------------------------------
+
+(defun string-contains-ac (trie txt)
+
+  (loop
+     :for c :across txt
+     :for node = (find-trie-child trie c) :then (find-trie-child node c)
+     :when node :do (if (trie-data-mark node)
+			(return (trie-data-mark node)))
+     :unless node :do (setf node trie)
+     ))
 
 ;; --------------------------------------------------------
 
 (defun test-trie ()
   (let ((trie (build-trie '("he" "she" "his" "hers"))))
-    (traverse trie)))
+    (format t "~%~%~a~%" trie)
+    (traverse-trie trie)
+
+    (format t "~&trie-contains: ~a ~a~%" "she" (trie-contains trie "she"))
+    (format t "~&trie-contains: ~a ~a~%" "from" (trie-contains trie "from"))
+
+    (format t "~&string-contains-ac: ~a~%" (string-contains-ac trie "from his m"))
+    (format t "~&string-contains-ac: ~a~%" (string-contains-ac trie "from her his m"))
+    (format t "~&string-contains-ac: ~a~%" (string-contains-ac trie "from hor hos m"))))
 
 ;; EOF
