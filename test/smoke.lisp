@@ -49,7 +49,8 @@
     sm:string-contains-bm
     sm:string-contains-bmh
     sm:string-contains-rk
-    sm:string-contains-kmp))
+    sm:string-contains-kmp
+    sm:string-contains-ac))
 
 ;; --------------------------------------------------------
 

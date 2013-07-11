@@ -14,6 +14,7 @@ algorithms:
 * Boyer-Moore-Horspool algorithm
 * Rabin-Karp algorithm
 * Knuth-Morris-Pratt algorithm
+* Aho-Corasick algorithm (with finite set of patterns)
 
 Project home page:
 
@@ -36,8 +37,6 @@ development. Following tasks are still to be implemented:
 * Commentz-Walter algorithm
 
 Algorithms with finite set of patterns:
-
-* Aho–Corasick string matching algorithm
 
 * Commentz-Walter algorithm
 
