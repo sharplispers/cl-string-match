@@ -127,15 +127,20 @@
 
 ;; --------------------------------------------------------
 
-(defun string-contains-ac (trie txt)
+(defun string-contains-ac (pat txt)
+  "Looks for the given pattern in the text and returns index of the
+first occurence."
 
-  (loop
-     :for c :across txt
-     :for node = (find-trie-child trie c) :then (find-trie-child node c)
-     :when node :do (if (trie-data-mark node)
-			(return (trie-data-mark node)))
-     :unless node :do (setf node trie)
-     ))
+  (let ((trie (build-trie (list pat))))
+    (loop
+       :for c :across txt
+       :for j :from 1 :to (length txt)
+       :for node = (find-trie-child trie c) :then (find-trie-child node c)
+       :do (if node
+	       (if (trie-data-mark node)
+		   (return (- j (length pat))))
+	       (setf node (find-trie-child trie c)))
+       :unless node :do (setf node trie))))
 
 ;; --------------------------------------------------------
 

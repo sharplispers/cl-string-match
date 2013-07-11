@@ -34,6 +34,7 @@
    :string-contains-bmh
    :string-contains-rk
    :string-contains-kmp
+   :string-contains-ac
    :initialize-bm
    :initialize-bmh
    :initialize-rk
