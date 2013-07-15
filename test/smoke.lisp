@@ -47,8 +47,10 @@
 (defparameter *funcs*
   '(sm:string-contains-brute
     sm:string-contains-bm
+    sm:string-contains-bmh
     sm:string-contains-rk
-    sm:string-contains-kmp))
+    sm:string-contains-kmp
+    sm:string-contains-ac))
 
 ;; --------------------------------------------------------
 
@@ -71,6 +73,26 @@
   (run-assertions 1 "abc" "_abcab_")
   (run-assertions 2 "abc" "ababc"))
 
+;; --------------------------------------------------------
+
+(define-test ac-test
+    ;; test Aho-Corasick implementation how it deals with multiple
+    ;; patterns search
+
+    (let ((trie (initialize-ac '("he" "she" "his" "hers"))))
+      (assert-equal 0 (search-ac trie "she"))
+      (assert-equal 1 (search-ac trie "_she"))
+      (assert-equal nil (search-ac trie "_sh_"))
+      
+      (multiple-value-bind (pos idx)
+	  (search-ac trie "___his")
+	(assert-equal 3 pos)
+	(assert-equal 2 idx))
+      (multiple-value-bind (pos idx)
+	  (search-ac trie "___h_s")
+	(assert-equal nil pos)
+	(assert-equal nil idx))))
+    
 ;; --------------------------------------------------------
 
 (run-tests :all)

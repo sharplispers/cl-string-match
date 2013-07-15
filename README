@@ -11,8 +11,10 @@ algorithms:
 
 * Brute-force (also known as naïve algorithm)
 * Boyer-Moore (with mismatched character heuristic)
+* Boyer-Moore-Horspool algorithm
 * Rabin-Karp algorithm
 * Knuth-Morris-Pratt algorithm
+* Aho-Corasick algorithm (with finite set of patterns)
 
 Project home page:
 
@@ -27,18 +29,17 @@ development. Following tasks are still to be implemented:
 * Comprehensive unit test suite: test if the functions in this package
   work properly
 
-* Closre replication of the SEARCH function parameters, implement
+* Better replication of the SEARCH function parameters, implement
   search on generic sequences, not just on strings
 
-* Finite-State automaton algorithm
+* Improve performance: some implementations (i.e. Aho-Corasick) are
+  extremely slow compared with theoretical boundaries.
 
-* Boyer–Moore–Horspool algorithm
+* Finite-State automaton algorithm
 
 * Commentz-Walter algorithm
 
 Algorithms with finite set of patterns:
-
-* Aho–Corasick string matching algorithm
 
 * Commentz-Walter algorithm
 
