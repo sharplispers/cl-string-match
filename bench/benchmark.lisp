@@ -93,11 +93,22 @@
 
 ;; --------------------------------------------------------
 
+(defun run-aho-corasick ()
+  (format t "~%Benchmarking AHO-CORASICK simple~%")
+  (bm-timer #'sm:string-contains-ac needle haystack)
+
+  (format t "~%Benchmarking AHO-CORASICK with index~%")
+  (let ((idx (sm:initialize-ac needle)))
+    (bm-timer #'sm:search-ac idx haystack)))
+
+;; --------------------------------------------------------
+
 (defun run-benchmarks ()
   (run-search)
   (run-brute-force)
   (run-boyer-moore)
   (run-rabin-karp)
-  (run-knuth-morris-pratt))
+  (run-knuth-morris-pratt)
+  (run-aho-corasick))
 
 (format t "Eval: (run-benchmarks) to run all benchmarks~%")

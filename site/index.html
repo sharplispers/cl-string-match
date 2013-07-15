@@ -48,6 +48,7 @@
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li class="active"><a href="#">Home</a></li>
+	      <li><a href="api/index.html">API reference</a></li>
               <li><a href="http://sourceforge.net/projects/clstringmatch/">Project info</a></li>
               <li><a href="http://sourceforge.net/projects/clstringmatch/support">Contact</a></li>
             </ul>
@@ -71,6 +72,12 @@
             <a href="http://sourceforge.net/p/clstringmatch/code">Sources
             are in the Mercurial repository</a>.
           </p>
+	  <p>
+	    <img src="media/made-with-lisp.jpg" width="120px" height="84px"/>
+	  </p>
+	  <p>
+	    <script type="text/javascript" src="http://www.ohloh.net/p/642435/widgets/project_thin_badge.js"></script>
+	  </p>
 	</div>
 
 	<div class="span10">
@@ -84,7 +91,8 @@
              in a string, but its implementation can be subotimal: it can
              be beaten in some cases by even the simpliest brute-force
              algorithm.  This project is aimed at implementing robust
-             substring search (subsequence search) algorithms for Common
+             <a href="http://en.wikipedia.org/wiki/String_searching_algorithm">substring
+             search</a> (subsequence search) algorithms for Common
              Lisp.
            </p>
 	 </div>
@@ -92,9 +100,21 @@
 	 <ul>
 	   <li>Brute-force (also known as naïve algorithm)</li>
 	   <li>Boyer-Moore (with mismatched character heuristic)</li>
+	   <li>Boyer-Moore-Horspool</li>
 	   <li>Rabin-Karp</li>
 	   <li>Knuth-Morris-Pratt</li>
+	   <li>Aho-Corasick (with finite set of patterns)</li>
 	 </ul>
+	 <p>
+	   Along with subsequence search (matching) algorithms this
+	   package provides implementations of the following data
+	   structures and utility algorithms:
+	 </p>
+	 <ul>
+	   <li>Trie (used by the Aho-Corasick algorithm)</li>
+	   <li>Horner hash (used by the Rabin-Karp algorithm)</li>
+	 </ul>
+	 <p>Check also the <a href="api/index.html">API reference</a>.</p>
 	 <h3>How to use</h3>
 	 <p>At the moment Cl-String-Match is not supported by Quicklisp. Installation is manual.</p>
 	 <p>Cl-String-Match exports functions in <code>cl-string-match</code> package (nicknamed <code>sm</code>).</p>
@@ -107,6 +127,7 @@
 	   <li><code>string-contains-bm <i>pat</i> <i>txt</i></code> Boyer-Moore</li>
 	   <li><code>string-contains-rk <i>pat</i> <i>txt</i></code> Rabin-Karp</li>
 	   <li><code>string-contains-kmp <i>pat</i> <i>txt</i></code> Knuth-Morris-Pratt</li>
+	   <li><code>string-contains-ac <i>pat</i> <i>txt</i></code> Aho-Corasick</li>
 	 </ul>
 
 	 <p>A more robust approach is to use pre-calculated index data
@@ -116,6 +137,9 @@
 	   <li><code>initialize-bm <i>pat</i></code> and <code>search-bm <i>bm</i> <i>txt</i></code></li>
 	   <li><code>initialize-rk <i>pat</i></code> and <code>search-rk <i>rk</i> <i>txt</i></code></li>
 	   <li><code>initialize-kmp <i>pat</i></code> and <code>search-kmp <i>kmp</i> <i>txt</i></code></li>
+	   <li><code>initialize-ac <i>pat</i></code>
+	   and <code>search-ac <i>ac</i> <i>txt</i></code>. Here <code>initialize-ac</code>
+	   can accept a list of patterns that are compiled into a trie.</li>
 	 </ul>
 
 	 <p>Following example looks for a given
@@ -128,7 +152,7 @@
 	 </pre>
 
 	 <h3>Status</h3>
-	 <p>This project is still a work in progress. Any contributions are welcome!</p>
+	 <p>This project is still a work in progress. <strong>Any contributions are welcome!</strong></p>
 	</div>
       </div>
     </div>

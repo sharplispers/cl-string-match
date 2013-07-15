@@ -31,13 +31,27 @@
   (:export
    :string-contains-brute
    :string-contains-bm
+   :string-contains-bmh
    :string-contains-rk
    :string-contains-kmp
+   :string-contains-ac
    :initialize-bm
+   :initialize-bmh
    :initialize-rk
    :initialize-kmp
+   :initialize-ac
    :search-bm
+   :search-bmh
    :search-rk
-   :search-kmp))
+   :search-kmp
+   :search-ac
+   ;; Trie operations
+   :empty-trie
+   :trie-node
+   :trie-build
+   :trie-add-keyword
+   :trie-traverse
+   :trie-contains
+   ))
 
 ;; EOF
