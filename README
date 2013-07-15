@@ -29,8 +29,11 @@ development. Following tasks are still to be implemented:
 * Comprehensive unit test suite: test if the functions in this package
   work properly
 
-* Closre replication of the SEARCH function parameters, implement
+* Better replication of the SEARCH function parameters, implement
   search on generic sequences, not just on strings
+
+* Improve performance: some implementations (i.e. Aho-Corasick) are
+  extremely slow compared with theoretical boundaries.
 
 * Finite-State automaton algorithm
 
