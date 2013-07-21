@@ -55,8 +55,9 @@ letter) and a mark (some value attributed to the matching string)."
 
   (let ((child (make-trie-node :label label
 			       :mark mark
-			       :children nil)))
-    (push child (trie-node-children trie))
+			       :children (make-hash-table))))
+    (setf (gethash label (trie-node-children trie))
+	  child)
     child))
 
 ;; --------------------------------------------------------
@@ -96,9 +97,9 @@ letter) and a mark (some value attributed to the matching string)."
 	    (trie-node-mark trie))
     (when (trie-node-children trie)
       (format stream "~&~v@T  Children: ~%" padding)
-      (map nil #'(lambda (x)
-		   (trie-traverse x (+ padding 3) stream))
-	   (trie-node-children trie)))
+      (maphash #'(lambda (key val)
+		   (trie-traverse val (+ padding 3) stream))
+	       (trie-node-children trie)))
     (format stream "~%")))
 
 ;; --------------------------------------------------------
@@ -107,11 +108,7 @@ letter) and a mark (some value attributed to the matching string)."
   "Looks for a child of the given node trie with the given label."
 
   (declare #.*standard-optimize-settings*)
-
-  (let ((node (find-if #'(lambda (x)
-			   (eql (trie-node-label x) label))
-		       (trie-node-children trie))))
-    node))
+  (gethash label (trie-node-children trie)))
 
 ;; --------------------------------------------------------
 
@@ -119,7 +116,7 @@ letter) and a mark (some value attributed to the matching string)."
   "Creates a new instance and returns an empty trie."
 
   (declare #.*standard-optimize-settings*)
-  (make-trie-node :children nil :label nil :mark nil))
+  (make-trie-node :children (make-hash-table) :label nil :mark nil))
 
 ;; --------------------------------------------------------
 
