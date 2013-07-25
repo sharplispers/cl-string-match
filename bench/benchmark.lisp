@@ -40,16 +40,21 @@
 ;; --------------------------------------------------------
 
 (defconstant +times+ (* 1000 1000))
-(defparameter needles '("abcde_"
-			"abcdeabcde_"
-			"abcdeabcdeabcde_"
-			"abcdeabcdeabcdeabcde_"
-			"abcdeabcdeabcdeabcdeabcde_"
-			"abcdeabcdeabcdeabcdeabcdeabcde_"))
+
+;; some algorithms process needle from the end to start, other
+;; algorithms go in the opposite direction. The mismatching symbol is
+;; put into the middle to make it work in both cases
+(defparameter needles '("abcde"
+			"abcde_abcde"
+			"abcdeabc_deabcde"
+			"abcdeabcde_abcdeabcde"
+			"abcdeabcdeab_cdeabcdeabcde"
+			"abcdeabcdeabcde_abcdeabcdeabcde"))
+
 (defparameter haystack "abcdeabcdeabcdeabcdeabcdeabcdeabcdefabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde")
 
 (defconstant +bm-simple+ nil
-  "Whether to benchmark implementations including index generation")
+  "Whether to benchmark implementations including index generation.")
 
 ;; --------------------------------------------------------
 
@@ -119,6 +124,21 @@ chart."
     (let ((idx (sm:initialize-bm needle)))
       (bm-timer (length needle)
 		#'sm:search-bm idx haystack))))
+
+;; --------------------------------------------------------
+
+(defun run-boyer-horspool ()
+  (when +bm-simple+
+    (log-title "BOYER MOORE HORSPOOL simple")
+    (dolist (needle needles)
+      (bm-timer (length needle)
+		#'sm:string-contains-bmh needle haystack)))
+
+  (log-title "BOYER MOORE HORSPOOL with index")
+  (dolist (needle needles)
+    (let ((idx (sm:initialize-bmh needle)))
+      (bm-timer (length needle)
+		#'sm:search-bmh idx haystack))))
 
 ;; --------------------------------------------------------
 
@@ -211,6 +231,7 @@ chart."
   (run-search)
   (run-brute-force)
   (run-boyer-moore)
+  (run-boyer-horspool)
   (run-rabin-karp)
   (run-knuth-morris-pratt)
   (run-aho-corasick)
