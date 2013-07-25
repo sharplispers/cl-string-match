@@ -35,6 +35,9 @@ development. Following tasks are still to be implemented:
 * Improve performance: some implementations (i.e. Aho-Corasick) are
   extremely slow compared with theoretical boundaries.
 
+* Benchmark should include corner cases (general worst-case scenarios)
+  and also check correlation between needle and haystack sizes
+
 * Finite-State automaton algorithm
 
 * Commentz-Walter algorithm

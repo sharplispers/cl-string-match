@@ -27,88 +27,195 @@
 ;; simple benchmarks for the string search functions to evaluate their
 ;; performance relative to the standard SEARCH routine
 ;;
-;; lx86cl --load "benchmark.lisp" --eval "(run-benchmarks)"
+;; lx86cl --load "benchmark.lisp" --eval "(run-benchmarks)" --eval "(quit)"
 
 ;; based on: Performing Lisp: Measure and Explore by Kenneth R. Anderson
 ;; see also: http://openmap.bbn.com/~kanderso/performance/
+;;
+;; See also: http://clisp.hg.sourceforge.net/hgweb/clisp/clisp/file/tip/benchmarks/run-all.lisp
 
 (ql:quickload "cl-string-match")
+(ql:quickload "cl-ppcre")
 
 ;; --------------------------------------------------------
 
-(defconstant +times+ 1000000)
-(defparameter needle "abcdef")
-(defparameter haystack "abcdeabcdeabcdeabcdeabcdeabcdeabcdefabcdeabcdeabcdeabcdeabcdeabcde")
+(defconstant +times+ (* 1000 1000))
+(defparameter needles '("abcde_"
+			"abcdeabcde_"
+			"abcdeabcdeabcde_"
+			"abcdeabcdeabcdeabcde_"
+			"abcdeabcdeabcdeabcdeabcde_"
+			"abcdeabcdeabcdeabcdeabcdeabcde_"))
+(defparameter haystack "abcdeabcdeabcdeabcdeabcdeabcdeabcdefabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcdeabcde")
+
+(defconstant +bm-simple+ nil
+  "Whether to benchmark implementations including index generation")
 
 ;; --------------------------------------------------------
 
-(defun bm-timer (function &rest args)
+(defparameter log-file "benchmark.log")
+
+;; --------------------------------------------------------
+
+(defun log-msg (msg)
+  (with-open-file (out log-file
+		       :direction :output
+		       :if-exists :append
+		       :if-does-not-exist :create)
+    (write-string msg out)))
+
+;; --------------------------------------------------------
+
+(defun log-title (title)
+  (log-msg (format nil "~%~%\"~a\"~%" title)))
+
+;; --------------------------------------------------------
+
+(defun bm-timer (len function &rest args)
+  "Timer function that measures duration of the test function
+execution multiple times.
+
+The timer is responsible for pretty-printing benchmark information and
+duration to the log file so that it can be later used to produce a
+chart."
+
   (declare (function function))
-  (time
-   (dotimes (i +times+)
-     (declare (fixnum i))
-     (apply function args))))
+
+  (let ((start (get-internal-run-time))
+	ret elapsed)
+    (loop :repeat +times+ :do (setq ret (apply function args)))
+    (setq elapsed (/ (- (get-internal-run-time) start)
+                     (float internal-time-units-per-second 1d0)))
+    (log-msg (format nil "~a	~3$~%" len elapsed))))
+
 
 ;; --------------------------------------------------------
 
 (defun run-search ()
-  (format t "~%Benchmarking standard system SEARCH~%")
-  (bm-timer #'search needle haystack))
+  (log-msg (format nil "\"System SEARCH\"~%"))
+  (dolist (needle needles)
+    (bm-timer (length needle)
+	      #'search needle haystack)))
 
 ;; --------------------------------------------------------
 
 (defun run-brute-force ()
-  (format t "~%Benchmarking BRUTE FORCE~%")
-  (bm-timer #'sm:string-contains-brute needle haystack))
+  (log-title "BRUTE FORCE")
+  (dolist (needle needles)
+    (bm-timer (length needle)
+	      #'sm:string-contains-brute needle haystack)))
 
 ;; --------------------------------------------------------
 
 (defun run-boyer-moore ()
-  (format t "~%Benchmarking BOYER MOORE simple~%")
-  (bm-timer #'sm:string-contains-bm needle haystack)
+  (when +bm-simple+
+    (log-title "BOYER MOORE simple")
+    (dolist (needle needles)
+      (bm-timer (length needle)
+		#'sm:string-contains-bm needle haystack)))
 
-  (format t "~%Benchmarking BOYER MOORE with index~%")
-  (let ((idx (sm:initialize-bm needle)))
-    (bm-timer #'sm:search-bm idx haystack)))
+  (log-title "BOYER MOORE with index")
+  (dolist (needle needles)
+    (let ((idx (sm:initialize-bm needle)))
+      (bm-timer (length needle)
+		#'sm:search-bm idx haystack))))
 
 ;; --------------------------------------------------------
 
 (defun run-rabin-karp ()
-  (format t "~%Benchmarking RABIN KARP simple~%")
-  (bm-timer #'sm:string-contains-rk needle haystack)
+  (when +bm-simple+
+    (log-title "RABIN KARP simple")
+    (dolist (needle needles)
+      (bm-timer (length needle)
+		#'sm:string-contains-rk needle haystack)))
 
-  (format t "~%Benchmarking RABIN KARP with index~%")
-  (let ((idx (sm:initialize-rk needle)))
-    (bm-timer #'sm:search-rk idx haystack)))
+  (log-title "RABIN KARP with index")
+  (dolist (needle needles)
+    (let ((idx (sm:initialize-rk needle)))
+      (bm-timer (length needle)
+		#'sm:search-rk idx haystack))))
 
 ;; --------------------------------------------------------
 
 (defun run-knuth-morris-pratt ()
-  (format t "~%Benchmarking KNUTH-MORRIS-PRATT simple~%")
-  (bm-timer #'sm:string-contains-kmp needle haystack)
-
-  (format t "~%Benchmarking KNUTH-MORRIS-PRATT with index~%")
-  (let ((idx (sm:initialize-kmp needle)))
-    (bm-timer #'sm:search-kmp idx haystack)))
+  (log-title "KNUTH-MORRIS-PRATT with index")
+  (dolist (needle needles)
+    (let ((idx (sm:initialize-kmp needle)))
+      (bm-timer (length needle)
+		#'sm:search-kmp idx haystack))))
 
 ;; --------------------------------------------------------
 
 (defun run-aho-corasick ()
-  (format t "~%Benchmarking AHO-CORASICK simple~%")
-  (bm-timer #'sm:string-contains-ac needle haystack)
+  (when +bm-simple+
+    (log-title "AHO-CORASICK simple")
+    (dolist (needle needles)
+      (bm-timer
+       (length needle)
+       #'sm:string-contains-ac needle haystack)))
 
-  (format t "~%Benchmarking AHO-CORASICK with index~%")
-  (let ((idx (sm:initialize-ac needle)))
-    (bm-timer #'sm:search-ac idx haystack)))
+  (log-title "AHO-CORASICK with index")
+  (dolist (needle needles)
+    (let ((idx (sm:initialize-ac needle)))
+      (bm-timer
+       (length needle)
+       #'sm:search-ac idx haystack))))
+
+;; --------------------------------------------------------
+
+(defun collect-needles (needle)
+  (loop :with kw-count = 0
+     :for c :from (char-code #\A) :to (+ (char-code #\A) 20)
+     :do (setf (aref needle 2) (code-char c))
+     :collect (format nil "~a" needle)
+     :do (incf kw-count)))
+
+;; --------------------------------------------------------
+
+(defun run-aho-corasick-many ()
+  (log-title (format nil "AHO-CORASICK with 20 keywords index"))
+  (dolist (needle needles)
+    (let* ((idx (sm:initialize-ac (collect-needles needle))))
+      (bm-timer
+       (length needle)
+       #'sm:search-ac idx haystack))))
+
+;; --------------------------------------------------------
+
+(defun run-ppcre ()
+  (log-title (format nil "PPCRE with index"))
+  (dolist (needle needles)
+    (let* ((idx (ppcre:create-scanner needle)))
+      (bm-timer
+       (length needle)
+       #'ppcre:scan idx haystack))))
+
+;; --------------------------------------------------------
+
+(defun run-ppcre-many ()
+  (log-title (format nil "PPCRE with 20 keywords index"))
+  (dolist (needle needles)
+    (let* ((idx (ppcre:create-scanner `(:alternation ,@(collect-needles needle)))))
+      (bm-timer
+       (length needle)
+       #'ppcre:scan idx haystack))))
 
 ;; --------------------------------------------------------
 
 (defun run-benchmarks ()
+  (with-open-file (out log-file
+		       :direction :output
+		       :if-exists :supersede)
+    (declare (ignore out)))
+
   (run-search)
   (run-brute-force)
   (run-boyer-moore)
   (run-rabin-karp)
   (run-knuth-morris-pratt)
-  (run-aho-corasick))
+  (run-aho-corasick)
+  (run-aho-corasick-many)
+  (run-ppcre)
+  (run-ppcre-many))
 
 (format t "Eval: (run-benchmarks) to run all benchmarks~%")
