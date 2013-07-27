@@ -35,6 +35,10 @@
 ;;
 ;; Downloaded from: http://www.cs.uku.fi/~kilpelai/BSA05/lectures/slides04.pdf
 ;;
+;;
+;; TODO: check if the algorithm is really implemented like it must be,
+;; including skip distances and proper trie construction as it is a
+;; little bit more simple now than described in different books
 
 (in-package :cl-string-match)
 
