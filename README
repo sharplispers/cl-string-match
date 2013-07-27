@@ -30,17 +30,24 @@ development. Following tasks are still to be implemented:
   work properly
 
 * Better replication of the SEARCH function parameters, implement
-  search on generic sequences, not just on strings
+  search on generic sequences where possible, not just on
+  strings. Search on byte sequences/arrays should be possible.
 
-* Improve performance: some implementations (i.e. Aho-Corasick) are
-  extremely slow compared with theoretical boundaries.
+* Improve performance: some implementations (i.e. Aho-Corasick,
+  Rabin-Karp) are extremely slow compared with theoretical boundaries.
 
 * Benchmark should include corner cases (general worst-case scenarios)
   and also check correlation between needle and haystack sizes
 
+* It is possible to generate code for automata and compile it into
+  native code using standard Lisp facilities [as described by Peter
+  Seibel](http://gigamonkeys.wordpress.com/2007/07/27/compiling-queries-without-eval/)
+
+* Utilize random haystack for benchmarking similar to CL-IRREGSEXP
+
 * Finite-State automaton algorithm
 
-* Commentz-Walter algorithm
+* Apostolico–Giancarlo algorithm
 
 Algorithms with finite set of patterns:
 
@@ -48,9 +55,14 @@ Algorithms with finite set of patterns:
 
 * Rabin–Karp string search algorithm
 
+* DAWG-match
+
 Additional algorithms:
 
 * Suffix tree and tree-based algorithms
 
+* Thompson NFA
+
+* Consider inexact matching and other algorithms on strings
 
 ;; EOF
