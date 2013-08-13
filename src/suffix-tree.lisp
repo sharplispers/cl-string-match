@@ -25,29 +25,43 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-;;; Commentz-Walter algorithm implementation
+;;; Suffix tree data structure and Ukkonen's algorithm implementation
+;;; for their construction in linear time
+;;;
 ;;; TODO
+
+;; based on description in StackOverflow question:
+;;
+;; http://stackoverflow.com/questions/9452701/ukkonens-suffix-tree-algorithm-in-plain-english
 
 (in-package :cl-string-match)
 
 ;; --------------------------------------------------------
 
-(defun initialize-cw (patterns)
-  "Initialize CW automata for the given set of patterns."
+(defstruct (suffix-tree (:conc-name suffix-tree.)
+			(:print-function suffix-tree-printer))
   )
+
+(defun suffix-tree-printer (obj stream depth)
+  (declare (ignore depth))
+  (print-unreadable-object (obj stream :type t :identity t)))
 
 ;; --------------------------------------------------------
 
-(defun search-cw (idx txt)
-    "Looks for patterns defined in the index in the txt."
-
+(defstruct (suffix-node (:conc-name suffix-node.)
+			(:print-function suffx-node-printer))
   )
+
+(defun suffix-node-printer (obj stream depth)
+  (declare (ignore depth))
+  (print-unreadable-object (obj stream :type t :identity t)))
 
 ;; --------------------------------------------------------
 
-(defun string-contains-cw (pat txt)
-  "Looks for the given pattern in the text and returns index of the
-first occurence."
-)
+(defun build-suffix-tree (str)
+  "Build a Suffix tree for the given string STR using Ukkonen's
+  algorithm."
+
+  )
 
 ;; EOF
