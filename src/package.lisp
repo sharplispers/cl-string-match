@@ -51,7 +51,6 @@
    :trie-build
    :trie-add-keyword
    :trie-traverse
-   :trie-contains
-   ))
+   :trie-contains))
 
 ;; EOF
