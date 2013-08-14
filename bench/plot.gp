@@ -16,10 +16,12 @@ set ylabel "Duration in seconds"
 plot 'benchmark.log' i 0 t columnheader(1),\
      'benchmark.log' i 1 t columnheader(1),\
      'benchmark.log' i 2 t columnheader(1),\
-     'benchmark.log' i 4 t columnheader(1),\
+     'benchmark.log' i 3 t columnheader(1),\
      'benchmark.log' i 5 t columnheader(1),\
      'benchmark.log' i 6 t columnheader(1),\
-     'benchmark.log' i 7 t columnheader(1)
+     'benchmark.log' i 7 t columnheader(1),\
+     'benchmark.log' i 8 t columnheader(1)
+     
 
 #     'benchmark.log' i 8 t columnheader(1),\
 #     'benchmark.log' i 9 t columnheader(1)
