@@ -44,7 +44,7 @@
 ;; some algorithms process needle from the end to start, other
 ;; algorithms go in the opposite direction. The mismatching symbol is
 ;; put into the middle to make it work in both cases
-(defparameter needles '("abcde"
+(defparameter needles '("abc_de"
 			"abcde_abcde"
 			"abcdeabc_deabcde"
 			"abcdeabcde_abcdeabcde"
@@ -184,10 +184,14 @@ chart."
 ;; --------------------------------------------------------
 
 (defun collect-needles (needle)
+  "Generates a list of needles that replace the underscore character
+with 20 different characters."
+
   (loop :with kw-count = 0
      :for c :from (char-code #\A) :to (+ (char-code #\A) 20)
-     :do (setf (aref needle 2) (code-char c))
-     :collect (format nil "~a" needle)
+     :for new-needle = (copy-seq needle)
+     :do (setf (aref new-needle (position #\_ needle)) (code-char c))
+     :collect new-needle
      :do (incf kw-count)))
 
 ;; --------------------------------------------------------
