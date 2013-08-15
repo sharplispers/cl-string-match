@@ -38,16 +38,16 @@
 
 (defconstant +big-prime+ (the fixnum 479001599))
 
-(defconstant +alph-size+ (the fixnum CHAR-CODE-LIMIT)) ; 256
+(defparameter +alph-size+ 256) ; 256 (the (unsigned-byte 32) CHAR-CODE-LIMIT)
 
 ;; --------------------------------------------------------
 
 (defstruct rk
-  (pat)
-  (pat-hash)
-  (pat-len)
-  (alph-size +alph-size+)
-  (rm 1))
+  (pat nil    :type (or null simple-string))
+  (pat-hash 0 :type fixnum)
+  (pat-len  0 :type fixnum)
+  (alph-size +alph-size+ :type (unsigned-byte 32))
+  (rm 1       :type fixnum))
 
 ;; --------------------------------------------------------
 
@@ -63,12 +63,15 @@ pattern and the text.)"
 	   #.*standard-optimize-settings*)
 
   (let ((h 0))
-    (declare (fixnum h))
+    (declare (type fixnum h))
 
     (loop :for j :of-type fixnum :from 0 :below end :do
        (setf h
-	     (mod (+ (* +alph-size+ h)
-		     (char-code (char key j)))
+	     (mod (the (unsigned-byte 32)
+		    (+ (the fixnum (* (the fixnum +alph-size+)
+				      (the fixnum h)))
+		       (the fixnum (mod (char-code (char key j))
+					(the fixnum +alph-size+)))))
 		  +big-prime+)))
     h))
 
@@ -90,8 +93,10 @@ pattern and the text.)"
     (loop :for i :from 0 :below (- (length pat) 1) :do
        (setf (rk-rm idx)
 	     (mod
-	      (* (rk-alph-size idx) (rk-rm idx))
-	      +big-prime+)))
+	      (the (unsigned-byte 32)
+		(* (the (unsigned-byte 32) (rk-alph-size idx))
+		   (the (unsigned-byte 32) (rk-rm idx))))
+	      (the fixnum +big-prime+))))
     idx))
 
 ;; --------------------------------------------------------
@@ -104,23 +109,24 @@ pattern and the text.)"
 
 ;; --------------------------------------------------------
 
-(defun search-rk (idx txt)
+(defun search-rk (idx txt-s)
   "Implementation of the Rabin-Karp substring search algorithm."
-  (declare (type string txt)
+  (declare (type simple-string txt-s)
 	   (type rk idx)
 	   #.*standard-optimize-settings*)
 
-  (let* ((txt-len (length txt))
+  (let* ((txt txt-s)
+	 (txt-len (length txt))
 	 (txt-hash (horner-hash txt (rk-pat-len idx)))
 	 (M (rk-pat-len idx)))
-    
+
     (declare (fixnum txt-len txt-hash M))
 
     ;; check for initial match
     (when (= txt-hash (rk-pat-hash idx))
       (return-from search-rk 0))
 
-    (loop :for i :from 0 :to (- txt-len (rk-pat-len idx)) :do
+    (loop :for i :of-type fixnum :from 0 :to (- txt-len (rk-pat-len idx)) :do
        (progn
 	 ;; Remove leading digit, add trailing digit, check for match.
 	 (when (= (rk-pat-hash idx)
@@ -131,26 +137,31 @@ pattern and the text.)"
 	 ;; leading digit, add trailing digit
 	 (when (< i (- txt-len M))
 	   ;; txtHash = (alphSize * (txtHash - txt[i]*RM) + txt[i+M]) % prime;
-	   
-	   (setf txt-hash
-		 (mod
-		  (+ (* +alph-size+
-			(- txt-hash
-			   (* (char-code (char txt i))
-			      (rk-rm idx))))
-		     (char-code (char txt (+ i m))))
-		  +big-prime+))
-	   
-	   ;; We might get negative value of t, converting it to positive
-	   (when (< txt-hash 0)
-	     (setf txt-hash (+ txt-hash +big-prime+))))))
+	   (let ((base (the fixnum
+			 (+ (the fixnum (* (the fixnum +alph-size+)
+					   (- (the fixnum txt-hash)
+					      (the fixnum (* (the fixnum (mod (the fixnum (char-code (char txt i)))
+									      (the fixnum +alph-size+)))
+							     (the fixnum (rk-rm idx)))))))
+
+			    (the fixnum (mod (the fixnum (char-code (char txt (+ i m))))
+					     (the fixnum +alph-size+)))))))
+
+	     (setf txt-hash
+		   (mod (the (unsigned-byte 32) base)
+			+big-prime+))
+
+	     ;; We might get negative value of t, converting it to positive
+	     (when (< base 0)
+	       (setf txt-hash (- +big-prime+
+				 (the fixnum txt-hash) )))))))
     NIL))
 
 ;; --------------------------------------------------------
 
 (defun string-contains-rk (pat txt)
-  (declare (type string pat)
-	   (type string txt)
+  (declare (type simple-string pat)
+	   (type simple-string txt)
 	   #.*standard-optimize-settings*)
 
   (search-rk (initialize-rk pat) txt))
