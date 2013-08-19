@@ -50,6 +50,7 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
 			 (:file "boyer-moore-horspool")
 			 (:file "rabin-karp")
 			 (:file "knuth-morris-pratt")
-			 (:file "aho-corasick")))))
+			 (:file "aho-corasick")
+			 (:file "suffix-tree")))))
 
 ;; EOF
