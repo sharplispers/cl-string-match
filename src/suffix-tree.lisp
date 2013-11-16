@@ -305,7 +305,7 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 ;;
 ;; --------------------------------------------------------
 
-(defstruct (ukk-node (:conc-name suffix-node.)
+(defstruct (ukk-node (:conc-name ukk-node.)
                      (:include suffix-node))
   "Ukkonen's algorithm relies on the suffix link technique. Some other
  algorithms might also rely on it but the naive suffix tree algorithm
@@ -338,6 +338,8 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 (defun ref-length (l r)
   (+ (- r l) 1))
 
+(defconstant infinity 100)
+
 ;; --------------------------------------------------------
 
 ;; Different with Ukkonen’s original program, I didn’t use sentinel
@@ -357,17 +359,17 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 (defun ukkonen-update (tree node l i)
   (let ((c    (suffix-tree.char tree i)) ;  current char
         (prev (make-ukk-node)))          ;  dummy init
-    (loop do
+    (loop named worker do
          (multiple-value-bind (finish p)
              (branch tree node l (- i 1) c)
            (when finish
-             (break))
+             (return-from worker))
            (add-child-node tree p i infinity)
            (setf (ukk-node.suffix prev) p)
            (setf prev p)
            ;;  go up along suffix link
            (multiple-value-setq (node l)
-             (canonize tree node.suffix l (- i 1)))))
+             (canonize tree (ukk-node.suffix node) l (- i 1)))))
     ;; end loop
 
     (setf (ukk-node.suffix prev) node)
@@ -375,9 +377,8 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 
 ;; Function branch() is used to test if a position is the end point
 ;; and turn the implicit node to explicit node if necessary.  Because
-;; I don’t use sentinel node, the special case is handled in the first
+;; sentinel node is not used, the special case is handled in the first
 ;; if-clause.
-
 (defun branch (tree node l r c)
   (if (<= (ref-length l r) 0)
       (if node
@@ -411,7 +412,7 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
         (return-from canonize (values nil l))
         ;; else:
         (return-from canonize (canonize tree (suffix-tree.root tree) (1+ l) r))))
-  (loop while (<= l r) do               ;  str_ref is not empty
+  (loop named worker while (<= l r) do	;  str_ref is not empty
        (let* ((child (suffix-node.get-child node (suffix-tree.char tree l)))
               (l1 (suffix-node.start child))
               (r1 (suffix-node.end   child)))
@@ -420,7 +421,7 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
              (progn
                (incf l (+ (- r1 l1) 1))
                (setf node child))
-             (break))))
+             (return-from worker))))
   (values node l))
 
 (defun build-suffix-tree-ukkonen (str)
@@ -462,7 +463,9 @@ TODO"
 	     (multiple-value-setq (node l)
 	       (ukkonen-update tree node l i))
 	     (multiple-value-setq (node l)
-	       (canonize tree node l i))))
+	       (canonize tree node l i))
+	     #+debug-simple-stree
+	     (format t "char: ~a; tree: ~a~%" (char str i) tree)))
     tree))
 
 ;; --------------------------------------------------------

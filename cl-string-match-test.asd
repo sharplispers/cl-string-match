@@ -1,4 +1,4 @@
-;;; -*- package: CLSTRINGMATCH.SYSTEM; Syntax: Common-lisp; Base: 10 -*-
+;;; -*- package: CLSTRINGMATCH-TEST.SYSTEM; Syntax: Common-lisp; Base: 10 -*-
 
 ;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
@@ -25,33 +25,29 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (unless (find-package :clstringmatch.system)
-    (defpackage :clstringmatch.system
-      (:use :common-lisp :asdf))))
+
+#|
+  This file is a part of cl-aww project.
+|#
+
+(in-package :cl-user)
+
+(defpackage cl-string-match-test-asd
+  (:use :cl :asdf))
+(in-package :cl-string-match-test-asd)
 
 ;; --------------------------------------------------------
 
-(in-package :clstringmatch.system)
-
-;; --------------------------------------------------------
-
-(asdf:defsystem #:cl-string-match
+(defsystem cl-string-match-test
   :description
-  "Provides implementations of the standard sub-string search (string
-matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
+  "Tests of the CL-STRING-MATCH functions."
   :license "BSD"
-  :components ((:module "src"
+  :depends-on (:cl-string-match :lisp-unit)
+  :components ((:module "t"
 			:serial T
 			:components
 			((:file "package")
-			 (:file "brute-force")
-			 (:file "boyer-moore")
-			 (:file "boyer-moore-horspool")
-			 (:file "rabin-karp")
-			 (:file "knuth-morris-pratt")
-			 (:file "aho-corasick")
-			 (:file "suffix-tree"))))
-  :in-order-to ((test-op (load-op cl-string-match-test))))
+			 (:file "smoke"))))
+  :perform (load-op :after (op c) (asdf:clear-system c)))
 
 ;; EOF
