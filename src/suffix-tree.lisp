@@ -146,22 +146,20 @@ dot format."
 				      :end end
 				      :parent node
 				      :id (incf (suffix-tree.nodes-count tree)))))
-    (push child-node (suffix-node.children node))))
+    (push child-node (suffix-node.children node))
+    child-node))
 
 ;; --------------------------------------------------------
 
 ;; TODO: for branch function
-(defun insert-child-node (tree node start end)
+(defun insert-child-node (tree node child-node)
   "Adds a child node to the given NODE."
 
   (declare (type suffix-tree tree)
-	   (type suffix-node node))
+	   (type suffix-node node)
+	   (type suffix-node child-node))
 
-  (let ((child-node (make-suffix-node :start start
-				      :end end
-				      :parent node
-				      :id (incf (suffix-tree.nodes-count tree)))))
-    (push child-node (suffix-node.children node))))
+  (push child-node (suffix-node.children node)))
 
 ;; --------------------------------------------------------
 
@@ -319,15 +317,6 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 
 ;; --------------------------------------------------------
 
-;; The node definition is as same as the suffix Trie, however, the
-;; exact meaning for children field are not same.
-class Node:
-    def __init__(self, suffix= None):
-        self.children  =  {}  ;;  ’c’:(word, Node), where word  =  (l, r)
-        self.suffix  =  suffix
-
-;; --------------------------------------------------------
-
 ;; The infinity is defined as the length of the string plus a big
 ;; number, we’ll benefit from python’s list[a:b] expression that if
 ;; the right index exceed to the length of the list, the result is
@@ -347,7 +336,7 @@ class Node:
 ;; --------------------------------------------------------
 
 (defun ref-length (l r)
-  (- r l))
+  (+ (- r l) 1))
 
 ;; --------------------------------------------------------
 
@@ -378,7 +367,7 @@ class Node:
            (setf prev p)
            ;;  go up along suffix link
            (multiple-value-setq (node l)
-             (ukkonen-canonize tree node.suffix l (- i 1)))))
+             (canonize tree node.suffix l (- i 1)))))
     ;; end loop
 
     (setf (ukk-node.suffix prev) node)
@@ -390,40 +379,38 @@ class Node:
 ;; if-clause.
 
 (defun branch (tree node l r c)
+  (if (<= (ref-length l r) 0)
+      (if node
+	  (return-from branch (values (suffix-node.get-child node c) node))
+	  ;; else:
+	  (return-from branch (values T (suffix-tree.root tree))))
+      ;; else:
+      (let* ((node1 (suffix-node.get-child node (suffix-tree.char tree l)))
+	     (l1 (suffix-node.start node1))
+	     (r1 (suffix-node.end   node1))
+	     (pos (+ l1 (ref-length l r))))
 
-    (if (<= (ref-length l r) 0)
-        (if node
-            (return (values (suffix-node.get-child node c) node))
-            ;; else:
-            (return (values (T (suffix-tree.root tree)))))
-
-    ;; else:
-        (let* ((node1 (suffix-node.get-child node (suffix-tree.char tree l)))
-               (l1 (suffix-node.start node1))
-               (r1 (suffix-node.end   node1))
-               (pos (+ l1 (ref-length l r))))
-
-          (if (char= (suffix-tree.char tree pos) c)
-              (return T node)
-        ;; else:
-              (progn
-                ;; todo make sure that 
-                (let ((branch-node (add-child-node tree node l1 (- pos 1))))
-
-            (add-child-node tree branch-node pos r1) ;; todo: finish this
-            branch_node.children[tree.str[pos]]  =  ((pos, r1), node1)
-            (return nil branch-node)))))))
+	(if (char= (suffix-tree.char tree pos) c)
+	    (return-from branch (values T node))
+	    ;; else:
+	    (progn
+	      ;; todo make sure that
+	      (let ((branch-node (add-child-node tree node l1 (- pos 1))))
+		(setf (suffix-node.start node1) pos)
+		(setf (suffix-node.end node1) r1)
+		(insert-child-node tree branch-node node1)
+		(return-from branch (values nil branch-node))))))))
 
 ;; --------------------------------------------------------
 
 ;; The canonize() function helps to convert a reference pair to
 ;; canonical reference pair.
-(defun ukkonen-canonize (tree node l r)
+(defun canonize (tree node l r)
   (unless node
     (if (<= (ref-length l r) 0)
-        (return (values nil l))
+        (return-from canonize (values nil l))
         ;; else:
-        (return (ukkonen-canonize tree (suffix-tree.root tree) (1+ l) r))))
+        (return-from canonize (canonize tree (suffix-tree.root tree) (1+ l) r))))
   (loop while (<= l r) do               ;  str_ref is not empty
        (let* ((child (suffix-node.get-child node (suffix-tree.char tree l)))
               (l1 (suffix-node.start child))
@@ -475,7 +462,7 @@ TODO"
 	     (multiple-value-setq (node l)
 	       (ukkonen-update tree node l i))
 	     (multiple-value-setq (node l)
-	       (ukkonen-canonize tree node l i))))
+	       (canonize tree node l i))))
     tree))
 
 ;; --------------------------------------------------------
