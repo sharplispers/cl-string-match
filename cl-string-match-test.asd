@@ -38,7 +38,7 @@
 
 ;; --------------------------------------------------------
 
-(defsystem cl-string-match-test
+(asdf:defsystem #:cl-string-match-test
   :description
   "Tests of the CL-STRING-MATCH functions."
   :license "BSD"

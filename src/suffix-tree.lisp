@@ -120,7 +120,8 @@ dot format."
 		       (suffix-node.id child)
 		       (subseq (suffix-tree.str tree)
 			       (suffix-node.start child)
-			       (suffix-node.end child)))
+			       (min (suffix-node.end child)
+				    (length (suffix-tree.str tree)))))
 	       (format stream "n~a [label=\"[~a;~a)\"];~%"
 		       (suffix-node.id child)
 		       (suffix-node.start child)
@@ -317,12 +318,12 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 
 ;; --------------------------------------------------------
 
-;; The infinity is defined as the length of the string plus a big
-;; number, we’ll benefit from python’s list[a:b] expression that if
-;; the right index exceed to the length of the list, the result is
-;; from left to the end of the list.
 (defun stbstr (str l r)
-  (subseq str l (1+ r)))
+  "The infinity is defined as the length of the string plus a big
+number, if the right index exceed to the length of the list, the
+result is from left to the end of the list."
+  (subseq str l (min (1+ r)
+		     (length str))))
 
 ;; --------------------------------------------------------
 
@@ -357,6 +358,8 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 ;; the end point. Since the end point is always in form of (node, (l,
 ;; i-1)), only (node, l) is returned.
 (defun ukkonen-update (tree node l i)
+  #+debug-simple-stree
+  (format t "update: ~a; ~a ~a~%" node l i)
   (let ((c    (suffix-tree.char tree i)) ;  current char
         (prev (make-ukk-node)))          ;  dummy init
     (loop named worker do
@@ -375,11 +378,14 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
     (setf (ukk-node.suffix prev) node)
     (values node l)))
 
-;; Function branch() is used to test if a position is the end point
-;; and turn the implicit node to explicit node if necessary.  Because
-;; sentinel node is not used, the special case is handled in the first
-;; if-clause.
 (defun branch (tree node l r c)
+  "Function branch is used to test if a position is the end point
+and turn the implicit node to explicit node if necessary.  Because
+sentinel node is not used, the special case is handled in the first
+if-clause."
+
+  #+debug-simple-stree
+  (format t "branch: ~a; ~a ~a ~a~%" node l r c)
   (if (<= (ref-length l r) 0)
       (if node
 	  (return-from branch (values (suffix-node.get-child node c) node))
@@ -407,6 +413,8 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 ;; The canonize() function helps to convert a reference pair to
 ;; canonical reference pair.
 (defun canonize (tree node l r)
+  #+debug-simple-stree
+  (format t "canonize: ~a; ~a ~a~%" node l r)
   (unless node
     (if (<= (ref-length l r) 0)
         (return-from canonize (values nil l))
@@ -465,7 +473,15 @@ TODO"
 	     (multiple-value-setq (node l)
 	       (canonize tree node l i))
 	     #+debug-simple-stree
-	     (format t "char: ~a; tree: ~a~%" (char str i) tree)))
+	     (with-open-file (out (format nil "stage_~a.dot" i)
+				  :direction :output
+				  :if-exists :supersede
+				  :if-does-not-exist :create)
+	       ;; for i in stage_*.dot ; do dot -Tpng -o $i.png $i ; done
+	       (print-suffix-tree-for-gv tree
+					 :stream out
+					 :label (format nil "додано {~a}"
+							(subseq str 0 i))))))
     tree))
 
 ;; --------------------------------------------------------

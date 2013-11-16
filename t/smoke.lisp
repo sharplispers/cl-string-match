@@ -67,6 +67,15 @@
 ;; --------------------------------------------------------
 
 (define-test ukk-tree
+    (build-suffix-tree-ukkonen "cocoa$")
+  (build-suffix-tree-ukkonen "banana$")
+
+ana in banana : 2
+an in banana : 2
+anan in banana : 1
+nana in banana : 1
+ananan in banana : 0
+
     )
 
 ;; --------------------------------------------------------
