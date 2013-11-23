@@ -16,9 +16,23 @@ algorithms:
 * Knuth-Morris-Pratt algorithm
 * Aho-Corasick algorithm (with finite set of patterns)
 
+Some string processing algorithms are also implemented:
+
+* Simple (naїve) suffix tree construction algorithm
+* Ukkonen's suffix tree construction algorithm
+
+Data structures:
+
+* Prefix trie
+* Suffix tree
+
 Project home page:
 
 http://sourceforge.net/projects/clstringmatch/
+
+Also take a look at the project Wiki:
+
+http://sourceforge.net/p/clstringmatch/wiki/Home/
 
 TODO
 ====
