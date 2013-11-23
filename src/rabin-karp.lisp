@@ -35,8 +35,7 @@
 
 ;; --------------------------------------------------------
 
-
-(defconstant +big-prime+ (the fixnum 479001599))
+(define-constant +big-prime+ (the fixnum 479001599))
 
 (defparameter +alph-size+ 256) ; 256 (the (unsigned-byte 32) CHAR-CODE-LIMIT)
 
