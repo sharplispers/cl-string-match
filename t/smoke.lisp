@@ -66,21 +66,48 @@
 
 ;; --------------------------------------------------------
 
+(define-test tree-test
+  "Test generic tree operations."
+  (let* ((tree (sm:make-suffix-tree :str "cacao"
+                                    :root (sm:make-ukk-node)))
+         (first-child (sm:suffix-node.add-child tree (sm:suffix-tree.root tree)
+                                                0 sm:+infinity+)))
+    
+    (assert-equal (sm:suffix-tree.str tree)
+                  (sm:suffix-node.str tree first-child)))
+
+
+  )
+
+;; --------------------------------------------------------
+
 (define-test ukk-tree
-    (build-suffix-tree-ukkonen "cocoa$")
-  (build-suffix-tree-ukkonen "banana$")
+  "Test ukkonen tree implementation and operations"
 
-ana in banana : 2
-an in banana : 2
-anan in banana : 1
-nana in banana : 1
-ananan in banana : 0
+  (let ((banana-tree (sm:suffix-tree.build-from-sexp
+                      "banana$"
+                      `((6 ,sm:+infinity+)
+                        (0 ,sm:+infinity+)
+                        (1 2 ((6 ,sm:+infinity+)
+                              (2 4 ((6 ,sm:+infinity+)
+                                    (4 ,sm:+infinity+)))))
+                        (2 4 ((6 ,sm:+infinity+)
+                              (4 ,sm:+infinity+)))))))
+    
+    (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-ukkonen "banana$")
+                                        banana-tree))
 
-    )
+    ;; ana in banana : 2
+    ;; an in banana : 2
+    ;; anan in banana : 1
+    ;; nana in banana : 1
+    ;; ananan in banana : 0
+
+    ))
 
 ;; --------------------------------------------------------
 
 (defun run ()
-  (lisp-unit:run-all-tests :cl-string-match-test))
+  (lisp-unit:run-tests :all))
 
 ;; EOF

@@ -41,6 +41,7 @@
   "Provides implementations of the standard sub-string search (string
 matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
   :license "BSD"
+  :depends-on (:alexandria)
   :components ((:module "src"
 			:serial T
 			:components

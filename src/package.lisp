@@ -26,7 +26,7 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (defpackage :cl-string-match
-  (:use :common-lisp)
+  (:use :common-lisp :alexandria)
   (:nicknames :sm)
   (:export
    :string-contains-brute
@@ -51,6 +51,29 @@
    :trie-build
    :trie-add-keyword
    :trie-traverse
-   :trie-contains))
+   :trie-contains
+   ;; Suffix tree
+   :+infinity+
+   :suffix-tree
+   :suffix-tree.root
+   :suffix-tree.str
+   :make-suffix-tree
+   :suffix-tree.char
+   :suffix-tree.walk
+   :suffix-tree.equals
+   :suffix-tree.build-from-sexp
+   :suffix-node
+   :suffix-node.start
+   :suffix-node.end
+   :suffix-node.children
+   :suffix-node.add-child
+   :suffix-node.leafp
+   :suffix-node.map-over-children
+   :suffix-node.str
+   :suffix-node.equals
+   :ukk-node
+   :make-ukk-node
+   :build-suffix-tree-simple
+   :build-suffix-tree-ukkonen))
 
 ;; EOF

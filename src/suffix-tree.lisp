@@ -66,15 +66,68 @@ actual nodes as its children."
   (declare (ignore depth)
 	   (type suffix-tree obj))
 
-  (format stream "#<suffix-tree str: ~s children:~%  ~{ ~a~% ~}>"
+  (format stream "#<suffix-tree str: ~s has-root: ~a children:~%  ~{ ~a~% ~}>"
 	  (suffix-tree.str obj)
+          (not (null (suffix-tree.root obj)))
 	  (suffix-node.children (suffix-tree.root obj))))
 
 ;; --------------------------------------------------------
 
 (defun suffix-tree.char (tree i)
+  (declare (type suffix-tree tree))
   "Return the char that is located in the string at index i."
   (char (suffix-tree.str tree) i))
+
+;; --------------------------------------------------------
+
+(defun suffix-tree.walk (tree function)
+  "Applies the given FUNCTION to every node in the given TREE."
+  (labels ((walker (node)
+             (funcall function node)
+             (suffix-node.map-over-children node #'walker)))
+    (walker (suffix-tree.root tree))))
+
+;; --------------------------------------------------------
+
+(defun suffix-tree.equals (tree-a tree-b)
+  "Checks all the nodes in the given trees and returns T if trees are
+  equal or NIL otherwise."
+
+  (suffix-node.equals (suffix-tree.root tree-a)
+                      (suffix-tree.root tree-b)))
+
+;; --------------------------------------------------------
+
+(defun suffix-node.equals (node-a node-b)
+  (let ((result (or (and (null node-a)
+			 (null node-b))
+		    (and (= (suffix-node.start node-a)
+			    (suffix-node.start node-b))
+			 (= (suffix-node.end node-a)
+			    (suffix-node.end node-b))
+			 (tree-equal (sort (copy-seq (suffix-node.children node-a)) #'< :key #'suffix-node.start)
+				     (sort (copy-seq (suffix-node.children node-b)) #'< :key #'suffix-node.start)
+				     :test #'suffix-node.equals)))))
+    #+debug-simple-stree
+    (unless result
+      (format t "nodes: ~a and ~a mismatch~%" node-a node-b))
+    result))
+
+;; --------------------------------------------------------
+
+(defun suffix-tree.build-from-sexp (str sexp)
+  "Build the suffix tree from the given sexp representation. Sexp is
+in form (begin end (children))."
+
+  (let ((tree (make-suffix-tree :str str :root (make-ukk-node))))
+    (labels ((convert-node (expr)
+               (make-ukk-node :start (first expr)
+                              :end (second expr)
+                              :children (map 'list #'convert-node (caddr expr))
+                              :id (incf (suffix-tree.nodes-count tree)))))
+      (setf (suffix-node.children (suffix-tree.root tree))
+            (map 'list #'convert-node sexp)))
+    tree))
 
 ;; --------------------------------------------------------
 
@@ -93,16 +146,37 @@ actual nodes as its children."
 (defun suffix-node-printer (obj stream depth)
   (declare (ignore depth)
 	   (type suffix-node obj))
-  (format stream "#<node start: ~a; end: ~a; children: ~{~a~} >"
+  (format stream "#<node ~a start: ~a; end: ~a; children: ~{~a~} >"
+          (suffix-node.id obj)
 	  (suffix-node.start obj)
 	  (suffix-node.end obj)
 	  (suffix-node.children obj)))
 
 ;; --------------------------------------------------------
 
-(defun suffix-node.get-child (node c)
-  "Return a child of the given node that corresponds to the given char
-  c or return nil if there is none."  nil ) ; TODO
+(defun suffix-node.leafp (node)
+  "Retruns T is the given node is a leaf (has no children), return NIL
+otherwise."
+  (= (length (suffix-node.children node)) 0))
+
+;; --------------------------------------------------------
+
+(defun suffix-node.map-over-children (node function)
+  "Applies the given function to every child of the given node."
+  (map nil function (suffix-node.children node)))
+
+;; --------------------------------------------------------
+
+(defun suffix-node.str (tree node)
+  "Returns the string that corresponds to the edge pointing to this
+node."
+  (declare (type suffix-tree tree)
+           (type suffix-node node))
+
+  (subseq (suffix-tree.str tree)
+          (suffix-node.start node)
+          (min (suffix-node.end node)
+               (length (suffix-tree.str tree)))))
 
 ;; --------------------------------------------------------
 
@@ -118,10 +192,7 @@ dot format."
 		       (suffix-node.end node)
 		       (suffix-node.id node)
 		       (suffix-node.id child)
-		       (subseq (suffix-tree.str tree)
-			       (suffix-node.start child)
-			       (min (suffix-node.end child)
-				    (length (suffix-tree.str tree)))))
+		       (suffix-node.str tree child))
 	       (format stream "n~a [label=\"[~a;~a)\"];~%"
 		       (suffix-node.id child)
 		       (suffix-node.start child)
@@ -134,42 +205,102 @@ dot format."
     (format stream "~&}~%")))
 
 ;; --------------------------------------------------------
+
+(defun print-suffix-tree-for-gv-pretty (tree &key (stream *standard-output*) (label nil))
+  "Alternative representation of the suffix tree. Based on java
+implementation from: http://pastie.org/5925812"
+
+  (format stream "digraph {~%")
+  (format stream "rankdir = LR;~%")
+  (format stream "edge [arrowsize=0.4,fontsize=10];~%")
+  (format stream "node1 [label=\"\",style=filled,fillcolor=lightgrey,shape=circle,width=.1,height=.1];~%")
+  (suffix-tree.walk tree
+                    #'(lambda (node)
+                        (when (and (ukk-node-p node)
+				   (ukk-node.suffix node))
+                          ;; suffix link connection
+                          (format stream "node~a -> node~a [label=\"\",weight=1,style=dotted]"
+                                  (suffix-node.id node)
+                                  (suffix-node.id (ukk-node.suffix node))))
+                        (if (suffix-node.leafp node)
+                            ;; print leaf node
+                            (format stream "node~a [label=\"\",shape=point];~%" (suffix-node.id node))
+                            ;; print internal node
+                            (progn
+                              (format stream "node~a [label=\"\",style=filled,fillcolor=lightgrey,shape=circle,width=.07,height=.07];~%" (suffix-node.id node))
+                              (suffix-node.map-over-children node
+                                                             #'(lambda (child)
+                                                                 (format stream "node~a -> node~a [label=\"~a (~a, ~a)\",weight=3];~%"
+                                                                         (suffix-node.id node)
+                                                                         (suffix-node.id child)
+                                                                         (suffix-node.str tree child)
+                                                                         (suffix-node.start child)
+                                                                         (if (= (suffix-node.end child) +infinity+)
+									     "w"
+									     (suffix-node.end child)))))))))
+  (when label
+    (format stream "label=~S~%" label))
+  (format stream "}~%"))
+
+;; --------------------------------------------------------
+
+(defun print-suffix-tree-in-file (tree fname &optional (label ""))
+  (with-open-file (out fname
+                       :direction :output
+                       :if-exists :supersede
+                       :if-does-not-exist :create)
+    ;; for i in stage_*.dot ; do dot -Tpng -o $i.png $i ; done
+    (print-suffix-tree-for-gv-pretty tree
+                                     :stream out
+                                     :label label)))
+
+;; --------------------------------------------------------
 ;; ALGORITHM IMPLEMENTATIONS
 ;; --------------------------------------------------------
 
-(defun add-child-node (tree node start end)
-  "Adds a child node to the given NODE."
+(defun suffix-node.add-child (tree node start end)
+  "Adds a child node to the given NODE. Depending on the type of the
+given node creates either Ukkonens suffix tree or simple suffix tree
+node."
 
   (declare (type suffix-tree tree)
 	   (type suffix-node node))
 
-  (let ((child-node (make-suffix-node :start start
-				      :end end
-				      :parent node
-				      :id (incf (suffix-tree.nodes-count tree)))))
-    (push child-node (suffix-node.children node))
+  (let ((child-node (if (ukk-node-p node)
+                        (make-ukk-node :start start
+                                       :end end
+                                       :parent node
+                                       :id (incf (suffix-tree.nodes-count tree)))
+                        (make-suffix-node :start start
+                                          :end end
+                                          :parent node
+                                          :id (incf (suffix-tree.nodes-count tree))))))
+    (suffix-node.insert-child tree node child-node)
     child-node))
 
 ;; --------------------------------------------------------
 
-;; TODO: for branch function
-(defun insert-child-node (tree node child-node)
+(defun suffix-node.insert-child (tree node child-node)
   "Adds a child node to the given NODE."
 
   (declare (type suffix-tree tree)
 	   (type suffix-node node)
 	   (type suffix-node child-node))
 
+  (setf (suffix-node.children node)
+	(remove child-node (suffix-node.children node)
+		:test #'(lambda (x y)
+			  (char= (suffix-tree.char tree (suffix-node.start x))
+				 (suffix-tree.char tree (suffix-node.start y))))))
+
   (push child-node (suffix-node.children node)))
 
 ;; --------------------------------------------------------
 
-(defun find-child-node-by-char (tree node c)
+(defun suffix-node.get-child (tree node c)
   "Given the NODE lookup a child node that starts with the given char
-C."
+C in the given suffix tree TREE."
 
-  #+debug-simple-stree
-  (format t "find-child: ~a~%" c)
   (loop :with str = (suffix-tree.str tree)
      :for child :in (suffix-node.children node)
      :when (char= c
@@ -195,7 +326,7 @@ C."
     (setf (suffix-node.children old-node) (list new-node)
 	  (suffix-node.end old-node) (+ (- pos start)
 					(suffix-node.start old-node)))
-    (add-child-node tree old-node pos end)))
+    (suffix-node.add-child tree old-node pos end)))
 
 ;; --------------------------------------------------------
 
@@ -203,23 +334,8 @@ C."
   "Adds a suffix of a string STR designated by its START and END to
 the suffix tree TREE."
 
-  ;; At the first step, S[1..m]$ is inserted in an empty tree and suffix tree T1 is composed of
-  ;; a unique node. At step i + 1, suffix S[i + 1..m]$ is inserted in Ti as follows. Traverse the tree
-  ;; starting at the root r and find the longest prefix that matches a path of Ti . If such prefix is
-  ;; not found, this is because none of the previous suffixes S[j..m]$, for j = 1 to j = i, starts
-  ;; by character S[i + 1]. In this case, a new leaf numbered i + 1 with edge-label S[i + 1..m]$ is
-  ;; created and joined to the root.
-
-  ;; Thus, assume there is a path such that S[i + 1..m]$ is a prefix of maximal length of
-  ;; that path. Because of the presence of the termination character $, the prefix cannot be a
-  ;; substring of a suffix entered into the tree early on. Therefore, there is a character at position
-  ;; k such that S[i + 1..k]$ is the prefix; let S[k..m]$ be the non-matching substring. Let (u, v)
-  ;; be the edge of the path where character S[k] is found. The algorithm creates a new node w
-  ;; and a leaf numbered i + 1. Node w splits edge (u, v) into edges (u, w) and (w, v), and edge
-  ;; joining w and leaf i + 1 receives edge-label S[i + 1..k]$. The algorithm finishes when the
-  ;; termination character is inserted.
-
-  (declare (type fixnum start)
+  (declare (type suffix-tree tree)
+	   (type fixnum start)
 	   (type fixnum end))
 
   #+debug-simple-stree
@@ -230,7 +346,7 @@ the suffix tree TREE."
      :with current-node = (suffix-tree.root tree)
      :with tree-str = (suffix-tree.str tree)
      :with suffix-pos = start		; position of a current char
-     :with child = (find-child-node-by-char tree current-node (char tree-str suffix-pos))
+     :with child = (suffix-node.get-child tree current-node (char tree-str suffix-pos))
      :while (< suffix-pos end) :do
      (if child
 	 ;; find the longest path from the root with label matching
@@ -255,14 +371,14 @@ the suffix tree TREE."
 	     ;; a child node following the path from the current child
 	     (progn
 	       (setf current-node child
-		     child (find-child-node-by-char tree
-						    current-node
-						    (char tree-str suffix-pos)))))
+		     child (suffix-node.get-child tree
+                                                  current-node
+                                                  (char tree-str suffix-pos)))))
 
 	 ;; current-node has no appropriate children, prefix path ends here and
 	 ;; must be extended to accomodate the suffix
 	 (progn
-	   (add-child-node tree current-node suffix-pos end)
+	   (suffix-node.add-child tree current-node suffix-pos end)
 	   (return-from outer)))))
 
 ;; --------------------------------------------------------
@@ -289,15 +405,12 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
        (progn
 	 (add-suffix-simple tree i str-len)
 	 #+debug-simple-stree
-	 (with-open-file (out (format nil "stage_~a.dot" i)
-			      :direction :output
-			      :if-exists :supersede
-			      :if-does-not-exist :create)
-	   ;; for i in stage_*.dot ; do dot -Tpng -o $i.png $i ; done
-	   (print-suffix-tree-for-gv tree
-				     :stream out
-				     :label (format nil "додано {~a}"
-						    (subseq str i str-len))))))
+	 (progn
+	   (format t "complete stage ~a~%" i)
+	   (print-suffix-tree-in-file tree
+				      (format nil "stage_~a.dot" i)
+				      (format nil "Simple: added {~a}"
+					      (subseq str i str-len))))))
     tree))
 
 ;; --------------------------------------------------------
@@ -319,9 +432,9 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 ;; --------------------------------------------------------
 
 (defun stbstr (str l r)
-  "The infinity is defined as the length of the string plus a big
-number, if the right index exceed to the length of the list, the
-result is from left to the end of the list."
+  "The +infinity+ is defined as the largest number (standard constant
+MOST-POSITIVE-FIXNUM), if the right index exceed to the length of the
+list, the result is from left to the end of the list."
   (subseq str l (min (1+ r)
 		     (length str))))
 
@@ -339,44 +452,34 @@ result is from left to the end of the list."
 (defun ref-length (l r)
   (+ (- r l) 1))
 
-(defconstant infinity 100)
+;; --------------------------------------------------------
+
+(define-constant +infinity+ MOST-POSITIVE-FIXNUM)
 
 ;; --------------------------------------------------------
 
-;; Different with Ukkonen’s original program, I didn’t use sentinel
-;; node. The reference passed in is (node,(l,i), the active point is
-;; (node,(l,i - 1)) actually, we passed the active point to branch()
-;; function. If it is end point, branch() function will return true as
-;; the first element in the result. we then terminate the loop
-;; immediately. Otherwise, branch() function will return the node
-;; which need to branch out a new leaf as the second element in the
-;; result. The program then create the new leaf, set it as open pair,
-;; and then go up along with suffix link. The prev variable first
-;; point to a dummy node, this can simplify the logic, and it used to
-;; record the position along the boundary path. by the end of the
-;; loop, we’ll finish the last updating of the suffix link and return
-;; the end point. Since the end point is always in form of (node, (l,
-;; i-1)), only (node, l) is returned.
 (defun ukkonen-update (tree node l i)
   #+debug-simple-stree
-  (format t "update: ~a; ~a ~a~%" node l i)
+  (format t "update: ~a ~a~%" l i)
   (let ((c    (suffix-tree.char tree i)) ;  current char
         (prev (make-ukk-node)))          ;  dummy init
-    (loop named worker do
-         (multiple-value-bind (finish p)
-             (branch tree node l (- i 1) c)
-           (when finish
-             (return-from worker))
-           (add-child-node tree p i infinity)
-           (setf (ukk-node.suffix prev) p)
-           (setf prev p)
-           ;;  go up along suffix link
-           (multiple-value-setq (node l)
-             (canonize tree (ukk-node.suffix node) l (- i 1)))))
+    (loop :named worker :do
+       (multiple-value-bind (finish p)
+           (branch tree node l (- i 1) c)
+         (when finish
+           (return-from worker))
+         (suffix-node.add-child tree p i +infinity+)
+         (setf (ukk-node.suffix prev) p)
+         (setf prev p)
+         ;;  go up along suffix link
+         (multiple-value-setq (node l)
+           (canonize tree (ukk-node.suffix node) l (- i 1)))))
     ;; end loop
 
     (setf (ukk-node.suffix prev) node)
-    (values node l)))
+    (return-from ukkonen-update (values node l))))
+
+;; --------------------------------------------------------
 
 (defun branch (tree node l r c)
   "Function branch is used to test if a position is the end point
@@ -385,14 +488,14 @@ sentinel node is not used, the special case is handled in the first
 if-clause."
 
   #+debug-simple-stree
-  (format t "branch: ~a; ~a ~a ~a~%" node l r c)
+  (format t "branch: ~a ~a ~a~%" l r c)
   (if (<= (ref-length l r) 0)
-      (if node
-	  (return-from branch (values (suffix-node.get-child node c) node))
-	  ;; else:
-	  (return-from branch (values T (suffix-tree.root tree))))
-      ;; else:
-      (let* ((node1 (suffix-node.get-child node (suffix-tree.char tree l)))
+      (if (null node)
+	  (return-from branch (values T (suffix-tree.root tree)))
+	  ;; else
+          (return-from branch (values (suffix-node.get-child tree node c) node)))
+      ;; else
+      (let* ((node1 (suffix-node.get-child tree node (suffix-tree.char tree l)))
 	     (l1 (suffix-node.start node1))
 	     (r1 (suffix-node.end   node1))
 	     (pos (+ l1 (ref-length l r))))
@@ -400,13 +503,20 @@ if-clause."
 	(if (char= (suffix-tree.char tree pos) c)
 	    (return-from branch (values T node))
 	    ;; else:
-	    (progn
-	      ;; todo make sure that
-	      (let ((branch-node (add-child-node tree node l1 (- pos 1))))
-		(setf (suffix-node.start node1) pos)
-		(setf (suffix-node.end node1) r1)
-		(insert-child-node tree branch-node node1)
-		(return-from branch (values nil branch-node))))))))
+	    (progn ; todo
+              (let ((branch-node (suffix-node.add-child tree node l1 pos)))
+                #+debug-simple-stree
+                (format t "branching node with suffix link: ~a~%" (ukk-node.suffix node1))
+                #+debug-simple-stree
+                (print-suffix-tree-in-file tree (format nil "before_branch_~a.dot" (suffix-tree.nodes-count tree)) "")
+
+                (setf (suffix-node.start node1) pos)
+                (setf (suffix-node.end   node1) r1)
+                (suffix-node.insert-child tree branch-node node1)
+
+                #+debug-simple-stree
+                (print-suffix-tree-in-file tree (format nil "branch_~a.dot" (suffix-tree.nodes-count tree)) "")
+                (return-from branch (values nil branch-node))))))))
 
 ;; --------------------------------------------------------
 
@@ -414,23 +524,25 @@ if-clause."
 ;; canonical reference pair.
 (defun canonize (tree node l r)
   #+debug-simple-stree
-  (format t "canonize: ~a; ~a ~a~%" node l r)
+  (format t "canonize: ~a ~a~%" l r)
   (unless node
     (if (<= (ref-length l r) 0)
         (return-from canonize (values nil l))
         ;; else:
         (return-from canonize (canonize tree (suffix-tree.root tree) (1+ l) r))))
-  (loop named worker while (<= l r) do	;  str_ref is not empty
-       (let* ((child (suffix-node.get-child node (suffix-tree.char tree l)))
-              (l1 (suffix-node.start child))
-              (r1 (suffix-node.end   child)))
-         (if (>= (- r l)
-                 (- r1 l1))
-             (progn
-               (incf l (+ (- r1 l1) 1))
-               (setf node child))
-             (return-from worker))))
+  (loop :named worker :while (<= l r) :do ;  str_ref is not empty
+     (let* ((child (suffix-node.get-child tree node (suffix-tree.char tree l)))
+            (l1 (suffix-node.start child))
+            (r1 (suffix-node.end   child)))
+       (if (>= (- r l)
+               (- r1 l1))
+           (progn
+             (incf l (+ (- r1 l1) 1))
+             (setf node child))
+           (return-from worker))))
   (values node l))
+
+;; --------------------------------------------------------
 
 (defun build-suffix-tree-ukkonen (str)
   "Build a Suffix tree for the given string STR using Ukkonen's
@@ -440,25 +552,7 @@ Ukkonen's algorithm takes O(m) time to build a suffix tree where m is
 the given string length.
 
 Ukkonen's algorithm is an on-line algorithm and can operate on a
-stream of characters, adding one character at a time.
-
-TODO"
-
-  ;; Ukkonen's algorithm builds an implicit suffix tree I_i for each
-  ;; prefix S[1..i] of the given string. Based on the implicit suffix
-  ;; tree I_m it builds a true suffix tree for string S of length
-  ;; m. This whole operation happens in O(m) time.
-
-  ;; The main entry for Ukkonen’s algorithm is implemented as the
-  ;; following.
-
-  ;; In the main entry, we initialize the tree and let the node points
-  ;; to the root, at this time point, the active point is (root,ε),
-  ;; which is (root, (0, -1)) in Python. we pass the active point to
-  ;; update() function in a loop from the left most index to the right
-  ;; most index of the string. Inside the loop, update() function
-  ;; returns the end point, and we need convert it to canonical
-  ;; reference pair for the next time update.
+stream of characters, adding one character at a time."
 
   (declare (type simple-string str))
 
@@ -473,15 +567,10 @@ TODO"
 	     (multiple-value-setq (node l)
 	       (canonize tree node l i))
 	     #+debug-simple-stree
-	     (with-open-file (out (format nil "stage_~a.dot" i)
-				  :direction :output
-				  :if-exists :supersede
-				  :if-does-not-exist :create)
-	       ;; for i in stage_*.dot ; do dot -Tpng -o $i.png $i ; done
-	       (print-suffix-tree-for-gv tree
-					 :stream out
-					 :label (format nil "додано {~a}"
-							(subseq str 0 i))))))
+             (print-suffix-tree-in-file tree
+                                        (format nil "stage_~a.dot" i)
+                                        (format nil "Ukkonen: added {~a}"
+                                                (subseq str 0 (+ i 1))))))
     tree))
 
 ;; --------------------------------------------------------
@@ -490,8 +579,8 @@ TODO"
   "Build a Suffix tree for the given string STR using McCreight's
 algorithm.
 
-McCreight's algorithm takes O(m²) time to build a suffix tree where m is
-the given string length.
+McCreight's algorithm takes O(n) time to build a suffix tree where n
+is the given string length.
 
 TODO"
   (declare (type simple-string str))
