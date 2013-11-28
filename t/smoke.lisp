@@ -2,7 +2,7 @@
 
 
 ;; Running tests from the command line:
-;; 
+;;
 ;; sbcl --load smoke.lisp --eval '(test:run)' --quit
 ;; lx86cl --load smoke.lisp --eval '(test:run)' --eval '(quit)'
 
@@ -54,7 +54,7 @@
       (assert-equal 0 (search-ac trie "she"))
       (assert-equal 1 (search-ac trie "_she"))
       (assert-equal nil (search-ac trie "_sh_"))
-      
+
       (multiple-value-bind (pos idx)
 	  (search-ac trie "___his")
 	(assert-equal 3 pos)
@@ -72,30 +72,125 @@
                                     :root (sm:make-ukk-node)))
          (first-child (sm:suffix-node.add-child tree (sm:suffix-tree.root tree)
                                                 0 sm:+infinity+)))
-    
+
     (assert-equal (sm:suffix-tree.str tree)
-                  (sm:suffix-node.str tree first-child)))
+                  (sm:suffix-node.str tree first-child))))
 
+;; --------------------------------------------------------
 
-  )
+(define-test simple-tree
+  "Test simple (naive) suffix tree construction implementation."
+  (let ((banana-tree (sm:suffix-tree.build-from-sexp
+                      "banana$"
+                      `((6 7)
+                        (0 7)
+                        (1 1 ((6 7)
+                              (2 3 ((6 7)
+                                    (4 7)))))
+                        (2 3 ((6 7)
+                              (4 7))))))
+
+        (cacao-tree (sm:suffix-tree.build-from-sexp
+                     "cacao"
+                     `((4 5)
+                       (0 1 ((2 5)
+                             (4 5)))
+                       (1 1 ((2 5)
+                             (4 5))))))
+
+        (mississippi-tree (sm:suffix-tree.build-from-sexp
+                           "mississippi"
+                           `((0 11)
+                             (1 1 ((2 4 ((5 11)
+                                         (8 11)))
+                                   (8 11)))
+                             (2 2 ((3 4 ((8 11)
+                                         (5 11)))
+                                   (4 4 ((8 11)
+                                         (5 11)))))
+                             (8 8 ((10 11)
+                                   (9 11))))))
+
+        (cdddcdc-tree (sm:suffix-tree.build-from-sexp
+                       "cdddcdc"
+                       `((0 1 ((6 7)
+                               (2 7)))
+                         (1 1 ((4 7)
+                               (2 2 ((4 7)
+                                     (3 7)))))))))
+
+    (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-simple "banana$")
+                                        banana-tree))
+    (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-simple "cacao")
+                                        cacao-tree))
+    (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-simple "mississippi")
+                                        mississippi-tree))
+    (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-simple "cdddcdc")
+                                        cdddcdc-tree))))
 
 ;; --------------------------------------------------------
 
 (define-test ukk-tree
-  "Test ukkonen tree implementation and operations"
+  "Test Ukkonens suffix tree construction implementation."
 
   (let ((banana-tree (sm:suffix-tree.build-from-sexp
                       "banana$"
                       `((6 ,sm:+infinity+)
                         (0 ,sm:+infinity+)
-                        (1 2 ((6 ,sm:+infinity+)
-                              (2 4 ((6 ,sm:+infinity+)
+                        (1 1 ((6 ,sm:+infinity+)
+                              (2 3 ((6 ,sm:+infinity+)
                                     (4 ,sm:+infinity+)))))
-                        (2 4 ((6 ,sm:+infinity+)
-                              (4 ,sm:+infinity+)))))))
-    
+                        (2 3 ((6 ,sm:+infinity+)
+                              (4 ,sm:+infinity+))))))
+
+        (cacao-tree (sm:suffix-tree.build-from-sexp
+                     "cacao"
+                     `((4 ,sm:+infinity+)
+                       (0 1 ((2 ,sm:+infinity+)
+                             (4 ,sm:+infinity+)))
+                       (1 1 ((2 ,sm:+infinity+)
+                             (4 ,sm:+infinity+))))))
+
+        (mississippi-tree (sm:suffix-tree.build-from-sexp
+                           "mississippi"
+                           `((0 ,sm:+infinity+)
+                             (1 1 ((2 4 ((5 ,sm:+infinity+)
+                                         (8 ,sm:+infinity+)))
+                                   (8 ,sm:+infinity+)))
+                             (2 2 ((3 4 ((8 ,sm:+infinity+)
+                                         (5 ,sm:+infinity+)))
+                                   (4 4 ((8 ,sm:+infinity+)
+                                         (5 ,sm:+infinity+)))))
+                             (8 8 ((10 ,sm:+infinity+)
+                                   (9 ,sm:+infinity+))))))
+
+        (cdddcdc-tree (sm:suffix-tree.build-from-sexp
+                       "cdddcdc"
+                       `((0 1 ((6 ,sm:+infinity+)
+                               (2 ,sm:+infinity+)))
+                         (1 1 ((4 ,sm:+infinity+)
+                               (2 2 ((4 ,sm:+infinity+)
+                                     (3 ,sm:+infinity+)))))))))
+
     (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-ukkonen "banana$")
                                         banana-tree))
+
+    (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-ukkonen "cacao")
+                                        cacao-tree))
+
+    (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-ukkonen "mississippi")
+                                        mississippi-tree))
+
+    (assert-true (sm:suffix-tree.equals (sm:build-suffix-tree-ukkonen "cdddcdc")
+                                        cdddcdc-tree))
+
+    ;; now let's verfiy that suffix-tree.equals does not produce false
+    ;; positives
+    (assert-false (sm:suffix-tree.equals (sm:build-suffix-tree-ukkonen "cacao")
+                                         banana-tree))
+
+    (assert-false (sm:suffix-tree.equals (sm:build-suffix-tree-ukkonen "banana")
+                                         mississippi-tree))
 
     ;; ana in banana : 2
     ;; an in banana : 2
@@ -108,6 +203,6 @@
 ;; --------------------------------------------------------
 
 (defun run ()
-  (lisp-unit:run-tests :all))
+  (lisp-unit:run-tests :all (find-package 'cl-string-match-test)))
 
 ;; EOF

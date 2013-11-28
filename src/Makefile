@@ -8,6 +8,7 @@ png_files=$(subst .dot,.png,$(dot_files))
 
 %.png: %.dot
 	dot -Tpng -o $@ $<
+	rm $<
 
 charts: $(png_files)
 #	eog .
