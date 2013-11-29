@@ -42,7 +42,7 @@
 
 ;; --------------------------------------------------------
 
-(defun string-contains-brute (pat txt)
+(defun string-contains-brute (pat txt &key (start1 0) end1 (start2 0) end2)
   "A Brute-force substring search implementation.
 
 Brute-force substring search requires O(N x M) character compares to
@@ -50,21 +50,29 @@ search for a pattern of length M in a text of length N, in the worst
 case.
 
 Algorithm described in: Chapter 5, p. 760 in
-  “Algorithms”, Robert Sedgewick and Kevin Wayne. 4th"
+  'Algorithms', Robert Sedgewick and Kevin Wayne. 4th"
 
   (declare (type simple-string pat)
-	   (type simple-string txt))
+	   (type simple-string txt)
+           (type fixnum start1)
+           (type fixnum start2)
+           #.*standard-optimize-settings*)
 
   (let ((pat-len (length pat))
 	(txt-len (length txt)))
-    
-    (loop :for txt-pos fixnum :from 0 :to (- txt-len pat-len) :do
-       (loop :for pat-pos fixnum :from 0 :below pat-len
-	  :until (char/= (char txt (+ txt-pos pat-pos))
+    ;; we don't check if the start and end parameters are valid
+    (setq end1 (if end1 (the fixnum end1) pat-len))
+    (setq end2 (if end2 (the fixnum end2) txt-len))
+
+    (loop :for txt-pos fixnum :from start2 :to (- end2 end1) :do
+       (loop :for pat-pos fixnum :from start1 :below end1
+	  :until (char/= (char txt (- (+ txt-pos pat-pos) start1))
 			 (char pat pat-pos))
 	  :finally
-	  (when (= pat-pos pat-len)
+	  (when (= pat-pos end1)
+            ;; found match
 	    (return-from string-contains-brute txt-pos))))
+    ;; no match found
     NIL))
 
 ;; EOF

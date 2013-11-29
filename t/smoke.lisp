@@ -46,6 +46,16 @@
 
 ;; --------------------------------------------------------
 
+(define-test window-test
+  "Test how well the start and begin windows over the search pattern
+and the text works."
+
+  (assert-equal 1 (sm:string-contains-brute "-abc-" "_abcab_"
+                                            :start1 1 :end1 3
+                                            :start2 1 :end2 5)))
+
+;; --------------------------------------------------------
+
 (define-test ac-test
     ;; test Aho-Corasick implementation how it deals with multiple
     ;; patterns search
