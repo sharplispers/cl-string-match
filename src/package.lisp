@@ -76,4 +76,21 @@
    :build-suffix-tree-simple
    :build-suffix-tree-ukkonen))
 
+;; --------------------------------------------------------
+
+(in-package :cl-string-match)
+
+;; got idea from CL-PPCRE. Need to place it here so that the Lisp
+;; reader will have an idea about this variable when parsing package
+;; sources
+(defvar *standard-optimize-settings*
+  '(optimize
+    speed
+    (safety 0)
+    (space 0)
+    (debug 1)
+    (compilation-speed 0)
+    #+:lispworks (hcl:fixnum-safety 0))
+  "The standard optimize settings used by most declaration expressions.")
+
 ;; EOF
