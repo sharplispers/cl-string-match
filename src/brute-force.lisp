@@ -29,19 +29,6 @@
 
 ;; --------------------------------------------------------
 
-;; got idea from CL-PPCRE
-(defvar *standard-optimize-settings*
-  '(optimize
-    speed
-    (safety 0)
-    (space 0)
-    (debug 1)
-    (compilation-speed 0)
-    #+:lispworks (hcl:fixnum-safety 0))
-  "The standard optimize settings used by most declaration expressions.")
-
-;; --------------------------------------------------------
-
 (defun string-contains-brute (pat txt &key (start1 0) end1 (start2 0) end2)
   "A Brute-force substring search implementation.
 

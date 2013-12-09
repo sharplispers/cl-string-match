@@ -3,8 +3,8 @@
 
 ;; Running tests from the command line:
 ;;
-;; sbcl --load smoke.lisp --eval '(test:run)' --quit
-;; lx86cl --load smoke.lisp --eval '(test:run)' --eval '(quit)'
+;; sbcl --eval '(ql:quickload "CL-STRING-MATCH-TEST")' --eval '(test:run)' --quit
+;; lx86cl --eval '(ql:quickload "CL-STRING-MATCH-TEST")' --eval '(test:run)' --eval '(quit)'
 
 ;; --------------------------------------------------------
 
