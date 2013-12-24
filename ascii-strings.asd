@@ -41,7 +41,7 @@
   "Operations on ASCII strings. Essentially this can be any kind of
 single-byte encoded strings."
   :license "BSD"
-  :depends-on (:alexandria)
+  :depends-on (:alexandria :babel)
   :components ((:module "contrib"
 			:serial T
 			:components
