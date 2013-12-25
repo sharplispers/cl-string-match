@@ -19,6 +19,7 @@
   '(sm:string-contains-brute
     sm:string-contains-bm
     sm:string-contains-bmh
+    sm:string-contains-bmh8
     sm:string-contains-rk
     sm:string-contains-kmp
     sm:string-contains-ac))

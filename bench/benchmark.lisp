@@ -142,6 +142,21 @@ chart."
 
 ;; --------------------------------------------------------
 
+(defun run-boyer-horspool8 ()
+  (when +bm-simple+
+    (log-title "BOYER MOORE HORSPOOL-8 simple")
+    (dolist (needle needles)
+      (bm-timer (length needle)
+		#'sm:string-contains-bmh8 needle haystack)))
+
+  (log-title "BOYER MOORE HORSPOOL-8 with index")
+  (dolist (needle needles)
+    (let ((idx (sm:initialize-bmh8 needle)))
+      (bm-timer (length needle)
+		#'sm:search-bmh8 idx haystack))))
+
+;; --------------------------------------------------------
+
 (defun run-rabin-karp ()
   (when +bm-simple+
     (log-title "RABIN KARP simple")

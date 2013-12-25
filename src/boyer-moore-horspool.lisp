@@ -43,74 +43,108 @@
 
 ;; --------------------------------------------------------
 
-(defun initialize-bmh (pat)
-  "Preprocess.
-Initialize the table to default value. "
+(defmacro define-bmh-matcher (initialize-name
+                              search-name
+                              matcher-name
+                              &key
+                                (key-get 'char)
+                                (key-code 'char-code)
+                                (key-cmp= 'char=)
+                                (alphabet-size char-code-limit)
+                                (data-type 'simple-string))
 
-  (declare #.*standard-optimize-settings*)
+  `(progn
 
-  ;; When a character is encountered that does not occur in the
-  ;; needle, we can safely skip ahead for the whole length of the
-  ;; needle.
-  (let ((idx
-	 (make-bmh
-	  :pat pat
-	  :pat-len (length pat)
-	  :bad-char-skip (make-array char-code-limit
-				     :initial-element (length pat)))))
+     ;; --------------------------------------------------------
 
-    (loop :for c :across pat
-       :for i :from 0 :to (length pat) :do
-       (setf (aref (bmh-bad-char-skip idx)
-		   (char-code c))
-	     (- (length pat) i 1)))
-    idx))
+     (defun ,initialize-name (pat)
+       "Preprocess the needle.
+
+Initialize the table to default value."
+
+       (declare #.*standard-optimize-settings*)
+
+       ;; When a character is encountered that does not occur in the
+       ;; needle, we can safely skip ahead for the whole length of the
+       ;; needle.
+       (let ((idx
+              (make-bmh
+               :pat pat
+               :pat-len (length pat)
+               :bad-char-skip (make-array ,alphabet-size
+                                          :initial-element (length pat)))))
+
+         (loop :for c :across pat
+            :for i :from 0 :to (length pat) :do
+            (setf (aref (bmh-bad-char-skip idx)
+                        (,key-code c))
+                  (- (length pat) i 1)))
+         idx))
+
+     ;; --------------------------------------------------------
+
+     (defun ,search-name (bmh txt)
+       "Search for pattern BMH in TXT."
+
+       (declare #.*standard-optimize-settings*)
+       (let ((haystack 0)
+             (hlen (length txt))
+             (last (- (bmh-pat-len bmh) 1)))
+
+         ;; Search the haystack, while the needle can still be within it.
+         (loop :while (>= hlen (bmh-pat-len bmh)) :do
+            (progn
+              ;; scan from the end of the needle
+              (loop :for scan = last :then (- scan 1)
+                 :while (,key-cmp= (,key-get txt (+ haystack scan))
+                                   (,key-get (bmh-pat bmh) scan))
+                 :when (= scan 0)
+                 :do (return-from ,search-name haystack))
+
+              ;; otherwise, we need to skip some bytes and start
+              ;; again. Note that here we are getting the skip value based
+              ;; on the last byte of needle, no matter where we didn't
+              ;; match. So if needle is: "abcd" then we are skipping based
+              ;; on 'd' and that value will be 4, and for "abcdd" we again
+              ;; skip on 'd' but the value will be only 1. The alternative
+              ;; of pretending that the mismatched character was the last
+              ;; character is slower in the normal case (E.g. finding
+              ;; "abcd" in "...azcd..." gives 4 by using 'd' but only
+              ;; 4-2==2 using 'z'.
+              (let ((skip (aref (bmh-bad-char-skip bmh)
+                                (,key-code (,key-get txt last)))))
+
+                (setf hlen (- hlen skip))
+                (setf haystack (+ haystack  skip)))))
+         nil))
+
+
+     ;; --------------------------------------------------------
+
+     (defun ,matcher-name (pat txt)
+       (declare (type ,data-type pat)
+                (type ,data-type txt)
+                #.*standard-optimize-settings*)
+
+       (,search-name (,initialize-name pat) txt))
+
+     ))
 
 ;; --------------------------------------------------------
 
-(defun search-bmh (bmh txt)
-  "Search for pattern bm in txt."
+(define-bmh-matcher initialize-bmh search-bmh string-contains-bmh)
 
-  (declare #.*standard-optimize-settings*)
-  (let ((haystack 0)
-	(hlen (length txt))
-	(last (- (bmh-pat-len bmh) 1)))
+;; The following set of BMH matchers operate on strings that contain
+;; characters in the range 0-256 (single-byte or octet). Therefore,
+;; the skip array in the index is not equal to the CHAR-CODE-LIMIT
+;; that is huge for Lisp implementations with Unicode support, but has
+;; a fixed size of 256 cells
+(define-bmh-matcher initialize-bmh8 search-bmh8 string-contains-bmh8
+                    :key-code ascii-char-code
+                    :alphabet-size ub-char-code-limit)
 
-    ;; Search the haystack, while the needle can still be within it.
-    (loop :while (>= hlen (bmh-pat-len bmh)) :do
-       (progn
-	 ;; scan from the end of the needle
-	 (loop :for scan = last :then (- scan 1)
-	    :while (char= (char txt (+ haystack scan))
-			  (char (bmh-pat bmh) scan))
-	    :when (= scan 0)
-	    :do (return-from search-bmh haystack))
-
-	 ;; otherwise, we need to skip some bytes and start
-	 ;; again. Note that here we are getting the skip value based
-	 ;; on the last byte of needle, no matter where we didn't
-	 ;; match. So if needle is: "abcd" then we are skipping based
-	 ;; on 'd' and that value will be 4, and for "abcdd" we again
-	 ;; skip on 'd' but the value will be only 1. The alternative
-	 ;; of pretending that the mismatched character was the last
-	 ;; character is slower in the normal case (E.g. finding
-	 ;; "abcd" in "...azcd..." gives 4 by using 'd' but only
-	 ;; 4-2==2 using 'z'.
-	 (let ((skip (aref (bmh-bad-char-skip bmh)
-			   (char-code (char txt last)))))
-	   
-	   (setf hlen (- hlen skip))
-	   (setf haystack (+ haystack  skip)))))
-    nil))
-
-;; --------------------------------------------------------
-
-(defun string-contains-bmh (pat txt)
-  (declare (type string pat)
-	   (type string txt)
-	   #.*standard-optimize-settings*)
-
-  (search-bmh (initialize-bmh pat) txt))
-
+(export 'initialize-bmh8)
+(export 'search-bmh8)
+(export 'string-contains-bmh8)
 
 ;; EOF
