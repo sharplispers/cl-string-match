@@ -112,7 +112,7 @@
   (= c1 c2))
 
 (declaim (inline ub-char/=))
-(defun ub-CHAR/= (c1 c2)
+(defun ub-char/= (c1 c2)
   (/= c1 c2))
 
 (declaim (inline ub-char<))
@@ -120,15 +120,15 @@
   (< c1 c2))
 
 (declaim (inline ub-char>))
-(defun ub-CHAR> (c1 c2)
+(defun ub-char> (c1 c2)
   (> c1 c2))
 
 (declaim (inline ub-char<=))
-(defun ub-CHAR<= (c1 c2)
+(defun ub-char<= (c1 c2)
   (<= c1 c2))
 
 (declaim (inline ub-char=>))
-(defun ub-CHAR>= (c1 c2)
+(defun ub-char>= (c1 c2)
   (>= c1 c2))
 
 (defun ub-CHAR-EQUAL ())

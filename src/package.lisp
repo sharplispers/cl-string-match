@@ -26,7 +26,7 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (defpackage :cl-string-match
-  (:use :common-lisp :alexandria)
+  (:use :common-lisp :alexandria :ascii-strings)
   (:nicknames :sm)
   (:export
    :string-contains-brute
@@ -45,6 +45,7 @@
    :search-rk
    :search-kmp
    :search-ac
+
    ;; Trie operations
    :empty-trie
    :trie-node
@@ -52,6 +53,7 @@
    :trie-add-keyword
    :trie-traverse
    :trie-contains
+
    ;; Suffix tree
    :+infinity+
    :suffix-tree
@@ -81,16 +83,22 @@
 (in-package :cl-string-match)
 
 ;; got idea from CL-PPCRE. Need to place it here so that the Lisp
-;; reader will have an idea about this variable when parsing package
-;; sources
+;; reader will have an idea about this variable when parsing other
+;; package source files
 (defvar *standard-optimize-settings*
   '(optimize
-    speed
+    (speed 3)
     (safety 0)
     (space 0)
     (debug 1)
     (compilation-speed 0)
     #+:lispworks (hcl:fixnum-safety 0))
   "The standard optimize settings used by most declaration expressions.")
+
+;; --------------------------------------------------------
+
+(defun format-name (format &rest args)
+  (let ((*print-case* :upcase))
+    (intern (apply #'format nil format args))))
 
 ;; EOF
