@@ -251,6 +251,7 @@ with 20 different characters."
   (run-brute-force)
   (run-boyer-moore)
   (run-boyer-horspool)
+  (run-boyer-horspool8)
   (run-rabin-karp)
   (run-knuth-morris-pratt)
   (run-aho-corasick)
