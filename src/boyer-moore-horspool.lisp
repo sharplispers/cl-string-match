@@ -26,10 +26,18 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-;;; Boyer-Moore-Horspool algorithm implementation based on description
-;; from Wikipedia article
+;;; Boyer-Moore-Horspool algorithm
+;;; simplification of the Boyer-Moore algorithm;
+
+;;; * preprocessing phase in O(m+s) time and O(s) space complexity;
+;;; * searching phase in O(mn) time complexity;
+;;; * the average number of comparisons for one text character is between 1/s and 2/(s+1).
+
+;; implementation based on the description from the book
+;; 
+;; "Exact String Matching Algorithms" by Christian Charras and Thierry Lecroq
 ;;
-;; http://en.wikipedia.org/wiki/Boyer-Moore-Horspool_algorithm
+;; http://www-igm.univ-mlv.fr/~lecroq/string/node18.html#SECTION00180
 
 (in-package :cl-string-match)
 
@@ -64,7 +72,6 @@
 
        (defun ,initialize-name (pat)
 	 "Preprocess the needle.
-
 Initialize the table to default value."
 
 	 (declare (type ,data-type pat)
@@ -82,54 +89,39 @@ Initialize the table to default value."
 			     :element-type 'fixnum
 			     :initial-element (the fixnum (length pat))))))
 
-	   (loop :for c :across pat
-	      :for i :from 0 :to (length pat) :do
+	   (loop 
+	      :for k :from 0 :below (- (length pat) 1) :do
 	      (setf (aref (,the-bad-char-skip idx)
-			  (,key-code c))
-		    (- (length pat) i 1)))
+			  (,key-code (,key-get pat k)))
+		    (- (length pat) k 1)))
 	   idx))
 
        ;; --------------------------------------------------------
 
-       (defun ,search-name (bmh txt)
-	 "Search for pattern BMH in TXT."
+       (defun ,search-name (idx txt)
+	 "Search for pattern defined in the IDX in TXT."
 
 	 (declare (type ,data-type txt)
 		  #.*standard-optimize-settings*)
-	 (let ((haystack 0)
-	       (hlen (length txt))
-	       (last (- (,the-pat-len bmh) 1)))
-	   (declare (type fixnum haystack)
-		    (type fixnum hlen)
-		    (type fixnum last))
 
-	   ;; Search the haystack, while the needle can still be within it.
-	   (loop :while (>= hlen (,the-pat-len bmh)) :do
-	      (progn
-		;; scan from the end of the needle
-		(loop :for scan :of-type fixnum :from last :downto -1
-		   :while (,key-cmp= (,key-get txt (the fixnum (+ haystack scan)))
-				     (,key-get (,the-pat bmh) scan))
-		   :when (= scan 0)
-		   :do (return-from ,search-name haystack))
+	 (loop
+	    :with m fixnum = (,the-pat-len idx)
+	    :with n fixnum = (length txt)
+	    :with j fixnum = 0
+	    ;; Search the haystack, while the needle can still be within it.
+	    :while (<= j (- n m))
+	    :do (let ((c (,key-get txt (- (+ j m) 1))))
 
-		;; otherwise, we need to skip some bytes and start
-		;; again. Note that here we are getting the skip value based
-		;; on the last byte of needle, no matter where we didn't
-		;; match. So if needle is: "abcd" then we are skipping based
-		;; on 'd' and that value will be 4, and for "abcdd" we again
-		;; skip on 'd' but the value will be only 1. The alternative
-		;; of pretending that the mismatched character was the last
-		;; character is slower in the normal case (E.g. finding
-		;; "abcd" in "...azcd..." gives 4 by using 'd' but only
-		;; 4-2==2 using 'z'.
-		(let ((skip (aref (,the-bad-char-skip bmh)
-				  (,key-code (,key-get txt last)))))
-		  (declare (type fixnum skip))
-		  (setf hlen (- hlen skip))
-		  (setf haystack (+ haystack  skip)))))
-	   nil))
+		  (when (,key-cmp= c (,key-get (,the-pat idx) (- m 1)))
+		    (loop :for i fixnum :from 0 :below m
+		       :while (,key-cmp= (,key-get (,the-pat idx) i)
+					 (,key-get txt (+ i j)))
+		       :finally
+		       (when (= i m)
+			 (return-from ,search-name j))))
 
+		  (incf j (aref (,the-bad-char-skip idx)
+				(,key-code c))))))
 
        ;; --------------------------------------------------------
 
@@ -161,4 +153,12 @@ Initialize the table to default value."
 (export 'search-bmh8)
 (export 'string-contains-bmh8)
 
+(defun report-bmh-idx (idx)
+  "Report skip values for the pattern in the BMH index."
+  (loop :for c :across (bmh-pat idx)
+     :do (format t "~a: ~a~%" c (aref (bmh-bad-char-skip idx)
+				      (char-code c)))))
 ;; EOF
+
+
+

@@ -43,7 +43,8 @@
 (define-test str-test
   (run-assertions 0 "abc" "abcab_")
   (run-assertions 1 "abc" "_abcab_")
-  (run-assertions 2 "abc" "ababc"))
+  (run-assertions 2 "abc" "ababc")
+  (run-assertions 5 "GCAGAGAG" "GCATCGCAGAGAGTATACAGTACG"))
 
 ;; --------------------------------------------------------
 

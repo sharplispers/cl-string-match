@@ -95,6 +95,9 @@
     #+:lispworks (hcl:fixnum-safety 0))
   "The standard optimize settings used by most declaration expressions.")
 
+;; you can change it to the more debug-friendly settings by evaluating:
+;; (setf *STANDARD-OPTIMIZE-SETTINGS* '(optimize (debug 3)))
+
 ;; --------------------------------------------------------
 
 (defun format-name (format &rest args)
