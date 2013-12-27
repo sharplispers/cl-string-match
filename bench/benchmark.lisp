@@ -39,7 +39,7 @@
 
 ;; --------------------------------------------------------
 
-(defconstant +times+ (* 1000 1000))
+(defconstant +times+ (* 10 1000))
 
 ;; some algorithms process needle from the end to start, other
 ;; algorithms go in the opposite direction. The mismatching symbol is
@@ -82,16 +82,20 @@ execution multiple times.
 
 The timer is responsible for pretty-printing benchmark information and
 duration to the log file so that it can be later used to produce a
-chart."
+chart.
+
+Returns: the amount of elapsed time."
 
   (declare (function function))
 
   (let ((start (get-internal-run-time))
-	ret elapsed)
+	ret
+	elapsed)
     (loop :repeat +times+ :do (setq ret (apply function args)))
     (setq elapsed (/ (- (get-internal-run-time) start)
                      (float internal-time-units-per-second 1d0)))
-    (log-msg (format nil "~a	~3$~%" len elapsed))))
+    (log-msg (format nil "~a	~3$~%" len elapsed))
+    elapsed))
 
 
 ;; --------------------------------------------------------
@@ -260,3 +264,125 @@ with 20 different characters."
   (run-ppcre-many))
 
 (format t "Eval: (run-benchmarks) to run all benchmarks~%")
+
+;; --------------------------------------------------------
+;; Random haystack and the needle benchmarks
+;; --------------------------------------------------------
+;; 
+;; To run random benchmarks first compile the source file and execute
+;; the following command:
+;; 
+;; sbcl --load benchmark --eval '(rnd-run)' --eval '(quit)'
+
+(defparameter *alphabet*
+  (concatenate 'list
+	       ;; upper-case characters
+	       (loop :for c :from 65 :to 90 :collect (code-char c))
+	       ;; lower-case characters
+	       (loop :for c :from 97 :to 122 :collect (code-char c))
+	       ;; digits and different symbols
+	       (loop :for c :from 33 :to 64 :collect (code-char c)))
+  "List of characters that are used to construct random needles and
+the haystack. We give priority to the upper case characters and the
+lowest priority to different symbols and numbers.")
+
+;; --------------------------------------------------------
+
+(defun fill-random-string (str alphabet-size)
+  "Fills the given string with random characters from obtained from
+the master *ALPHABET* limited by the given ALPHABET-SIZE."
+
+  (loop :for i :from 0 :below (length str)
+     :do (setf (char str i) (nth (random alphabet-size) *alphabet*)))
+  str)
+
+;; --------------------------------------------------------
+
+(defparameter random-alphabet-size 12)
+
+(defparameter random-needles
+  '())
+
+(defparameter random-haystack
+  (make-string 1024))
+
+
+(defun fill-random-needles ()
+  (setf random-needles
+	(loop :for n :from 1 :to 17 :collect
+	   (fill-random-string (make-string (+ 5 (* n 2))) random-alphabet-size))))
+
+(defun fill-random-haystack ()
+  (setf random-haystack
+	(fill-random-string random-haystack random-alphabet-size)))
+
+(defun rnd-run ()
+  (log-title "Random needles and haystacks with index")
+
+  (let ((sys-times '())
+	(bf-times '())
+	(bm-times '())
+	(bmh-times '())
+	(bmh8-times '())
+	(rk-times '())
+	(kmp-times '()))
+    (fill-random-needles)
+    (fill-random-haystack)
+    ;; (format t "haystack: ~a~%" random-haystack)
+    (dolist (needle random-needles)
+      (format t "processing needle ~a" (length needle))
+      (force-output)
+      (let ((sys-time 0.0d0)
+	    (bf-time 0.0d0)
+	    (bm-time 0.0d0)
+	    (bmh-time 0.0d0)
+	    (bmh8-time 0.0d0)
+	    (rk-time 0.0d0)
+	    (kmp-time 0.0d0))
+
+	(dotimes (n 10)
+	  (fill-random-string needle random-alphabet-size)
+	  ;; (format t "needle: ~a~%" needle)
+	  (let ((bm-idx (sm:initialize-bm needle))
+		(bmh-idx (sm:initialize-bmh needle))
+		(bmh8-idx (sm:initialize-bmh8 needle))
+		(rk-idx (sm:initialize-rk needle))
+		(kmp-idx (sm:initialize-kmp needle)))
+	    
+	    (incf sys-time (bm-timer (length needle)
+				     #'search needle random-haystack))
+	    (incf bf-time (bm-timer (length needle)
+				    #'sm:string-contains-brute needle random-haystack))
+	    (incf bm-time (bm-timer (length needle)
+				    #'sm:search-bm bm-idx random-haystack))
+	    (incf bmh-time (bm-timer (length needle)
+				     #'sm:search-bmh bmh-idx random-haystack))
+	    (incf bmh8-time (bm-timer (length needle)
+				      #'sm:search-bmh8 bmh8-idx random-haystack))
+	    (incf rk-time (bm-timer (length needle)
+				    #'sm:search-rk rk-idx random-haystack))
+	    (incf kmp-time (bm-timer (length needle)
+				     #'sm:search-kmp kmp-idx random-haystack)))
+	  (format t ".")
+	  (force-output))
+	(push sys-time sys-times)
+	(push bf-time bf-times)
+	(push bm-time bm-times)
+	(push bmh-time bmh-times)
+	(push bmh8-time bmh8-times)
+	(push rk-time rk-times)
+	(push kmp-time kmp-times))
+      (format t "~%"))
+
+    (with-open-file (out "random.log"
+			 :direction :output
+			 :if-exists :supersede
+			 :if-does-not-exist :create)
+      (format out "\# l sys bf bm bmh bmh8 rk kmp~%")
+      (map nil
+	   #'(lambda (n sys bf bm bmh bmh8 rk kmp)
+	       (format out "~a ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f~%" (length n)
+		       sys bf bm bmh bmh8 rk kmp))
+	   random-needles sys-times bf-times bm-times bmh-times bmh8-times rk-times kmp-times))
+
+    ) )
