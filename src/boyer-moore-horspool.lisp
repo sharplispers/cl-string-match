@@ -34,7 +34,7 @@
 ;;; * the average number of comparisons for one text character is between 1/s and 2/(s+1).
 
 ;; implementation based on the description from the book
-;; 
+;;
 ;; "Exact String Matching Algorithms" by Christian Charras and Thierry Lecroq
 ;;
 ;; http://www-igm.univ-mlv.fr/~lecroq/string/node18.html#SECTION00180
@@ -43,10 +43,7 @@
 
 ;; --------------------------------------------------------
 
-(defmacro define-bmh-matcher (index-name
-			      initialize-name
-                              search-name
-                              matcher-name
+(defmacro define-bmh-matcher (variant-tag
                               &key
 			      (key-get 'char)
 			      (key-code 'char-code)
@@ -55,10 +52,14 @@
 			      (alphabet-size char-code-limit)
 			      (data-type 'simple-string))
 
-  (let ((make-index (format-name "MAKE-~a" index-name))
-	(the-bad-char-skip (format-name "~a-BAD-CHAR-SKIP" index-name))
-	(the-pat (format-name "~a-PAT" index-name))
-	(the-pat-len (format-name "~a-PAT-LEN" index-name)))
+  (let* ((index-name (format-name "BMH~a" variant-tag))
+	 (initialize-name (format-name "INITIALIZE-BMH~a" variant-tag))
+	 (search-name (format-name "SEARCH-BMH~a" variant-tag))
+	 (matcher-name (format-name "STRING-CONTAINS-BMH~a" variant-tag))
+	 (make-index (format-name "MAKE-~a" index-name))
+	 (the-bad-char-skip (format-name "~a-BAD-CHAR-SKIP" index-name))
+	 (the-pat (format-name "~a-PAT" index-name))
+	 (the-pat-len (format-name "~a-PAT-LEN" index-name)))
     `(progn
 
        ;; --------------------------------------------------------
@@ -84,12 +85,12 @@ Initialize the table to default value."
 		(,make-index
 		 :pat pat
 		 :pat-len (length pat)
-		 :bad-char-skip 
+		 :bad-char-skip
 		 (make-array ,alphabet-size
 			     :element-type 'fixnum
 			     :initial-element (the fixnum (length pat))))))
 
-	   (loop 
+	   (loop
 	      :for k :from 0 :below (- (length pat) 1) :do
 	      (setf (aref (,the-bad-char-skip idx)
 			  (,key-code (,key-get pat k)))
@@ -136,14 +137,14 @@ Initialize the table to default value."
 
 ;; --------------------------------------------------------
 
-(define-bmh-matcher bmh initialize-bmh search-bmh string-contains-bmh)
+(define-bmh-matcher "")
 
 ;; The following set of BMH matchers operate on strings that contain
 ;; characters in the range 0-256 (single-byte or octet). Therefore,
 ;; the skip array in the index is not equal to the CHAR-CODE-LIMIT
 ;; that is huge for Lisp implementations with Unicode support, but has
 ;; a fixed size of 256 cells
-(define-bmh-matcher bmh8 initialize-bmh8 search-bmh8 string-contains-bmh8
+(define-bmh-matcher "8"
 		    :empty-pat ""
                     :key-code ascii-char-code
                     :alphabet-size ub-char-code-limit)
@@ -153,12 +154,41 @@ Initialize the table to default value."
 (export 'search-bmh8)
 (export 'string-contains-bmh8)
 
+#|
 (defun report-bmh-idx (idx)
   "Report skip values for the pattern in the BMH index."
   (loop :for c :across (bmh-pat idx)
      :do (format t "~a: ~a~%" c (aref (bmh-bad-char-skip idx)
 				      (char-code c)))))
+
+(defun search-tbmh (idx txt)
+  )
+
+void TUNEDBM(char *x, int m, char *y, int n) {
+   int j, k, shift, bmBc[ASIZE];
+
+   /* Preprocessing */
+   preBmBc(x, m, bmBc);
+   shift = bmBc[x[m - 1]];
+   bmBc[x[m - 1]] = 0;
+   memset(y + n, x[m - 1], m);
+
+   /* Searching */
+   j = 0;
+   while (j < n) {
+      k = bmBc[y[j + m -1]];
+      while (k !=  0) {
+         j += k; k = bmBc[y[j + m -1]];
+         j += k; k = bmBc[y[j + m -1]];
+         j += k; k = bmBc[y[j + m -1]];
+      }
+      if (memcmp(x, y + j, m - 1) == 0 && j < n)
+         OUTPUT(j);
+      j += shift;                          /* shift */
+   }
+}
 ;; EOF
 
 
 
+|#
