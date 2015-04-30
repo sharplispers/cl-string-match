@@ -33,6 +33,13 @@
 ;; --------------------------------------------------------
 
 (define-test basic-test
+    ;; empty sequences
+  (run-assertions 0   "" "")
+  (run-assertions nil "a" "")
+  ;; one-letter sequences
+  (run-assertions nil "a" "b")
+  (run-assertions 0   "a" "a")
+  ;; longer sequences
   (run-assertions 0 "a" "a--")
   (run-assertions 1 "a" "-a-")
   (run-assertions 2 "a" "--a")
