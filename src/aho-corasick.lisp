@@ -212,15 +212,19 @@ first occurence."
 
   (declare #.*standard-optimize-settings*)
 
-  (let ((trie (trie-build (list pat))))
-    (loop
-       :for c :across txt
-       :for j :from 1 :to (length txt)
-       :for node = (trie-find-child trie c) :then (trie-find-child node c)
-       :do (if node
-	       (if (trie-node-mark node)
-		   (return (- j (length pat))))
-	       (setf node (trie-find-child trie c)))
-       :unless node :do (setf node trie))))
+  (if (= (length pat) 0)
+      0
+      (let* ((trie (trie-build (list pat)))
+	     (res 
+	      (loop
+		 :for c :across txt
+		 :for j :from 1 :to (length txt)
+		 :for node = (trie-find-child trie c) :then (trie-find-child node c)
+		 :do (if node
+			 (if (trie-node-mark node)
+			     (return (- j (length pat))))
+			 (setf node (trie-find-child trie c)))
+		 :unless node :do (setf node trie))))
+	(if res res nil))))
 
 ;; EOF

@@ -1,6 +1,9 @@
 
 # A helper makefile with shortcuts for rapid charts generation and
 # cleanup
+#
+# This is primarely intended to be used with the suffix tree
+# generation and handling code in the suffix-tree.lisp file
 
 
 dot_files=$(wildcard *.dot)
