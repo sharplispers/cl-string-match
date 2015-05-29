@@ -26,18 +26,13 @@ Data structures:
 * Prefix trie
 * Suffix tree
 
-Project home page:
+Resources:
 
-http://sourceforge.net/projects/clstringmatch/
+* [Project home page](http://sourceforge.net/projects/clstringmatch/)
 
-Also take a look at the project Wiki:
+* Also take a look at the [project Wiki](http://sourceforge.net/p/clstringmatch/wiki/Home/)
 
-http://sourceforge.net/p/clstringmatch/wiki/Home/
-
-If you prefer other project hosting sites, take a look at our mirror
-on BitBucket:
-
-http://bitbucket.org/vityok/cl-string-match
+* If you prefer other project hosting sites, take a look at [our mirror on BitBucket](http://bitbucket.org/vityok/cl-string-match)
 
 
 TODO
@@ -84,5 +79,3 @@ Additional algorithms:
 * Thompson NFA
 
 * Consider inexact matching and other algorithms on strings
-
-;; EOF
