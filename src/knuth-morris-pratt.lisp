@@ -89,6 +89,9 @@
   (declare (type simple-string txt)
 	   #.*standard-optimize-settings*)
 
+  (when (= (kmp-pat-len idx) 0)
+    (return-from search-kmp 0))
+  
   (let* ((m 0)
 	 (i 0)
 	 (txt-len (length txt)))

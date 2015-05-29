@@ -29,6 +29,10 @@
 ;; additional information can be found at:
 ;;
 ;; http://www.geeksforgeeks.org/searching-for-patterns-set-3-rabin-karp-algorithm/
+;;
+;; or:
+;;
+;; http://www-igm.univ-mlv.fr/~lecroq/string/node5.html
 
 
 (in-package :cl-string-match)
