@@ -210,7 +210,9 @@ start position of the first matching pattern and its index."
   "Looks for the given pattern in the text and returns index of the
 first occurence."
 
-  (declare #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*
+	   (type string pat)
+	   (type string txt))
 
   (if (= (length pat) 0)
       0
