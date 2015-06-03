@@ -51,7 +51,13 @@
   (run-assertions 0 "abc" "abcab_")
   (run-assertions 1 "abc" "_abcab_")
   (run-assertions 2 "abc" "ababc")
-  (run-assertions 5 "GCAGAGAG" "GCATCGCAGAGAGTATACAGTACG"))
+  (run-assertions 5 "GCAGAGAG" "GCATCGCAGAGAGTATACAGTACG")
+  (run-assertions 14 "abracadabra" "abacadabrabracabracadabrabrabracad")
+  (run-assertions 8 "rab" "abacadabrabracabracadabrabrabracad")
+  (run-assertions nil "bcara" "abacadabrabracabracadabrabrabracad")
+  (run-assertions 23 "rabrabracad" "abacadabrabracabracadabrabrabracad")
+  (run-assertions 0 "abacad" "abacadabrabracabracadabrabrabracad")
+  )
 
 ;; --------------------------------------------------------
 
