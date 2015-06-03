@@ -70,6 +70,9 @@ text *txt* using Boyer-Moore-Horspool algorithm implementation:
     (let ((idx (initialize-bmh "abc")))
       (search-bmh idx "ababcfbgsldkj"))
 
+It should be noted that Boyer-Moore-Horspool (`bmh`) implementation
+offers an order of magnitude boost to performance compared to the
+standard `search` function.
 
 TODO
 ====
