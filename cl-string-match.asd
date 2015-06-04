@@ -41,6 +41,8 @@
   "Provides implementations of the standard sub-string search (string
 matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
   :license "BSD"
+  :author "Vityok https://bitbucket.org/vityok"
+  :version "2015.06.04"
   :depends-on (:alexandria :ascii-strings)
   :components ((:module "src"
 			:serial T
