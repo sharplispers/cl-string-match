@@ -39,7 +39,10 @@ Additional resources:
 USAGE
 =====
 
-At the moment cl-string-match is not supported by Quicklisp. Installation is manual.
+cl-string-match is supported by Quicklisp and is known by its system name:
+```lisp
+    (ql:quickload :cl-string-match)
+```
 
 Cl-string-match exports functions in `cl-string-match` package (nicknamed `sm`).
 
@@ -66,9 +69,10 @@ Brute-force algorithm does not use pre-calculated data and has no
 
 Following example looks for a given substring *pat* in a given line of
 text *txt* using Boyer-Moore-Horspool algorithm implementation:
-
+```lisp
     (let ((idx (initialize-bmh "abc")))
       (search-bmh idx "ababcfbgsldkj"))
+```
 
 It should be noted that Boyer-Moore-Horspool (`bmh`) implementation
 offers an order of magnitude boost to performance compared to the
