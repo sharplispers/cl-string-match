@@ -39,7 +39,7 @@
 
 ;; --------------------------------------------------------
 
-(defconstant +times+ (* 10 1000))
+(defconstant +times+ (* 10 100))
 
 ;; some algorithms process needle from the end to start, other
 ;; algorithms go in the opposite direction. The mismatching symbol is
@@ -266,12 +266,72 @@ with 20 different characters."
 (format t "Eval: (run-benchmarks) to run all benchmarks~%")
 
 ;; --------------------------------------------------------
+;; Count matches of a pattern in a long file.
+;;
+;; Download the file/book from the Project Gutenberg:
+;;
+;; wget --no-check-certificate https://www.gutenberg.org/ebooks/135.txt.utf-8
+;;
+;; In this case we are using Les Miserables as it is one of the
+;; longest texts available for free and with 3.5MB in size it still
+;; can be loaded into memory.
+;;
+;; And then run the benchmark:
+;;
+;; lx86cl --load "benchmark.lisp" --eval "(run-count-matches)" --eval "(quit)"
+;;
+;; Or (after compiling the sources):
+;;
+;; sbcl --noinform --load "benchmark.fasl" --eval "(run-count-matches)" --quit
+
+(defun count-sub (pat &key (predicate nil))
+  "Count all occurences of pat in the given str. Code adopted from
+Rosetta Code:
+
+http://rosettacode.org/wiki/Count_occurrences_of_a_substring#Common_Lisp"
+
+  (loop with z = 0 with s = 0 while s do
+       (when (setf s (funcall predicate s))
+	 (incf z) (incf s (length pat)))
+     finally (return z)))
+
+;; --------------------------------------------------------
+
+(defun run-count-matches (&key (fname "135.txt.utf-8"))
+  (with-open-file (in fname :direction :input)
+    (let* ((pat "strength")
+	   (str (make-string (file-length in)))
+	   (idx (sm:initialize-bmh pat))
+	   (bm 0)
+	   (st 0))
+
+      ;; slurp book contents into memory
+      (read-sequence str in)
+
+      ;; now benchmark the time required to find all matches of pat in
+      ;; this string
+      (format t "time to count for BM: ~a~%"
+	      (bm-timer (length pat)
+			#'(lambda ()
+			    (setf bm
+				  (count-sub pat :predicate #'(lambda (s)
+								(sm:search-bmh idx str :start2 s)))))))
+      (format t "time to count for ST: ~a~%"
+	      (bm-timer (length pat)
+			#'(lambda ()
+			    (setf st
+				  (count-sub pat :predicate #'(lambda (s)
+								(search pat str :start2 s)))))))
+      (format t "matches found: bm=~a; st=~a~%" bm st)
+      )))
+
+;; --------------------------------------------------------
 ;; Random haystack and the needle benchmarks
 ;; --------------------------------------------------------
-;; 
+;;
 ;; To run random benchmarks first compile the source file and execute
 ;; the following command:
-;; 
+;;
 ;; sbcl --load benchmark --eval '(rnd-run)' --eval '(quit)'
 
 (defparameter *alphabet*
@@ -348,7 +408,7 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 		(bmh8-idx (sm:initialize-bmh8 needle))
 		(rk-idx (sm:initialize-rk needle))
 		(kmp-idx (sm:initialize-kmp needle)))
-	    
+
 	    (incf sys-time (bm-timer (length needle)
 				     #'search needle random-haystack))
 	    (incf bf-time (bm-timer (length needle)

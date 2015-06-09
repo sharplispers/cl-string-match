@@ -36,6 +36,19 @@ Additional resources:
 * If you prefer other project hosting sites, take a look at [our mirror on SourceForge](http://clstringmatch.sourceforge.net/)
 
 
+RATIONALE
+=========
+
+Since the standard `search` function is working fine, one might ask:
+why do we need a yet another implementation? Answer is simple:
+advanced algorithms offer different benefits compared to the standard
+implementation that is based on the brute-force algorithm.
+
+Benchmarks show that depending on environment and pattern of
+application, a Boyer-Moore-Horspool algorithm implementation can
+outperform standard search function by almost 18 times!
+
+
 USAGE
 =====
 
@@ -58,7 +71,8 @@ A more robust approach is to use pre-calculated index data that is
 processed by a pair of `initialize` and `search` functions:
 
 * `initialize-bm` *pat* and `search-bm` *bm* *txt*
-* `initialize-bmh` *pat* and `search-bm` *bm* *txt*
+* `initialize-bmh` *pat* and `search-bmh` *bm* *txt*
+* `initialize-bmh8` *pat* and `search-bmh8` *bm* *txt*
 * `initialize-rk` *pat* and `search-rk` *rk* *txt*
 * `initialize-kmp` *pat* and `search-kmp` *kmp* *txt*
 * `initialize-ac` *pat* and `search-ac` *ac* *txt*. `initialize-ac`
@@ -66,6 +80,10 @@ processed by a pair of `initialize` and `search` functions:
 
 Brute-force algorithm does not use pre-calculated data and has no
 "initialize" function.
+
+Boyer-Moore-Horspool implementation (the `-BMH` and `-BMH8` functions)
+also accepts `:start2` and `:end2` keywords for the "search" and
+"contains" functions.
 
 Following example looks for a given substring *pat* in a given line of
 text *txt* using Boyer-Moore-Horspool algorithm implementation:
@@ -75,8 +93,18 @@ text *txt* using Boyer-Moore-Horspool algorithm implementation:
 ```
 
 It should be noted that Boyer-Moore-Horspool (`bmh`) implementation
-offers an order of magnitude boost to performance compared to the
+can offer an order of magnitude boost to performance compared to the
 standard `search` function.
+
+However, some implementations create a "jump table" that can be the
+size of the alphabet (over 1M CHAR-CODE-LIMIT on implementations
+supporting Unicode) and thus consume a significant chunk of
+memory. There are different solutions to this problem and at the
+moment a version for the ASCII strings is offered: `initialize-bmh8`
+*pat* and `search-bmh8` *bm* *txt* as well as `string-contains-bmh8`
+*pat* *txt* work for strings with characters inside the 256 char code
+limit.
+
 
 TODO
 ====
