@@ -33,27 +33,31 @@
 ;; or:
 ;;
 ;; http://www-igm.univ-mlv.fr/~lecroq/string/node5.html
+;;
+;; Parts of the source code are modeled after the Java implementation
+;; by Robert Sedgewick and Kevin Wayne:
+;;
+;; http://algs4.cs.princeton.edu/53substring/RabinKarp.java.html
 
 
 (in-package :cl-string-match)
 
 ;; --------------------------------------------------------
 
-(deftype ub32 ()
-  '(unsigned-byte 31))
+(deftype rk-ub32 ()
+  '(unsigned-byte))
 
-;; (define-constant +big-prime+ (the (unsigned-byte 32) 1646866399))
-(define-constant +big-prime+ (the ub32 999925501));;   
-(define-constant +alph-size+ (the ub32 256)) ;; CHAR-CODE-LIMIT
+(define-constant +big-prime+ (the rk-ub32 723925871))
+(define-constant +alph-size+ (the rk-ub32 256)) ;; CHAR-CODE-LIMIT
 
 ;; --------------------------------------------------------
 
 (defstruct rk
   (pat nil    :type (or null simple-string))
-  (pat-hash 0 :type ub32)
-  (pat-len  0 :type ub32)
-  (alph-size +alph-size+ :type ub32)
-  (rm 1       :type ub32))
+  (pat-hash 0 :type rk-ub32)
+  (pat-len  0 :type rk-ub32)
+  (alph-size +alph-size+ :type rk-ub32)
+  (rm 1       :type rk-ub32))
 
 ;; --------------------------------------------------------
 
@@ -69,18 +73,19 @@ and the text.)"
 	   #.*standard-optimize-settings*)
 
   (let ((h 0))
-    (declare (type ub32 h))
+    (declare (type rk-ub32 h))
 
     (loop :for j :of-type fixnum :from 0 :below end :do
        (setf h
-	     (mod (the ub32
-		       (+ (the ub32 (* (the ub32 +alph-size+)
-				       (the ub32 h)))
-			  (the ub32 (char-code (char key j)))))
-		  (the ub32 +big-prime+))))
-    (return-from horner-hash (the ub32 h))))
-(declaim (ftype (function (simple-string fixnum) ub32) horner-hash)
-	 (inline horner-hash))
+	     (mod (the rk-ub32
+		       (+ (the rk-ub32 (* (the rk-ub32 +alph-size+)
+				       (the rk-ub32 h)))
+			  (the rk-ub32 (char-code (char key j)))))
+		  (the rk-ub32 +big-prime+))))
+    (return-from horner-hash (the rk-ub32 h))))
+
+;; (declaim (ftype (function (simple-string fixnum) rk-ub32) horner-hash)
+;;	 (inline horner-hash))
 
 ;; --------------------------------------------------------
 
@@ -91,17 +96,17 @@ and the text.)"
   (let ((idx (make-rk
 	      :pat pat	; saving patter is required only for Las-Vegas
 	      :pat-len (length pat)
-	      :pat-hash (the ub32 (horner-hash pat (length pat)))
+	      :pat-hash (the rk-ub32 (horner-hash pat (length pat)))
 	      :rm 1)))
 
     ;; Compute R^(M-1) % Q for use in removing leading digit.
     (loop :for i :from 0 :below (- (length pat) 1) :do
        (setf (rk-rm idx)
 	     (mod
-	      (the ub32
-		(* (the ub32 (rk-alph-size idx))
-		   (the ub32 (rk-rm idx))))
-	      (the ub32 +big-prime+))))
+	      (the rk-ub32
+		   (* (rk-alph-size idx)
+		      (rk-rm idx)))
+	      (the rk-ub32 +big-prime+))))
     idx))
 
 ;; --------------------------------------------------------
@@ -114,10 +119,11 @@ and the text.)"
 
   (string= (rk-pat idx) txt
 	   :start2 i
-	   :end2 (+ (rk-pat-len idx)
-		    i)))
+	   :end2 (+ i (rk-pat-len idx))))
 
-;; (loop for j :from 0 :below (rk-pat-len idx) :when (char/= (char (rk-pat idx) j) (char txt (+ i j))) :do (return-from check-rk-lv nil)) T
+;;  (loop for j :from 0 :below (rk-pat-len idx) :when (char/= (char
+;;  (rk-pat idx) j) (char txt (+ i j))) :do (return-from check-rk-lv
+;;  nil))
 
 
 ;; --------------------------------------------------------
@@ -126,7 +132,6 @@ and the text.)"
   "Monte Carlo version: always return true"
   (declare (ignore i))
   T)
-(declaim (inline check-rk))
 
 ;; --------------------------------------------------------
 
@@ -136,49 +141,44 @@ and the text.)"
 	   (type rk idx)
 	   #.*standard-optimize-settings*)
 
+  (when (= 0 (rk-pat-len idx))
+    (return-from search-rk 0))
+  (when (= 0 (length txt-s))
+    (return-from search-rk nil))
+
   (let* ((txt txt-s)
 	 (txt-len (length txt))
 	 (txt-hash (horner-hash txt (rk-pat-len idx)))
-	 (M (rk-pat-len idx)))
-
-    (declare (fixnum txt-len M)
-	     (ub32 txt-hash))
+	 (pat-len (rk-pat-len idx)))
+    (declare (fixnum txt-len pat-len)
+	     (rk-ub32 txt-hash))
 
     ;; check for initial match
     (when (= txt-hash (rk-pat-hash idx))
       (when (check-rk-lv idx txt-s 0)
 	(return-from search-rk 0)))
 
-    (loop :for i :of-type fixnum :from 0 :to (- txt-len (rk-pat-len idx)) :do
+    ;; main check loop
+    (loop :for i :of-type fixnum :from (rk-pat-len idx) :below txt-len
+       :for offset = (+ (- i pat-len) 1) :do
        (progn
 	 ;; Remove leading digit, add trailing digit, check for match.
-	 (when (= (rk-pat-hash idx)
-		  txt-hash)
-	   (when (check-rk-lv idx txt-s i)
-	     (return-from search-rk i)))
-
-	 ;; Calulate hash value for next window of text: Remove
-	 ;; leading digit, add trailing digit
-	 (when (< i (- txt-len M))
-	   ;; txtHash = (alphSize * (txtHash - txt[i]*RM) + txt[i+M]) % prime;
-	   (let ((base (the ub32
-			    (+ (the ub32 (* (the ub32 +alph-size+)
-					    (- (the ub32 txt-hash)
-					       (the ub32 (* (the ub32 (mod (the ub32 (char-code (char txt i)))
-									   (the ub32 +alph-size+)))
-							    (the ub32 (rk-rm idx)))))))
-
-			       (the ub32 (mod (the ub32 (char-code (char txt (+ i m))))
-					      (the ub32 +alph-size+)))))))
-
-	     (setf txt-hash
-		   (mod (the ub32 base)
-			(the ub32 +big-prime+)))
-
-	     ;; We might get negative value of t, converting it to positive
-	     (when (< base 0)
-	       (setf txt-hash (- (the ub32 +big-prime+)
-				 (the ub32 txt-hash) )))))))
+	 ;; txtHash = (txtHash + Q - RM*txt.charAt(i-M) % Q) % Q;
+	 (setf txt-hash
+	       (mod (- (+ txt-hash +big-prime+)
+		       (mod (* (rk-rm idx) (char-code (char txt-s (- i pat-len))))
+			    +big-prime+))
+		    +big-prime+))
+	 ;; txtHash = (txtHash*R + txt.charAt(i)) % Q;
+	 (setf txt-hash
+	       (mod (+
+		     (* txt-hash +alph-size+)
+		     (char-code (char txt-s i)))
+		    +big-prime+))
+	 (when (= txt-hash (rk-pat-hash idx))
+	   (when (check-rk-lv idx txt-s offset)
+	     (return-from search-rk offset)))
+	 ))
     NIL))
 
 ;; --------------------------------------------------------
@@ -188,6 +188,42 @@ and the text.)"
 	   (type simple-string txt)
 	   #.*standard-optimize-settings*)
 
+  (when (= 0 (length pat))
+    (return-from string-contains-rk 0))
+  (when (= 0 (length txt))
+    (return-from string-contains-rk nil))
+
   (search-rk (initialize-rk pat) txt))
 
 ;; EOF
+
+#|
+;; Remove leading digit, add trailing digit, check for match.
+(when (= (rk-pat-hash idx)
+	  txt-hash)
+  (when (check-rk-lv idx txt-s i)
+    (return-from search-rk i)))
+
+;; Calulate hash value for next window of text: Remove
+;; leading digit, add trailing digit
+(when (< i (- txt-len M))
+  ;; txtHash = (alphSize * (txtHash - txt[i]*RM) + txt[i+M]) % prime;
+  (let ((base (the rk-ub32
+		    (+ (the rk-ub32 (* (the rk-ub32 +alph-size+)
+				    (- (the rk-ub32 txt-hash)
+				       (the rk-ub32 (* (the rk-ub32 (mod (the rk-ub32 (char-code (char txt i)))
+								   (the rk-ub32 +alph-size+)))
+						    (the rk-ub32 (rk-rm idx)))))))
+
+		       (the rk-ub32 (mod (the rk-ub32 (char-code (char txt (+ i m))))
+				      (the rk-ub32 +alph-size+)))))))
+
+    (setf txt-hash
+	   (mod (the rk-ub32 base)
+		(the rk-ub32 +big-prime+)))
+
+    ;; We might get negative value of t, converting it to positive
+    (when (< base 0)
+      (setf txt-hash (- (the rk-ub32 +big-prime+)
+			 (the rk-ub32 txt-hash))))
+|#

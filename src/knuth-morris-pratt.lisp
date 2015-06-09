@@ -74,7 +74,7 @@
 	       (1+ cnd))
 	 (incf pos)
 	 (incf cnd))
-	
+
 	((> cnd 0)
 	 (setf cnd (aref (kmp-table idx) cnd)))
 
@@ -91,7 +91,9 @@
 
   (when (= (kmp-pat-len idx) 0)
     (return-from search-kmp 0))
-  
+  (when (= 0 (length txt))
+    (return-from search-kmp nil))
+
   (let* ((m 0)
 	 (i 0)
 	 (txt-len (length txt)))
@@ -101,7 +103,7 @@
 	    (aref (kmp-pat idx) i))
 	 (s (char txt (+ m i))))
 	((>= (+ m i) txt-len))
-      
+
       (cond
 	((char= w s)
 	 (incf i)
@@ -125,6 +127,10 @@
 	   (type string txt)
 	   #.*standard-optimize-settings*)
 
+  (when (= 0 (length pat))
+    (return-from string-contains-kmp 0))
+  (when (= 0 (length txt))
+    (return-from string-contains-kmp nil))
   (search-kmp (initialize-kmp pat) txt))
 
 
