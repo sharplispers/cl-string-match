@@ -99,16 +99,23 @@ Initialize the table to default value."
 
        ;; --------------------------------------------------------
 
-       (defun ,search-name (idx txt)
+       (defun ,search-name (idx txt &key (start2 0) (end2 nil))
 	 "Search for pattern defined in the IDX in TXT."
 
 	 (declare (type ,data-type txt)
+		  (type fixnum start2)
+		  (type (or fixnum null) end2)
 		  #.*standard-optimize-settings*)
+
+	 (when (= 0 (,the-pat-len idx))
+	   (return-from ,search-name 0))
+	 (when (= 0 (length txt))
+	   (return-from ,search-name nil))
 
 	 (loop
 	    :with m fixnum = (,the-pat-len idx)
-	    :with n fixnum = (length txt)
-	    :with j fixnum = 0
+	    :with n fixnum = (if end2 end2 (length txt))
+	    :with j fixnum = start2
 	    ;; Search the haystack, while the needle can still be within it.
 	    :while (<= j (- n m))
 	    :do (let ((c (,key-get txt (- (+ j m) 1))))
@@ -126,12 +133,13 @@ Initialize the table to default value."
 
        ;; --------------------------------------------------------
 
-       (defun ,matcher-name (pat txt)
+       (defun ,matcher-name (pat txt &key (start2 0) (end2 nil))
 	 (declare (type ,data-type pat)
 		  (type ,data-type txt)
 		  #.*standard-optimize-settings*)
 
-	 (,search-name (,initialize-name pat) txt))
+	 (,search-name (,initialize-name pat) txt
+		       :start2 start2 :end2 end2))
 
        )))
 

@@ -12,6 +12,7 @@
 (in-package :cl-string-match-test)
 
 (setq *print-failures* t)
+(setq lisp-unit:*print-failures* t)
 
 ;; --------------------------------------------------------
 
@@ -61,13 +62,37 @@
 
 ;; --------------------------------------------------------
 
+(defun count-sub (pat str)
+  "Count all occurences of pat in the given str. Code taken from Rosetta
+Code:
+
+http://rosettacode.org/wiki/Count_occurrences_of_a_substring#Common_Lisp"
+  
+  (loop with z = 0 with s = 0 while s do
+       (when (setf s (sm:string-contains-bmh pat str :start2 s))
+	 (incf z) (incf s (length pat)))
+     finally (return z)))
+
+;; --------------------------------------------------------
+
 (define-test window-test
   "Test how well the start and begin windows over the search pattern
 and the text works."
 
   (assert-equal 1 (sm:string-contains-brute "-abc-" "_abcab_"
                                             :start1 1 :end1 3
-                                            :start2 1 :end2 5)))
+                                            :start2 1 :end2 5))
+
+  (assert-equal (sm:string-contains-brute "-abc-" "_abcab_"
+					  :start2 1 :end2 5)
+		(sm:string-contains-bmh "-abc-" "_abcab_"
+					:start2 1 :end2 5))
+  
+  (assert-equal 2 (count-sub "ab" "ababa"))
+
+  (assert-equal 1 (count-sub "aba" "ababa"))
+		
+  )
 
 ;; --------------------------------------------------------
 
@@ -228,6 +253,6 @@ and the text works."
 ;; --------------------------------------------------------
 
 (defun run ()
-  (lisp-unit:run-tests :all (find-package 'cl-string-match-test)))
+  (lisp-unit:print-errors (lisp-unit:run-tests :all (find-package 'cl-string-match-test))))
 
 ;; EOF
