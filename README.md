@@ -13,7 +13,12 @@ algorithms:
 * Boyer-Moore (with mismatched character heuristic)
 * Boyer-Moore-Horspool algorithm
 * Knuth-Morris-Pratt algorithm
+* Rabin-Karp algorithm
 * Aho-Corasick algorithm (with finite set of patterns)
+* A simple backtracking regular expressions engine
+  [re](https://github.com/massung/re) similar to that of the Lua
+  programming language. At the moment it significantly underperforms
+  compared to the CL-PPCRE.
 
 Some string processing algorithms are also implemented:
 
@@ -33,7 +38,7 @@ Additional resources:
 
 * [Project home page](https://bitbucket.org/vityok/cl-string-match)
 * Also take a look at the [project Wiki](http://sourceforge.net/p/clstringmatch/wiki/Home/)
-* If you prefer other project hosting sites, take a look at [our mirror on SourceForge](http://clstringmatch.sourceforge.net/)
+* [A mirror on SourceForge](http://clstringmatch.sourceforge.net/)
 
 
 RATIONALE
@@ -53,8 +58,9 @@ USAGE
 =====
 
 cl-string-match is supported by Quicklisp and is known by its system name:
+
 ```lisp
-    (ql:quickload :cl-string-match)
+(ql:quickload :cl-string-match)
 ```
 
 Cl-string-match exports functions in `cl-string-match` package (nicknamed `sm`).
@@ -66,6 +72,7 @@ Shortcuts look for given pattern `pat` in text `txt`. They are usually much slow
 * `string-contains-bmh` *pat* *txt* — Boyer-Moore-Horspool
 * `string-contains-kmp` *pat* *txt* — Knuth-Morris-Pratt
 * `string-contains-ac` *pat* *txt* — Aho-Corasick
+* `string-contains-rk` *pat* *txt* — Rabin-Karp
 
 A more robust approach is to use pre-calculated index data that is
 processed by a pair of `initialize` and `search` functions:
@@ -87,9 +94,22 @@ also accepts `:start2` and `:end2` keywords for the "search" and
 
 Following example looks for a given substring *pat* in a given line of
 text *txt* using Boyer-Moore-Horspool algorithm implementation:
+
 ```lisp
-    (let ((idx (initialize-bmh "abc")))
-      (search-bmh idx "ababcfbgsldkj"))
+(let ((idx (initialize-bmh "abc")))
+  (search-bmh idx "ababcfbgsldkj"))
+```
+
+Counting all matches of a given pattern in a string:
+
+```lisp
+(loop with str = "____abc____abc____ab"
+      with pat = "abc"
+      with idx = (sm:initialize-bmh8 pat)
+      with z = 0 with s = 0 while s do
+       (when (setf s (sm:search-bmh8 idx str :start2 s))
+	 (incf z) (incf s (length pat)))
+     finally (return z))
 ```
 
 It should be noted that Boyer-Moore-Horspool (`bmh`) implementation
@@ -121,10 +141,10 @@ development. Following tasks are still to be implemented:
 
 * Rabin-Karp algorithm is not implemented properly: type conversions
   and native arithmetic operations bloat code and make it barely
-  readable. Function returns incorrect results in some cases.
+  readable.
 
 * Improve performance: some implementations (i.e. Aho-Corasick,
-  Rabin-Karp) are extremely slow compared with theoretical boundaries.
+  Rabin-Karp) are extremely slow compared with theoretical estimates.
 
 * Benchmark should include corner cases (general worst-case scenarios)
   and also check correlation between needle and haystack sizes
@@ -143,7 +163,7 @@ Algorithms with finite set of patterns:
 
 * Commentz-Walter algorithm
 
-* Rabin–Karp string search algorithm
+* Rabin–Karp multipattern search algorithm
 
 * DAWG-match
 
