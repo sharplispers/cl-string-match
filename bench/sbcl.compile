@@ -5,4 +5,9 @@ sbcl --noinform --eval '(ql:quickload "cl-string-match")' \
                 --eval '(compile-file "benchmark.lisp")' \
 		--eval '(quit)' > /dev/null
 
+sbcl --noinform --eval '(ql:quickload "cl-string-match")' \
+                --eval '(ql:quickload "cl-ppcre")' \
+                --eval '(compile-file "benchmark-re.lisp")' \
+		--eval '(quit)' > /dev/null
+
 # EOF

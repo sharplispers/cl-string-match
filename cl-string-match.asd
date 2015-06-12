@@ -42,8 +42,8 @@
 matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
   :license "BSD"
   :author "Vityok https://bitbucket.org/vityok"
-  :version "2015.06.04"
-  :depends-on (:alexandria :ascii-strings)
+  :version "2015.6.4"
+  :depends-on (:alexandria :ascii-strings :yacc)
   :components ((:module "src"
 			:serial T
 			:components
@@ -54,7 +54,8 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
 			 (:file "rabin-karp")
 			 (:file "knuth-morris-pratt")
 			 (:file "aho-corasick")
-			 (:file "suffix-tree"))))
+			 (:file "suffix-tree")
+			 (:file "pre"))))
   :in-order-to ((test-op (load-op cl-string-match-test))))
 
 ;; EOF

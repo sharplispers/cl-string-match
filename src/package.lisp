@@ -76,7 +76,28 @@
    :ukk-node
    :make-ukk-node
    :build-suffix-tree-simple
-   :build-suffix-tree-ukkonen))
+   :build-suffix-tree-ukkonen
+
+   ;; REGULAR EXPRESSIONS
+   #:re
+   #:re-match
+
+   ;; macros
+   #:with-re
+   #:with-re-match
+
+   ;; interface
+   #:compile-re
+   #:match-re
+   #:find-re
+   #:split-re
+   #:replace-re
+
+   ;; match readers
+   #:match-string
+   #:match-groups
+   #:match-pos-start
+   #:match-pos-end))
 
 ;; --------------------------------------------------------
 
