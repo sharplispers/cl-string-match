@@ -13,7 +13,8 @@
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (ql:quickload :cl-string-match)
-  (ql:quickload :cl-ppcre))
+  (ql:quickload :cl-ppcre)
+  (ql:quickload :regex))
 
 (defparameter +times+ 1)
 
@@ -61,6 +62,7 @@ Returns: the amount of elapsed time."
 
 
 (defun run-pre-benchmark ()
+  "Portable RE bencmark."
   (dolist (e *expressions*)
     (let ((re (sm:compile-re e)))
       (with-open-file (in *fname* :direction :input)
@@ -72,6 +74,7 @@ Returns: the amount of elapsed time."
 
 
 (defun run-ppcre-benchmark ()
+  "CL-PPCRE benchmark."
   (dolist (e *expressions*)
     (let ((re (ppcre:create-scanner e)))
       (with-open-file (in *fname* :direction :input)
@@ -81,8 +84,20 @@ Returns: the amount of elapsed time."
 		   when (ppcre:scan re line)
 		   count line))))))
 
+(defun run-regex-benchmark ()
+  "CLAWK/regexp benchmark. "
+  (dolist (e *expressions*)
+    (let ((re (regex:compile-str e)))
+      (with-open-file (in *fname* :direction :input)
+	(format t "found: ~a matches~%"
+		(loop for line = (read-line in nil)
+		   while line
+		   when (regex:scan-str re line)
+		   count line))))))
+
 
 (defun run-re-benchmarks ()
-  (format t "re complete in: ~a seconds~%ppcre complete in: ~a seconds~%"
+  (format t "pre complete in: ~a seconds~%ppcre complete in: ~a seconds~%regex complete in: ~a seconds~%"
 	  (bm-timer #'run-pre-benchmark)
-	  (bm-timer #'run-ppcre-benchmark)))
+	  (bm-timer #'run-ppcre-benchmark)
+	  (bm-timer #'run-regex-benchmark)))
