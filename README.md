@@ -1,10 +1,7 @@
 CL-STRING-MATCH aims at providing robust implementations of string
-matching algorithms. These algorithms are also called "substring
-search" or "subsequence search" algorithms.
-
-Corresponding article on Wikipedia is:
-
-http://en.wikipedia.org/wiki/String_searching_algorithm
+matching algorithms. These algorithms are also called "[substring
+search](http://en.wikipedia.org/wiki/String_searching_algorithm)"
+or "subsequence search" algorithms.
 
 Currently it provides implementations of the following string matching
 algorithms:
@@ -37,7 +34,7 @@ for application-specific custom data types and data structures.
 Additional resources:
 
 * [Project home page](https://bitbucket.org/vityok/cl-string-match)
-* Also take a look at the [project Wiki](http://sourceforge.net/p/clstringmatch/wiki/Home/)
+* Also take a look at the [project Wiki](https://bitbucket.org/vityok/cl-string-match/wiki/Home)
 * [A mirror on SourceForge](http://clstringmatch.sourceforge.net/)
 
 
@@ -162,6 +159,8 @@ development. Following tasks are still to be implemented:
 Algorithms with finite set of patterns:
 
 * Commentz-Walter algorithm
+
+* Wu-Manber algorithm
 
 * Rabin–Karp multipattern search algorithm
 
