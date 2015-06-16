@@ -31,6 +31,8 @@ Some algorithms (Brute-force, Boyer-Moore-Horspool) have parametric
 implementations making it possible to declare specific implementations
 for application-specific custom data types and data structures.
 
+Check the [API Reference](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference) for more details.
+
 Additional resources:
 
 * [Project home page](https://bitbucket.org/vityok/cl-string-match)
@@ -156,11 +158,13 @@ development. Following tasks are still to be implemented:
 
 * Apostolico–Giancarlo algorithm
 
+* Bitap/Shift-or algorithm
+
 Algorithms with finite set of patterns:
 
 * Commentz-Walter algorithm
 
-* Wu-Manber algorithm
+* Wu-Manber algorithm (derivative of Bitap)
 
 * Rabin–Karp multipattern search algorithm
 
