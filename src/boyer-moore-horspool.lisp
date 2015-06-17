@@ -158,6 +158,8 @@ Initialize the table to default value."
                     :alphabet-size ub-char-code-limit)
 
 (export 'bmh8)
+(export 'bmh8-p)
+(export 'bmh8-pat)
 (export 'initialize-bmh8)
 (export 'search-bmh8)
 (export 'string-contains-bmh8)
