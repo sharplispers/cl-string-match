@@ -4,7 +4,7 @@ search](http://en.wikipedia.org/wiki/String_searching_algorithm)"
 or "subsequence search" algorithms.
 
 Currently it provides implementations of the following string matching
-algorithms:
+algorithms (see [wiki for details](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference)):
 
 * Brute-force (also known as naïve algorithm)
 * Boyer-Moore (with mismatched character heuristic)
@@ -30,6 +30,8 @@ Data structures:
 Some algorithms (Brute-force, Boyer-Moore-Horspool) have parametric
 implementations making it possible to declare specific implementations
 for application-specific custom data types and data structures.
+
+This library is routinely tested on SBCL, Clozure CL and ABCL.
 
 Check the [API Reference](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference) for more details.
 
