@@ -52,21 +52,25 @@ letter) and a mark (some value attributed to the matching string)."
 
 ;; --------------------------------------------------------
 
-(defun trie-add-child (trie label mark)
-  "Add a child node to the given node with the given label and mark."
+(defun trie-add-child (trie label mark &key (constructor #'make-trie-node))
+  "Add a child node to the given node with the given label and mark.
+
+Constructor can be either MAKE-TRIE-NODE or any other structure
+constructor derieved from the TRIE-NODE struct."
 
   (declare #.*standard-optimize-settings*)
 
-  (let ((child (make-trie-node :label label
-			       :mark mark
-			       :children (make-hash-table))))
+  (let ((child (funcall constructor
+			:label label
+			:mark mark
+			:children (make-hash-table))))
     (setf (gethash label (trie-node-children trie))
 	  child)
     child))
 
 ;; --------------------------------------------------------
 
-(defun trie-add-keyword (trie kw idx)
+(defun trie-add-keyword (trie kw idx &key (constructor #'make-trie-node))
   ;; Starting at the root, follow the path labeled by chars
   ;; of Pi
   ;;
@@ -83,7 +87,7 @@ letter) and a mark (some value attributed to the matching string)."
      :for child-node = (trie-find-child node c)
      :do (if (null child-node)
 	     ;; found a place where the path ends, add new node here
-	     (setf node (trie-add-child node c nil))
+	     (setf node (trie-add-child node c nil :constructor constructor))
 	     ;; the path continues further
 	     (setf node child-node))
      ;; store the keyword index
@@ -155,7 +159,7 @@ Returns the length of the matched prefix."
 
 ;; --------------------------------------------------------
 
-(defun trie-build (patterns)
+(defun trie-build (patterns &key (constructor #'make-trie-node))
   "Builds a Trie based on the given list of patterns."
   (declare (type list patterns)
 	   #.*standard-optimize-settings*)
@@ -164,7 +168,7 @@ Returns the length of the matched prefix."
     (loop :for pat :in patterns
        :count pat :into idx :do
        (progn
-	 (trie-add-keyword trie pat (- idx 1))))
+	 (trie-add-keyword trie pat (- idx 1) :constructor constructor)))
     trie))
 
 ;; --------------------------------------------------------
@@ -217,7 +221,7 @@ first occurence."
   (if (= (length pat) 0)
       0
       (let* ((trie (trie-build (list pat)))
-	     (res 
+	     (res
 	      (loop
 		 :for c :across txt
 		 :for j :from 1 :to (length txt)
