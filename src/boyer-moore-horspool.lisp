@@ -38,6 +38,9 @@
 ;; "Exact String Matching Algorithms" by Christian Charras and Thierry Lecroq
 ;;
 ;; http://www-igm.univ-mlv.fr/~lecroq/string/node18.html#SECTION00180
+;;
+;; It uses only the "Bad character skip" rule, and does not use the
+;; "Good suffix rule"
 
 (in-package :cl-string-match)
 

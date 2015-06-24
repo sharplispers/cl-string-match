@@ -1,0 +1,14 @@
+2015-06-24  victor  <victor@vityok>
+
+	* src/boyer-moore.lisp now implements the Boyer-Moore algorithm
+	similar to the one described by Christian Charras and Thierry
+	Lecroq. Unlike a lot of other implementations this uses bad char
+	AND good suffix shift tables: important for Commentz-Walter
+	algorithm implementation.
+
+2015-06-23  victor  <victor@vityok>
+
+	* src/boyer-moore.lisp had the Boyer-Moore-Horspool algorithm
+	implemented, not the Boyer-Moore as declared in the comments,
+	README, and everywhere else. This was discovered while working on
+	the implementation of the Commentz-Walter algorithm.

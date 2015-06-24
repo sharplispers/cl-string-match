@@ -67,7 +67,7 @@
 Code:
 
 http://rosettacode.org/wiki/Count_occurrences_of_a_substring#Common_Lisp"
-  
+
   (loop with z = 0 with s = 0 while s do
        (when (setf s (sm:string-contains-bmh pat str :start2 s))
 	 (incf z) (incf s (length pat)))
@@ -87,11 +87,11 @@ and the text works."
 					  :start2 1 :end2 5)
 		(sm:string-contains-bmh "-abc-" "_abcab_"
 					:start2 1 :end2 5))
-  
+
   (assert-equal 2 (count-sub "ab" "ababa"))
 
   (assert-equal 1 (count-sub "aba" "ababa"))
-		
+
   )
 
 ;; --------------------------------------------------------
@@ -252,7 +252,13 @@ and the text works."
 
 ;; --------------------------------------------------------
 
+(setf lisp-unit:*print-summary* T
+      lisp-unit:*print-failures* T
+      lisp-unit:*print-errors* T)
+(lisp-unit:use-debugger T)
+
 (defun run ()
-  (lisp-unit:print-errors (lisp-unit:run-tests :all (find-package 'cl-string-match-test))))
+  (lisp-unit:print-errors
+   (lisp-unit:run-tests :all (find-package 'cl-string-match-test))))
 
 ;; EOF
