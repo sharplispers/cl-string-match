@@ -1,3 +1,10 @@
+2015-07-02  victor  <victor@vanyakin>
+
+	* src/aho-corasick.lisp was not implementing fail transitions of
+	the Aho-Corasick algorithm. While adding its implementation the
+	Trie building code got unique node ids, and we are now using ITER
+	in some places.
+
 2015-06-24  victor  <victor@vityok>
 
 	* src/boyer-moore.lisp now implements the Boyer-Moore algorithm

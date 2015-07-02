@@ -26,7 +26,7 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (defpackage :cl-string-match
-  (:use :common-lisp :alexandria :ascii-strings)
+  (:use :common-lisp :alexandria :iterate :ascii-strings)
   (:nicknames :sm)
   (:export
    :string-contains-brute
@@ -115,6 +115,12 @@
     (compilation-speed 0)
     #+:lispworks (hcl:fixnum-safety 0))
   "The standard optimize settings used by most declaration expressions.")
+
+;; --------------------------------------------------------
+
+(defvar *standard-debug-settings*
+  '(optimize safety debug)
+  "The standard debug settings to be used in functions under development.")
 
 ;; you can change it to the more debug-friendly settings by evaluating:
 ;; (setf *STANDARD-OPTIMIZE-SETTINGS* '(optimize (debug 3)))

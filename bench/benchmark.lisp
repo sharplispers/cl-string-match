@@ -34,8 +34,9 @@
 ;;
 ;; See also: http://clisp.hg.sourceforge.net/hgweb/clisp/clisp/file/tip/benchmarks/run-all.lisp
 
-(ql:quickload "cl-string-match")
-(ql:quickload "cl-ppcre")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+ (ql:quickload "cl-string-match")
+ (ql:quickload "cl-ppcre"))
 
 ;; --------------------------------------------------------
 

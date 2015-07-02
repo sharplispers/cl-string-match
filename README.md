@@ -7,7 +7,7 @@ Currently it provides implementations of the following string matching
 algorithms (see [wiki for details](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference)):
 
 * Brute-force (also known as naïve algorithm)
-* Boyer-Moore (with mismatched character heuristic)
+* Boyer-Moore (with mismatched character heuristic and good suffix shift)
 * Boyer-Moore-Horspool algorithm
 * Knuth-Morris-Pratt algorithm
 * Rabin-Karp algorithm
