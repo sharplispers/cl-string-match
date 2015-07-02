@@ -2,10 +2,10 @@
 
 # gnuplot < random.gp
 
-set terminal png enhanced size 800,600
+set terminal png enhanced size 640,480
 set output "random.png"
 
-set title "Benchmarking search on random strings\n{/=9 " . system("date +%F") . "}"
+set title "Benchmarking search on random strings\n{/=9 " . system("cat system.txt") . " " . system("date +%F") . "}"
 
 set grid
 set key autotitles

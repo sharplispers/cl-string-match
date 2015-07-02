@@ -44,23 +44,46 @@
 
 ;; --------------------------------------------------------
 
-(defstruct (trie-node)
+(defstruct (trie-node
+	     (:print-function trie-node-printer))
   "Each node of a trie contains a list of child nodes, a label (the
 letter) and a mark (some value attributed to the matching string)."
 
-  children label mark)
+  id	    ; numeric node identifier, nodes counter in the root
+  children  ; this is essentially a goto transition
+  label	    ; character attributed to this node
+  mark	    ; this is essentially an output function
+  fail	    ; fail transition - node to fallback in case of a mismatch
+  )
 
 ;; --------------------------------------------------------
 
-(defun trie-add-child (trie label mark &key (constructor #'make-trie-node))
+(defun trie-node-printer (obj stream depth)
+  "We have to avoid standard Lisp printer because of the FAIL links
+that turn our tree into a network with cycles, plungin the default
+printer into an infinite loop."
+
+  (declare (ignore depth)
+	   (type trie-node obj))
+
+  (format stream "#<trie-node ~a label: ~a mark: ~a>"
+	  (trie-node-id obj)
+	  (trie-node-label obj)
+          (trie-node-mark obj)))
+
+;; --------------------------------------------------------
+
+(defun trie-add-child (trie label mark &key (id 0) (constructor #'make-trie-node))
   "Add a child node to the given node with the given label and mark.
 
 Constructor can be either MAKE-TRIE-NODE or any other structure
 constructor derieved from the TRIE-NODE struct."
 
-  (declare #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*
+	   (function constructor))
 
   (let ((child (funcall constructor
+			:id id
 			:label label
 			:mark mark
 			:children (make-hash-table))))
@@ -87,28 +110,52 @@ constructor derieved from the TRIE-NODE struct."
      :for child-node = (trie-find-child node c)
      :do (if (null child-node)
 	     ;; found a place where the path ends, add new node here
-	     (setf node (trie-add-child node c nil :constructor constructor))
+	     (setf node (trie-add-child node c nil
+					:id (incf (trie-node-id trie))
+					:constructor constructor))
 	     ;; the path continues further
 	     (setf node child-node))
      ;; store the keyword index
-     :finally (setf (trie-node-mark node) idx)))
+     :finally (setf (trie-node-mark node) (list idx))))
 
 ;; --------------------------------------------------------
 
-(defun trie-traverse (trie &optional (padding 0) stream)
+(defmacro map-trie-children ((parent child) &body body)
+  "Perform the given BODY on the children of the given PARENT. The
+child node is bound to the CHILD variable."
+  (let ((key (gensym)))
+    `(maphash
+      #'(lambda (,key ,child)
+	  (declare (ignore ,key))
+	  ,@body)
+      (trie-node-children ,parent))))
+
+;; --------------------------------------------------------
+
+(defun trie-traverse (trie &key (padding 0) root (stream *standard-output*))
   "Traverse the given trie and pretty-print it to the given stream."
-
-  (declare #.*standard-optimize-settings*)
-
+  (declare #.*standard-debug-settings*)
   (when trie
-    (format stream "~&~v@TData: ~A ~A" padding (trie-node-label trie)
-	    (trie-node-mark trie))
+    (format stream "~&~v@TNode[~A] ~A ~A; fail: [~a]"
+	    padding
+	    (trie-node-id trie)
+	    (trie-node-label trie)
+	    (trie-node-mark trie)
+	    (if (eq (trie-node-fail trie) root)
+		"ROOT"
+		(if (eq trie (trie-node-fail trie))
+		    "SELF" ; we might not have the root node initially
+		    (if (trie-node-fail trie)
+			(trie-node-id (trie-node-fail trie))
+			"NONE"))))
     (when (trie-node-children trie)
-      (format stream "~&~v@T  Children: ~%" padding)
       (maphash #'(lambda (key val)
-		   (trie-traverse val (+ padding 3) stream))
-	       (trie-node-children trie)))
-    (format stream "~%")))
+		   (declare (ignore key))
+		   (trie-traverse val
+				  :padding (+ padding 3)
+				  :stream stream
+				  :root (if root root trie)))
+	       (trie-node-children trie)))))
 
 ;; --------------------------------------------------------
 
@@ -124,7 +171,7 @@ constructor derieved from the TRIE-NODE struct."
   "Creates a new instance and returns an empty trie."
 
   (declare #.*standard-optimize-settings*)
-  (make-trie-node :children (make-hash-table) :label nil :mark nil))
+  (make-trie-node :children (make-hash-table) :label nil :mark nil :id 0))
 
 ;; --------------------------------------------------------
 
@@ -173,14 +220,86 @@ Returns the length of the matched prefix."
 
 ;; --------------------------------------------------------
 
+(defun compute-failure-function (trie)
+  "Given a trie calculate failure transitions for its nodes.
+
+Modifies nodes.
+
+Traverses the trie in the breadth-first-order (BFO)"
+
+  (declare #.*standard-debug-settings*)
+
+  (let ((queue (make-instance 'jpl-queues:unbounded-fifo-queue))
+	(root trie))
+
+    ;; root fails to itself
+    (setf (trie-node-fail root) root)
+
+    ;; immediate children of the root also fail to the root
+    (map-trie-children (root child)
+      (setf (trie-node-fail child) root)
+      (jpl-queues:enqueue child queue))
+
+    ;; deal with the rest: the main while loop computes the set of
+    ;; states of depth d from the set of states of depth d-1
+    (iter
+      (until (jpl-queues:empty? queue))
+      ;; let r be the next state in queue
+      (for r = (jpl-queues:dequeue queue))
+      ;; map children of this r
+      (map-trie-children (r child)
+	;; child is S
+	(let* ((state (trie-node-fail r))  ; state <- f(r),
+	       (a (trie-node-label child)) ; g(r,a)=s
+	       ;; now we can deal with the fail transition:
+	       ;; g(state,a)=fail. however, original algorithm relies on
+	       ;; the fact that the root node goes forward to the root
+	       ;; node in cycles for every char that is not its
+	       ;; child. This is feasible if forward transitions/child
+	       ;; nodes are stored in a fixed table but with large
+	       ;; alphabets/hashmaps/treemaps this is not so
+	       ;; easy. Therefore we additionally check if we reached the
+	       ;; root and use it as a sort of default fallback node.
+	       (fail-node
+		(iter
+		  (until (trie-find-child state a))
+		  ;; state <- f(state)
+		  (when (eq state (trie-node-fail state))
+		    ;; avoid infinite cycle in the root node
+		    (leave state))
+		  (setf state (trie-node-fail state))
+		  ;; executed only if we are leaving via until
+		  (finally (return (trie-find-child state a))))))
+
+	  ;; to preserve BFO: queue <- queue U {s}
+	  (jpl-queues:enqueue child queue)
+	  ;; f(s) <- g(state, a)
+	  (setf (trie-node-fail child)
+		fail-node)
+
+	  ;; output(s) <- output(s) U output(f(s))
+	  (setf (trie-node-mark child)
+		(concatenate 'list
+			     (trie-node-mark child)
+			     (trie-node-mark fail-node))))))
+
+    ;; done, return reference to the trie
+    trie))
+
+;; --------------------------------------------------------
+
+;; (initialize-ac '("atatata" "tatat" "acgatat"))
+;; (initialize-ac '("announce" "annual" "annually"))
+
 (defun initialize-ac (patterns)
   "Returns a Trie that is used to look for the given patterns in the
 text. It can deal either with a single pattern or a list of patterns."
 
-  (declare #.*standard-optimize-settings*)
-  (trie-build (if (listp patterns)
-		  patterns
-		  (list patterns))))
+  (declare #.*standard-debug-settings*)
+  (let ((trie (trie-build (if (listp patterns)
+			      patterns
+			      (list patterns)))))
+    (compute-failure-function trie)))
 
 ;; --------------------------------------------------------
 
@@ -189,24 +308,29 @@ text. It can deal either with a single pattern or a list of patterns."
 start position of the first matching pattern and its index."
 
   (declare (type simple-string txt)
-	   #.*standard-optimize-settings*)
-  (loop
-     :with i = 0
-     :for c :across txt
-     :for j :from 0 :below (length txt)
-     :for node = (trie-find-child trie c) :then (trie-find-child node c)
-     :do (if node
-	     (if (trie-node-mark node)
-		 ;; if this node has a mark this means that we've
-		 ;; reached an end of some pattern
-		 (return (values i
-				 (trie-node-mark node))))
-	     ;; update current node with matching current char
-	     (setf node (trie-find-child trie c)
-		   ;; and update index of the last non-matching
-		   ;; character
-		   i (+ j 1)))
-     :unless node :do (setf node trie)))
+	   #.*standard-debug-settings*)
+  (iter
+    (with match-len = 0)
+    (with node = trie)
+    (for c in-string txt)
+    (for pos from 0 below (length txt))
+    (for new-node first (trie-find-child trie c) then (trie-find-child node c))
+    (if new-node
+	;; we've got a forward transition
+	(progn
+	  (setf node new-node)
+	  (when (trie-node-mark node)
+	    ;; if this node has a mark this means that we've
+	    ;; reached an end of some pattern
+	    ;; (format t "~a ~a~%" (- pos match-len) (trie-node-mark node))
+	    (return (values (- pos match-len) (trie-node-mark node))))
+	  (incf match-len))
+	;; perform a fail transition
+	(progn
+	  (setf node (trie-node-fail node)
+		;; and update index of the last non-matching
+		;; character
+		match-len 0)))))
 
 ;; --------------------------------------------------------
 

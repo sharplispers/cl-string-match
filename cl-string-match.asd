@@ -43,7 +43,11 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
   :license "BSD"
   :author "Vityok https://bitbucket.org/vityok"
   :version "2015.6.4"
-  :depends-on (:alexandria :ascii-strings :yacc)
+  :depends-on (:alexandria :ascii-strings
+			   :yacc	; Portable RE
+			   :jpl-queues	; Aho-Corasick
+			   :iterate	; at least Aho-Corasick
+			   )
   :components ((:module "src"
 			:serial T
 			:components

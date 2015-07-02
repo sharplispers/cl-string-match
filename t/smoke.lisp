@@ -100,15 +100,19 @@ and the text works."
     ;; test Aho-Corasick implementation how it deals with multiple
     ;; patterns search
 
-    (let ((trie (initialize-ac '("he" "she" "his" "hers"))))
+    (let ((trie (initialize-ac '("he" "she" "his" "hers")))
+	  (trie2 (initialize-ac '("announce" "annual" "annually")))
+	  (trie3 (initialize-ac '("atatata" "tatat" "acgatat"))))
       (assert-equal 0 (search-ac trie "she"))
       (assert-equal 1 (search-ac trie "_she"))
       (assert-equal nil (search-ac trie "_sh_"))
+      (assert-equal 0 (search-ac trie2 "annual_announce"))
+      (assert-equal 8 (search-ac trie3 "agatacgatatatac"))
 
       (multiple-value-bind (pos idx)
 	  (search-ac trie "___his")
 	(assert-equal 3 pos)
-	(assert-equal 2 idx))
+	(assert-equal 2 (car idx)))
       (multiple-value-bind (pos idx)
 	  (search-ac trie "___h_s")
 	(assert-equal nil pos)
