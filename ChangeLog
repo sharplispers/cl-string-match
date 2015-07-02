@@ -1,4 +1,4 @@
-2015-07-02  victor  <victor@vanyakin>
+2015-07-02  victor  <victor@vityok>
 
 	* src/aho-corasick.lisp was not implementing fail transitions of
 	the Aho-Corasick algorithm. While adding its implementation the
