@@ -32,7 +32,7 @@
 ;; --------------------------------------------------------
 
 (deftype sor-ub32 ()
-  '(unsigned-byte 32))
+  '(signed-byte 32))
 
 ;; --------------------------------------------------------
 
@@ -53,7 +53,7 @@
 
 (defun initialize-sor (pat)
   (let ((idx (make-sor :cidx (make-array +sor-alphabet+
-					 :initial-element #xFFFFFFFF
+					 :initial-element (lognot 0)
 					 :element-type 'sor-ub32 )))
 	(marker #x1))
     (declare (type sor-ub32 marker))
@@ -61,10 +61,10 @@
     (iter
       (for i from 0 below (length pat))
       (for cc = (char-code (char pat i)))
-      (format t "~a: ~a, ~a; m: ~a~%" i (char pat i) cc (lognot marker))
+      (format t "~a: ~a, ~a; m: ~a~%" i (char pat i) cc marker)
       (setf (elt (sor-cidx idx) cc)
 	    (the sor-ub32 (lognot marker)))
-      (ash marker 1)
+      (setf marker (ash marker 1))
       )
     idx))
 
