@@ -51,8 +51,10 @@
    :trie-node
    :trie-build
    :trie-add-keyword
-   :trie-traverse
+   :trie-traverse-bfo
+   :trie-traverse-dfo
    :trie-contains
+   :trie-pprint
 
    ;; Suffix tree
    :+infinity+
