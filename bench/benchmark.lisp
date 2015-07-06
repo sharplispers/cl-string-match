@@ -247,6 +247,7 @@ with 20 different characters."
 ;; --------------------------------------------------------
 
 (defun run-benchmarks ()
+  #+ignore
   (with-open-file (out log-file
 		       :direction :output
 		       :if-exists :supersede)
@@ -386,7 +387,8 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	(bmh-times '())
 	(bmh8-times '())
 	(rk-times '())
-	(kmp-times '()))
+	(kmp-times '())
+	(sor-times '()))
     (fill-random-needles)
     (fill-random-haystack)
     ;; (format t "haystack: ~a~%" random-haystack)
@@ -399,7 +401,8 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	    (bmh-time 0.0d0)
 	    (bmh8-time 0.0d0)
 	    (rk-time 0.0d0)
-	    (kmp-time 0.0d0))
+	    (kmp-time 0.0d0)
+	    (sor-time 0.0d0))
 
 	(dotimes (n 10)
 	  (fill-random-string needle random-alphabet-size)
@@ -408,7 +411,8 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 		(bmh-idx (sm:initialize-bmh needle))
 		(bmh8-idx (sm:initialize-bmh8 needle))
 		(rk-idx (sm:initialize-rk needle))
-		(kmp-idx (sm:initialize-kmp needle)))
+		(kmp-idx (sm:initialize-kmp needle))
+		(sor-idx (sm:initialize-sor needle)))
 
 	    (incf sys-time (bm-timer (length needle)
 				     #'search needle random-haystack))
@@ -423,7 +427,9 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	    (incf rk-time (bm-timer (length needle)
 				    #'sm:search-rk rk-idx random-haystack))
 	    (incf kmp-time (bm-timer (length needle)
-				     #'sm:search-kmp kmp-idx random-haystack)))
+				     #'sm:search-kmp kmp-idx random-haystack))
+	    (incf sor-time (bm-timer (length needle)
+				     #'sm:search-sor sor-idx random-haystack)))
 	  (format t ".")
 	  (force-output))
 	(push sys-time sys-times)
@@ -432,18 +438,17 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	(push bmh-time bmh-times)
 	(push bmh8-time bmh8-times)
 	(push rk-time rk-times)
-	(push kmp-time kmp-times))
+	(push kmp-time kmp-times)
+	(push sor-time sor-times))
       (format t "~%"))
 
     (with-open-file (out "random.log"
 			 :direction :output
 			 :if-exists :supersede
 			 :if-does-not-exist :create)
-      (format out "\# l sys bf bm bmh bmh8 rk kmp~%")
+      (format out "\# l sys bf bm bmh bmh8 rk kmp sor~%")
       (map nil
-	   #'(lambda (n sys bf bm bmh bmh8 rk kmp)
-	       (format out "~a ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f~%" (length n)
-		       sys bf bm bmh bmh8 rk kmp))
-	   random-needles sys-times bf-times bm-times bmh-times bmh8-times rk-times kmp-times))
-
-    ) )
+	   #'(lambda (n sys bf bm bmh bmh8 rk kmp sor)
+	       (format out "~a ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f~%" (length n)
+		       sys bf bm bmh bmh8 rk kmp sor))
+	   random-needles sys-times bf-times bm-times bmh-times bmh8-times rk-times kmp-times sor-times))))
