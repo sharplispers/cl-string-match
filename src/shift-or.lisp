@@ -26,6 +26,12 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ;;; Shift-OR single pattern search algorithm implementation
+;;
+;; Used
+;;
+;;  http://www-igm.univ-mlv.fr/~lecroq/string/node6.html#SECTION0060
+;;
+;; As the blueprint for this implementation
 
 (in-package :cl-string-match)
 
@@ -41,36 +47,97 @@
 
 ;; --------------------------------------------------------
 
-(defstruct sor
+(defstruct (sor
+	     (:print-function sor-printer))
   "Index for the Shift-OR search operation."
   (cidx)	; bit array identifying positions of characters in the
 		; pattern: cidx[c]=bit-mapped positions of char c
 
   (lim #x0 :type sor-ub32)		;
+  (pat-len 0 :type fixnum)		; pattern length
   )
+
+;; --------------------------------------------------------
+
+(defun sor-printer (obj stream depth)
+  "Make dump of the SOR structure more human-readable: in the CIDX
+print characters and their positions, decipher LIM."
+
+  (declare (ignore depth)
+	   (type sor obj))
+  (format stream "#S<sor cidx: ~a lim: ~a>"
+	  (iter
+	    (for i from 0 below (length (sor-cidx obj)))
+	    (when (/= (elt (sor-cidx obj) i) -1)
+	      (collect (cons (code-char i)
+			     (elt (sor-cidx obj) i)))))
+	  (sor-lim obj)))
 
 ;; --------------------------------------------------------
 
 (defun initialize-sor (pat)
   (let ((idx (make-sor :cidx (make-array +sor-alphabet+
 					 :initial-element (lognot 0)
-					 :element-type 'sor-ub32 )))
+					 :element-type 'sor-ub32 )
+		       :pat-len (length pat)))
 	(marker #x1))
-    (declare (type sor-ub32 marker))
+    (declare (type sor-ub32 marker)
+	     (optimize safety debug))
 
     (iter
       (for i from 0 below (length pat))
       (for cc = (char-code (char pat i)))
-      (format t "~a: ~a, ~a; m: ~a~%" i (char pat i) cc marker)
+      ;; S[x[i]] &= ~j
       (setf (elt (sor-cidx idx) cc)
-	    (the sor-ub32 (lognot marker)))
-      (setf marker (ash marker 1))
-      )
+	    (the sor-ub32 (logand (the sor-ub32 (elt (sor-cidx idx) cc))
+				  (the sor-ub32 (lognot marker)))))
+      ;; lim |= j
+      (setf (sor-lim idx)
+	    (logior (sor-lim idx)
+		    marker))
+      ;; j <<= 1
+      (setf marker (ash marker 1)))
+
+    ;;lim = ~(lim>>1)
+    (setf (sor-lim idx)
+	  (lognot (ash (sor-lim idx) -1)))
     idx))
 
 ;; --------------------------------------------------------
 
-(defun search-sor (pat txt)
-  )
+(defun search-sor (idx txt  &key (start2 0) (end2 nil))
+  (declare (type simple-string txt)
+	   (type fixnum start2)
+	   (type (or fixnum null) end2)
+	   #.*standard-optimize-settings*)
+
+  (when (= 0 (sor-pat-len idx))
+    (return-from search-sor 0))
+  (when (= 0 (length txt))
+    (return-from search-sor nil))
+
+  (iter (with state = (the sor-ub32 (lognot 0)))
+	(for j from start2 below (if end2 end2 (length txt)))
+	(setf state
+	      (logior (the sor-ub32 (ash state 1))
+		      (elt (sor-cidx idx)
+			   (char-code (char txt j)))))
+	(when (< state (sor-lim idx))
+	  (return (+ (- j (sor-pat-len idx)) 1)))))
+
+;; --------------------------------------------------------
+
+(defun string-contains-sor (pat txt)
+  (declare (type simple-string pat)
+	   (type simple-string txt)
+	   #.*standard-optimize-settings*)
+
+  (when (= 0 (length pat))
+    (return-from string-contains-sor 0))
+
+  (when (= 0 (length txt))
+    (return-from string-contains-sor nil))
+
+  (search-sor (initialize-sor pat) txt))
 
 ;; EOF

@@ -5,6 +5,7 @@
 ;;
 ;; sbcl --eval '(ql:quickload "CL-STRING-MATCH-TEST")' --eval '(test:run)' --quit
 ;; lx86cl --eval '(ql:quickload "CL-STRING-MATCH-TEST")' --eval '(test:run)' --eval '(quit)'
+;; ecl -eval '(ql:quickload "CL-STRING-MATCH-TEST")' -eval '(test:run)' -eval '(quit)'
 
 ;; --------------------------------------------------------
 
@@ -23,6 +24,7 @@
     sm:string-contains-bmh8
     sm:string-contains-rk
     sm:string-contains-kmp
+    sm:string-contains-sor
     sm:string-contains-ac))
 
 ;; --------------------------------------------------------

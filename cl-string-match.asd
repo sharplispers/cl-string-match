@@ -57,6 +57,7 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
 			 (:file "boyer-moore-horspool")
 			 (:file "rabin-karp")
 			 (:file "knuth-morris-pratt")
+			 (:file "shift-or")
 			 (:file "aho-corasick")
 			 (:file "suffix-tree")
 			 (:file "pre"))))

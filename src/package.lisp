@@ -34,16 +34,19 @@
    :string-contains-bmh
    :string-contains-rk
    :string-contains-kmp
+   :string-contains-sor
    :string-contains-ac
    :initialize-bm
    :initialize-bmh
    :initialize-rk
    :initialize-kmp
+   :initialize-sor
    :initialize-ac
    :search-bm
    :search-bmh
    :search-rk
    :search-kmp
+   :search-sor
    :search-ac
 
    ;; Trie operations

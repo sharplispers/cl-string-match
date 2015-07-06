@@ -11,6 +11,7 @@ algorithms (see [wiki for details](https://bitbucket.org/vityok/cl-string-match/
 * Boyer-Moore-Horspool algorithm
 * Knuth-Morris-Pratt algorithm
 * Rabin-Karp algorithm
+* Shift-OR algorithm (single pattern)
 * Aho-Corasick algorithm (with finite set of patterns, forward
   transition and fail function)
 * A simple backtracking regular expressions engine
