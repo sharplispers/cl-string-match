@@ -49,18 +49,18 @@
   "Each node of a trie contains a list of child nodes, a label (the
 letter) and a mark (some value attributed to the matching string)."
 
-  id	    ; numeric node identifier, nodes counter in the root
-  children  ; this is essentially a goto transition
-  label	    ; character attributed to this node
-  mark	    ; this is essentially an output function
-  fail	    ; fail transition - node to fallback in case of a mismatch
+  (id 1 :type fixnum) ; numeric node identifier, nodes counter in the root
+  children	      ; this is essentially a goto transition
+  label		      ; character attributed to this node
+  mark		      ; this is essentially an output function
+  (fail nil :type (or null trie-node))	; fail transition
   )
 
 ;; --------------------------------------------------------
 
 (defun trie-node-printer (obj stream depth)
   "We have to avoid standard Lisp printer because of the FAIL links
-that turn our tree into a network with cycles, plungin the default
+that turn our tree into a network with cycles, plunging the default
 printer into an infinite loop."
 
   (declare (ignore depth)
@@ -111,8 +111,9 @@ constructor derieved from the TRIE-NODE struct."
      :do (if (null child-node)
 	     ;; found a place where the path ends, add new node here
 	     (setf node (trie-add-child node c nil
-					:id (incf (trie-node-id trie))
-					:constructor constructor))
+					:id (trie-node-id trie)
+					:constructor constructor)
+		   (trie-node-id trie) (+ 1 (trie-node-id trie)))
 	     ;; the path continues further
 	     (setf node child-node))
      ;; store the keyword index
@@ -132,8 +133,83 @@ child node is bound to the CHILD variable."
 
 ;; --------------------------------------------------------
 
-(defun trie-traverse (trie &key (padding 0) root (stream *standard-output*))
-  "Traverse the given trie and pretty-print it to the given stream."
+(defun trie-traverse-dfo (trie handler)
+  "Traverse the trie in the Depth-First-Order and call the given
+handler function on each node.."
+  (declare (function handler))
+
+  (let ((stack nil))
+    (push trie stack)
+    (iter
+      (while stack)
+      (for node = (pop stack))
+      (funcall handler node)
+      (map-trie-children (node child)
+	(push child stack)))))
+
+;; --------------------------------------------------------
+
+(defun trie-traverse-bfo (trie handler)
+  "Traverse the trie in the Breadth-First-Order and call the given
+handler function on each node.."
+  (declare (function handler))
+
+  (let ((queue (make-instance 'jpl-queues:unbounded-fifo-queue)))
+    (jpl-queues:enqueue trie queue)
+    (iter
+      (until (jpl-queues:empty? queue))
+      (for node = (jpl-queues:dequeue queue))
+      (funcall handler node)
+      (map-trie-children (node child)
+	(jpl-queues:enqueue child queue)))))
+
+;; --------------------------------------------------------
+
+(defun trie-dump-dot (trie &key (stream *standard-output*))
+  "Dumps a textual representation of the Trie useful for making a
+graphical plot with Graphviz to the given stream."
+
+  (format stream "digraph finite_state_machine {
+rankdir=LR;
+size=\"8,5\"
+node [shape = circle];~%")
+
+  (trie-traverse-bfo
+   trie
+   #'(lambda (node)
+       (if (trie-node-mark node)
+	   (format stream "nd_~a [label=\"~a\",shape=doublecircle];~%" (trie-node-id node) (trie-node-id node))
+	   (format stream "nd_~a [label=\"~a\",shape=circle];~%" (trie-node-id node) (trie-node-id node)))
+       (when (trie-node-fail node)
+	 (format stream "nd_~a -> nd_~a [style=dashed,weight=1,arrowhead=open,constraint=false,penwidth=0.6];~%"
+		 (trie-node-id node)
+		 (trie-node-id (trie-node-fail node))))
+       (map-trie-children (node child)
+	 (format stream "nd_~a -> nd_~a [label=\"~a\"];~%"
+		 (trie-node-id node)
+		 (trie-node-id child)
+		 (trie-node-label child)))))
+
+  (format stream "}~%"))
+
+;; --------------------------------------------------------
+
+(defun trie-dump-dot-file (trie fname)
+  "Dumps output of the TRIE-DUMP-DOT function to the file with the
+specified file name." 
+
+  (with-open-file (out fname
+		       :direction :output
+		       :if-exists :supersede
+		       :if-does-not-exist :create)
+    (trie-dump-dot trie :stream out)))
+
+;; --------------------------------------------------------
+
+(defun trie-pprint (trie &key (padding 0) root (stream *standard-output*))
+  "Traverse the given trie and pretty-print it to the given stream.
+
+ROOT is the root node (optional)."
   (declare #.*standard-debug-settings*)
   (when trie
     (format stream "~&~v@TNode[~A] ~A ~A; fail: [~a]"
@@ -171,7 +247,7 @@ child node is bound to the CHILD variable."
   "Creates a new instance and returns an empty trie."
 
   (declare #.*standard-optimize-settings*)
-  (make-trie-node :children (make-hash-table) :label nil :mark nil :id 0))
+  (make-trie-node :children (make-hash-table) :label nil :mark nil))
 
 ;; --------------------------------------------------------
 
@@ -303,7 +379,7 @@ text. It can deal either with a single pattern or a list of patterns."
 
 ;; --------------------------------------------------------
 
-(defun search-ac (trie txt)
+(defun search-ac (trie txt &key greedy)
   "Looks for patterns that are indexed in the given trie and returns two values:
 start position of the first matching pattern and its index."
 
@@ -323,7 +399,9 @@ start position of the first matching pattern and its index."
 	    ;; if this node has a mark this means that we've
 	    ;; reached an end of some pattern
 	    ;; (format t "~a ~a~%" (- pos match-len) (trie-node-mark node))
-	    (return (values (- pos match-len) (trie-node-mark node))))
+	    (if greedy
+		(collect (list pos (trie-node-mark node)))
+		(return (values (- pos match-len) (trie-node-mark node)))))
 	  (incf match-len))
 	;; perform a fail transition
 	(progn
