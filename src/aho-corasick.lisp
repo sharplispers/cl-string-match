@@ -117,7 +117,7 @@ constructor derieved from the TRIE-NODE struct."
 	     ;; the path continues further
 	     (setf node child-node))
      ;; store the keyword index
-     :finally (setf (trie-node-mark node) (list idx))))
+     :finally (setf (trie-node-mark node) idx)))
 
 ;; --------------------------------------------------------
 
@@ -354,6 +354,12 @@ Traverses the trie in the breadth-first-order (BFO)"
 		fail-node)
 
 	  ;; output(s) <- output(s) U output(f(s))
+
+	  ;; we don't handle concatenation of outputs - our focus is
+	  ;; matching just one pattern. Unlike the original algorithm
+	  ;; that will output the string that is matched by all
+	  ;; patterns.
+	  #+ignore
 	  (setf (trie-node-mark child)
 		(concatenate 'list
 			     (trie-node-mark child)

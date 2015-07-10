@@ -1,4 +1,4 @@
-2015-07-10  victor  <victor@vanyakin>
+2015-07-10  victor  <victor@vityok>
 
 	* src/suffix-tree.lisp avoid :conc-name in structure definitions
 	becase they are not handled appropriately by ABCL and probably
@@ -7,6 +7,10 @@
 	* src/boyer-moore-horspool.lisp now uses ctypecase guards before
 	calling implementations to avoid misinforming compiler and avoid
 	random crashes. Will be implemented in other functions as well.
+
+	* src/aho-corasick.lisp will be dealing with only one match a
+	time, unlike the original algorithm. search-ac will return just
+	one matching mark.
 
 2015-07-02  victor  <victor@vityok>
 
