@@ -116,7 +116,7 @@ and the text works."
       (multiple-value-bind (pos idx)
 	  (search-ac trie "___his")
 	(assert-equal 3 pos)
-	(assert-equal 2 (car idx)))
+	(assert-equal 2 idx))
       (multiple-value-bind (pos idx)
 	  (search-ac trie "___h_s")
 	(assert-equal nil pos)
