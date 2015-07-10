@@ -388,7 +388,9 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	(bmh8-times '())
 	(rk-times '())
 	(kmp-times '())
-	(sor-times '()))
+	(sor-times '())
+	(times 10))
+
     (fill-random-needles)
     (fill-random-haystack)
     ;; (format t "haystack: ~a~%" random-haystack)
@@ -404,7 +406,10 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	    (kmp-time 0.0d0)
 	    (sor-time 0.0d0))
 
-	(dotimes (n 10)
+	(dotimes (n times)
+	  ;; in order to better average performance it is possible to
+	  ;; re-generate a needle on every attempt, but this makes
+	  ;; multistring performance comparison with AC more difficult
 	  (fill-random-string needle random-alphabet-size)
 	  ;; (format t "needle: ~a~%" needle)
 	  (let ((bm-idx (sm:initialize-bm needle))
@@ -451,4 +456,20 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	   #'(lambda (n sys bf bm bmh bmh8 rk kmp sor)
 	       (format out "~a ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f~%" (length n)
 		       sys bf bm bmh bmh8 rk kmp sor))
-	   random-needles sys-times bf-times bm-times bmh-times bmh8-times rk-times kmp-times sor-times))))
+	   random-needles sys-times bf-times bm-times bmh-times bmh8-times rk-times kmp-times sor-times))
+
+    ;; Aho-Corasick
+    (let ((ac-idx (sm:initialize-ac random-needles))
+	  (ac-time 0.0d0))
+
+      (dotimes (n (* (length random-needles) times))
+	(incf ac-time (bm-timer (length random-needles)
+				#'sm:search-ac ac-idx random-haystack)))
+      (format t "AC complete in: ~,2f seconds~%" ac-time)
+      (format t "BMH complete in: ~,2f seconds~%"
+	      (loop :for el :in bmh-times
+		 :sum el)))
+
+    ))
+
+;; EOF

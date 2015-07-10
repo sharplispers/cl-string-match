@@ -32,6 +32,14 @@
 ;;;
 ;;; Special thanks to Chun Tian (binghe) <binghe.lisp@gmail.com> for
 ;;; his defparser-to-yacc function in the ASN.1 library.
+;;;
+;;; It uses the simple non-recursive backtracking implementation from
+;;; the:
+;;;
+;;;  Regular Expression Matching: the Virtual Machine Approach
+;;;  https://swtch.com/~rsc/regexp/regexp2.html
+;;;
+;;; paper by Russ Cox.
 
 (in-package :cl-string-match)
 
@@ -67,6 +75,7 @@
 
 (defmethod make-load-form ((re re) &optional env)
   "Tell the system how to save and load a regular expression to a FASL."
+  (declare (ignore env))
   `(compile-re ,(re-pattern re)))
 
 ;; --------------------------------------------------------
@@ -341,7 +350,7 @@
 (defun run (expression s &optional (pc 0) (start 0) (end (length s)) (offset 0))
   "Execute a regular expression program."
   (declare #.*standard-optimize-settings*)
-  
+
   (loop with threads = (list (make-re-thread pc (+ start offset) nil nil))
         while threads
 

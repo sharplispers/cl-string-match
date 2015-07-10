@@ -31,7 +31,12 @@
 ;;
 ;;  http://www-igm.univ-mlv.fr/~lecroq/string/node6.html#SECTION0060
 ;;
-;; As the blueprint for this implementation
+;; As the blueprint for this implementation.
+;;
+;; At the moment existing implementation of the Shift-OR search
+;; algorithm is over 1.5 times slower than the standard SEARCH
+;; function on SBCL and much more sluggish than the fast search
+;; implementations offered by this library (BMH first of all).
 
 (in-package :cl-string-match)
 

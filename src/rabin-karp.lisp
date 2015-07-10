@@ -70,6 +70,7 @@ as an argument so that we can use the function for both the pattern
 and the text.)"
 
   (declare (type simple-string key)
+	   (type fixnum end)
 	   #.*standard-optimize-settings*)
 
   (let ((h 0))
@@ -83,6 +84,7 @@ and the text.)"
 			  (the rk-ub32 (char-code (char key j)))))
 		  (the rk-ub32 +big-prime+))))
     (return-from horner-hash (the rk-ub32 h))))
+(declaim (inline horner-hash))
 
 ;; (declaim (ftype (function (simple-string fixnum) rk-ub32) horner-hash)
 ;;	 (inline horner-hash))
@@ -120,6 +122,7 @@ and the text.)"
   (string= (rk-pat idx) txt
 	   :start2 i
 	   :end2 (+ i (rk-pat-len idx))))
+(declaim (inline check-rk-lv))
 
 ;;  (loop for j :from 0 :below (rk-pat-len idx) :when (char/= (char
 ;;  (rk-pat idx) j) (char txt (+ i j))) :do (return-from check-rk-lv
@@ -132,6 +135,7 @@ and the text.)"
   "Monte Carlo version: always return true"
   (declare (ignore i))
   T)
+(declaim (inline check-rk-mk))
 
 ;; --------------------------------------------------------
 
