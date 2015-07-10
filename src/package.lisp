@@ -62,23 +62,26 @@
    ;; Suffix tree
    :+infinity+
    :suffix-tree
-   :suffix-tree.root
-   :suffix-tree.str
+   :suffix-tree-root
+   :suffix-tree-str
+   :suffix-tree-char
+   :suffix-tree-walk
+   :suffix-tree-equals
+   :suffix-tree-build-from-sexp
    :make-suffix-tree
-   :suffix-tree.char
-   :suffix-tree.walk
-   :suffix-tree.equals
-   :suffix-tree.build-from-sexp
+   
    :suffix-node
-   :suffix-node.start
-   :suffix-node.end
-   :suffix-node.children
-   :suffix-node.add-child
-   :suffix-node.leafp
-   :suffix-node.map-over-children
-   :suffix-node.str
-   :suffix-node.equals
+   :suffix-node-start
+   :suffix-node-end
+   :suffix-node-children
+   :suffix-node-add-child
+   :suffix-node-leafp
+   :suffix-node-map-over-children
+   :suffix-node-str
+   :suffix-node-equals
+   :make-suffix-node
    :ukk-node
+   :ukk-node-suffix
    :make-ukk-node
    :build-suffix-tree-simple
    :build-suffix-tree-ukkonen

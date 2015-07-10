@@ -1,3 +1,13 @@
+2015-07-10  victor  <victor@vanyakin>
+
+	* src/suffix-tree.lisp avoid :conc-name in structure definitions
+	becase they are not handled appropriately by ABCL and probably
+	ECL.
+
+	* src/boyer-moore-horspool.lisp now uses ctypecase guards before
+	calling implementations to avoid misinforming compiler and avoid
+	random crashes. Will be implemented in other functions as well.
+
 2015-07-02  victor  <victor@vityok>
 
 	* src/aho-corasick.lisp was not implementing fail transitions of

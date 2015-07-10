@@ -227,10 +227,10 @@ ROOT is the root node (optional)."
     (when (trie-node-children trie)
       (maphash #'(lambda (key val)
 		   (declare (ignore key))
-		   (trie-traverse val
-				  :padding (+ padding 3)
-				  :stream stream
-				  :root (if root root trie)))
+		   (trie-pprint val
+				:padding (+ padding 3)
+				:stream stream
+				:root (if root root trie)))
 	       (trie-node-children trie)))))
 
 ;; --------------------------------------------------------

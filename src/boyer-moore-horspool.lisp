@@ -55,14 +55,16 @@
 			      (alphabet-size char-code-limit)
 			      (data-type 'simple-string))
 
-  (let* ((index-name (format-name "BMH~a" variant-tag))
-	 (initialize-name (format-name "INITIALIZE-BMH~a" variant-tag))
-	 (search-name (format-name "SEARCH-BMH~a" variant-tag))
-	 (matcher-name (format-name "STRING-CONTAINS-BMH~a" variant-tag))
-	 (make-index (format-name "MAKE-~a" index-name))
-	 (the-bad-char-skip (format-name "~a-BAD-CHAR-SKIP" index-name))
-	 (the-pat (format-name "~a-PAT" index-name))
-	 (the-pat-len (format-name "~a-PAT-LEN" index-name)))
+  (let* ((index-name           (format-name "BMH~a" variant-tag))
+	 (initialize-name-impl (format-name "%INITIALIZE-BMH~a" variant-tag))
+	 (initialize-name      (format-name "INITIALIZE-BMH~a" variant-tag))
+	 (search-name-impl     (format-name "%SEARCH-BMH~a" variant-tag))
+	 (search-name          (format-name "SEARCH-BMH~a" variant-tag))
+	 (matcher-name         (format-name "STRING-CONTAINS-BMH~a" variant-tag))
+	 (make-index           (format-name "MAKE-~a" index-name))
+	 (the-bad-char-skip    (format-name "~a-BAD-CHAR-SKIP" index-name))
+	 (the-pat              (format-name "~a-PAT" index-name))
+	 (the-pat-len          (format-name "~a-PAT-LEN" index-name)))
     `(progn
 
        ;; --------------------------------------------------------
@@ -74,13 +76,12 @@
 
        ;; --------------------------------------------------------
 
-       (defun ,initialize-name (pat)
-	 "Preprocess the needle.
+       (defun ,initialize-name-impl (pat)
+	 "IMPLEMENTS: Preprocess the needle.
 Initialize the table to default value."
 
 	 (declare (type ,data-type pat)
 		  #.*standard-optimize-settings*)
-
 	 ;; When a character is encountered that does not occur in the
 	 ;; needle, we can safely skip ahead for the whole length of the
 	 ;; needle.
@@ -99,10 +100,25 @@ Initialize the table to default value."
 			  (,key-code (,key-get pat k)))
 		    (- (length pat) k 1)))
 	   idx))
+       (declaim (inline ,initialize-name-impl))
 
        ;; --------------------------------------------------------
 
-       (defun ,search-name (idx txt &key (start2 0) (end2 nil))
+       (defun ,initialize-name (pat)
+	 "Preprocess the needle.
+Initialize the table to default value."
+
+	 (declare #.*standard-optimize-settings*)
+
+	 ;; make sure that the type of the given PAT matches what we
+	 ;; expect, signal type-error otherwise
+	 (ctypecase pat
+	   (,data-type
+	    (,initialize-name-impl pat))))
+
+       ;; --------------------------------------------------------
+
+       (defun ,search-name-impl (idx txt &key (start2 0) (end2 nil))
 	 "Search for pattern defined in the IDX in TXT."
 
 	 (declare (type ,data-type txt)
@@ -111,9 +127,9 @@ Initialize the table to default value."
 		  #.*standard-optimize-settings*)
 
 	 (when (= 0 (,the-pat-len idx))
-	   (return-from ,search-name 0))
+	   (return-from ,search-name-impl 0))
 	 (when (= 0 (length txt))
-	   (return-from ,search-name nil))
+	   (return-from ,search-name-impl nil))
 
 	 (loop
 	    :with m fixnum = (,the-pat-len idx)
@@ -129,16 +145,28 @@ Initialize the table to default value."
 					 (,key-get txt (+ i j)))
 		       :finally
 		       (when (= i m)
-			 (return-from ,search-name j))))
+			 (return-from ,search-name-impl j))))
 
 		  (incf j (aref (,the-bad-char-skip idx)
 				(,key-code c))))))
+       (declaim (inline ,search-name-impl))
 
        ;; --------------------------------------------------------
 
+       (defun ,search-name (idx txt &key (start2 0) (end2 nil))
+	 "Search for pattern defined in the IDX in TXT."
+
+	 (declare #.*standard-optimize-settings*)
+
+	 (ctypecase txt
+	   (,data-type
+	    (,search-name-impl idx txt :start2 start2 :end2 end2))))
+       
+       ;; --------------------------------------------------------
+
        (defun ,matcher-name (pat txt &key (start2 0) (end2 nil))
-	 (declare (type ,data-type pat)
-		  (type ,data-type txt)
+	 (declare ;; (type ,data-type pat)
+		  ;; (type ,data-type txt)
 		  #.*standard-optimize-settings*)
 
 	 (,search-name (,initialize-name pat) txt

@@ -35,6 +35,11 @@
 ;; (appeared in Java Report, February 1999)
 ;;
 ;; http://icu-project.org/docs/papers/efficient_text_searching_in_java.html
+;;
+;; And some other sources.
+;;
+;; Current implementation uses bad character and good suffix skip
+;; heuristics.
 
 (in-package :cl-string-match)
 
