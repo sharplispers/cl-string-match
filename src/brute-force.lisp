@@ -74,6 +74,7 @@ Algorithm described in: Chapter 5, p. 760 in
        (declaim (inline ,matcher-name-impl))
 
        (defun ,matcher-name (pat txt &key (start1 0) end1 (start2 0) end2)
+	 (declare #.*standard-optimize-settings*)
 	 (check-type pat ,data-type)
 	 (check-type txt ,data-type)
 	 (check-type start1 fixnum)
