@@ -92,10 +92,10 @@ Returns: the amount of elapsed time."
   (let ((start (get-internal-run-time))
 	ret
 	elapsed)
-    (loop :repeat +times+ :do (setq ret (apply function args)))
-    (setq elapsed (/ (- (get-internal-run-time) start)
+    (loop :repeat +times+ :do (setf ret (apply function args)))
+    (setf elapsed (/ (- (get-internal-run-time) start)
                      (float internal-time-units-per-second 1d0)))
-    (log-msg (format nil "~a	~3$~%" len elapsed))
+    ;; (log-msg (format nil "~a	~3$~%" len elapsed))
     elapsed))
 
 
@@ -335,6 +335,7 @@ http://rosettacode.org/wiki/Count_occurrences_of_a_substring#Common_Lisp"
 ;; the following command:
 ;;
 ;; sbcl --load benchmark --eval '(rnd-run)' --eval '(quit)'
+;; lx86cl --load benchmark --eval '(rnd-run)' --eval '(quit)'
 
 (defparameter *alphabet*
   (concatenate 'list
@@ -381,7 +382,9 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 (defun rnd-run ()
   (log-title "Random needles and haystacks with index")
 
-  (let ((sys-times '())
+  (let ((start (get-internal-run-time)) ; to measure total time per wall-clock
+	elapsed				; will be set in the end
+	(sys-times '())
 	(bf-times '())
 	(bm-times '())
 	(bmh-times '())
@@ -417,7 +420,9 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 		(bmh8-idx (sm:initialize-bmh8 needle))
 		(rk-idx (sm:initialize-rk needle))
 		(kmp-idx (sm:initialize-kmp needle))
-		(sor-idx (sm:initialize-sor needle)))
+		(sor-idx nil
+		 #+ignore
+		 (sm:initialize-sor needle)))
 
 	    (incf sys-time (bm-timer (length needle)
 				     #'search needle random-haystack))
@@ -433,7 +438,9 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 				    #'sm:search-rk rk-idx random-haystack))
 	    (incf kmp-time (bm-timer (length needle)
 				     #'sm:search-kmp kmp-idx random-haystack))
-	    (incf sor-time (bm-timer (length needle)
+	    (incf sor-time 0.0
+		  #+ignore
+		  (bm-timer (length needle)
 				     #'sm:search-sor sor-idx random-haystack)))
 	  (format t ".")
 	  (force-output))
@@ -469,6 +476,10 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
       (format t "BMH complete in: ~,2f seconds~%"
 	      (loop :for el :in bmh-times
 		 :sum el)))
+
+    (setq elapsed (/ (- (get-internal-run-time) start)
+                     (float internal-time-units-per-second 1d0)))
+    (format t "Benchmarks complete in: ~,2f seconds~%" elapsed)
 
     ))
 
