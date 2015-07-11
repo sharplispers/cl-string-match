@@ -157,22 +157,22 @@ Initialize the table to default value."
 	 "Search for pattern defined in the IDX in TXT."
 
 	 (declare #.*standard-optimize-settings*)
+	 (check-type idx ,index-name)
+	 (check-type txt ,data-type)
+	 (check-type start2 fixnum)
+	 (check-type end2 (or null fixnum))
+	 (,search-name-impl idx txt :start2 start2 :end2 end2))
 
-	 (ctypecase txt
-	   (,data-type
-	    (,search-name-impl idx txt :start2 start2 :end2 end2))))
-       
        ;; --------------------------------------------------------
 
        (defun ,matcher-name (pat txt &key (start2 0) (end2 nil))
-	 (declare ;; (type ,data-type pat)
-		  ;; (type ,data-type txt)
-		  #.*standard-optimize-settings*)
-
+	 (declare #.*standard-optimize-settings*)
+	 (check-type pat ,data-type)
+	 (check-type txt ,data-type)
+	 (check-type start2 fixnum)
+	 (check-type end2 (or null fixnum))
 	 (,search-name (,initialize-name pat) txt
-		       :start2 start2 :end2 end2))
-
-       )))
+		       :start2 start2 :end2 end2)))))
 
 ;; --------------------------------------------------------
 
