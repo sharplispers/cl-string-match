@@ -74,10 +74,13 @@ Algorithm described in: Chapter 5, p. 760 in
        (declaim (inline ,matcher-name-impl))
 
        (defun ,matcher-name (pat txt &key (start1 0) end1 (start2 0) end2)
-	 (if (and (typep pat ',data-type)
-		  (typep txt ',data-type))
-	     (,matcher-name-impl pat txt :start1 start1 :end1 end1 :start2 start2 :end2 end2)
-	     (error "can not handle this data type"))))))
+	 (check-type pat ,data-type)
+	 (check-type txt ,data-type)
+	 (check-type start1 fixnum)
+	 (check-type end1 (or null fixnum))
+	 (check-type start2 fixnum)
+	 (check-type end2 (or null fixnum))
+	 (,matcher-name-impl pat txt :start1 start1 :end1 end1 :start2 start2 :end2 end2)))))
 
 ;; --------------------------------------------------------
 
