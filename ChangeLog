@@ -1,3 +1,8 @@
+2015-07-23  victor  <victor@vityok>
+
+	* all: all implementations check-type of the given data in
+	interfacing functions.
+
 2015-07-10  victor  <victor@vityok>
 
 	* src/suffix-tree.lisp avoid :conc-name in structure definitions

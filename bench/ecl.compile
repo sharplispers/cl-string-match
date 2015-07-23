@@ -1,0 +1,6 @@
+#!/bin/sh
+
+ecl     -eval '(compile-file "benchmark.lisp")' \
+        -eval '(quit)' > /dev/null
+
+# EOF

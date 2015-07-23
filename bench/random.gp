@@ -13,7 +13,7 @@ set style data linespoints
 set xlabel "Needle length"
 set ylabel "Duration index\n(System search equals 1)"
 
-# set yrange [0:1]
+set yrange [0:1]
 
 # there is no sense to plot system search since it is always 1
 # 'random.log' using 1:($2/$2) title "System search",\

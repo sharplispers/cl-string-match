@@ -47,14 +47,19 @@
 
 ;; Member variables for storing precomputed pattern data
 (defstruct bm
-  (bad-char)			; bad character skip (or occurence shift; delta-1)
-  (good-suffix)			; good suffix shift (or matching shift; delta-2)
-  (pat)				; the pattern
-  )
+  ;; bad character skip (or occurence shift; delta-1)
+  (bad-char     (make-array 0 :element-type 'fixnum)
+		:type (simple-array fixnum))
+  ;; good suffix shift (or matching shift; delta-2)
+  (good-suffix  (make-array 0 :element-type 'fixnum)
+		:type (simple-array fixnum))
+  ;; the pattern
+  (pat "" :type simple-string))
 
 ;; --------------------------------------------------------
 
 ;; Map a collation element to an array index
+(declaim (inline hash-bm))
 (defun hash-bm (order)
   (round (mod (char-code order) 256)))
 
@@ -63,7 +68,7 @@
 (defun initialize-bad-char (idx)
   "Initialize the bad character skip for the Boyer-Moore algorithm."
 
-  (declare (type bm idx))
+  (check-type idx bm)
 
   (let ((pat-len (length (bm-pat idx))))
     (loop :for j :from 0 :below (- pat-len 1)
@@ -130,17 +135,17 @@ Boyer-Moore algorithm."
 ;; --------------------------------------------------------
 
 (defun initialize-bm (pat)
-  (declare (type string pat)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
 
   (when (> (length pat) 0)
     (let ((idx (make-bm
 		:pat pat
-		:bad-char (make-array 256
-				      :element-type 'integer
-				      :initial-element (length pat))
+		:bad-char    (make-array 256
+					 :element-type 'fixnum
+					 :initial-element (length pat))
 		:good-suffix (make-array (length pat)
-					 :element-type 'integer
+					 :element-type 'fixnum
 					 :initial-element (length pat)))))
 
       (initialize-bad-char idx)
@@ -152,9 +157,9 @@ Boyer-Moore algorithm."
 (defun search-bm (idx txt)
   "Search for pattern bm in txt."
 
-  (declare (type bm idx)
-	   (type simple-string txt)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type idx bm)
+  (check-type txt simple-string)
 
   (when (= 0 (length (bm-pat idx)))
     (return-from search-bm 0))
@@ -194,9 +199,9 @@ Boyer-Moore algorithm."
 ;; --------------------------------------------------------
 
 (defun string-contains-bm (pat txt)
-  (declare (type simple-string pat)
-	   (type simple-string txt)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
+  (check-type txt simple-string)
 
   (when (= 0 (length pat))
     (return-from string-contains-bm 0))

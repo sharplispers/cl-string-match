@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-lx86cl  --eval '(ql:quickload "cl-string-match")' \
-        --eval '(ql:quickload "cl-ppcre")' \
-        --eval '(compile-file "benchmark.lisp")' \
+lx86cl  --eval '(compile-file "benchmark.lisp")' \
         --eval '(quit)' > /dev/null
 
 lx86cl  --eval '(ql:quickload "cl-string-match")' \

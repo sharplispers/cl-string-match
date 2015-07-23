@@ -25,10 +25,8 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-;; Commentz-Walter algorithm implementation
-;; TODO
-;;
-;;
+;; TODO: Commentz-Walter algorithm implementation
+;; 
 ;; devoted to the backward pattern matching of a finite set of
 ;; patterns. It uses:
 ;;
