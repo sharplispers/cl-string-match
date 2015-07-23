@@ -468,12 +468,21 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 
     ;; Aho-Corasick
     (let ((ac-idx (sm:initialize-ac random-needles))
-	  (ac-time 0.0d0))
+	  (ac-time 0.0d0)
+	  (tabac-idx (sm:initialize-tabac random-needles))
+	  (tabac-time 0.0d0))
 
-      (dotimes (n (* (length random-needles) times))
+      ;; since we search for all needles at once, we have to perform
+      ;; our test only TIMES times.
+      (dotimes (n times)
 	(incf ac-time (bm-timer (length random-needles)
 				#'sm:search-ac ac-idx random-haystack)))
+      (dotimes (n times)
+	(incf tabac-time (bm-timer (length random-needles)
+				   #'sm:search-tabac tabac-idx random-haystack)))
+
       (format t "AC complete in: ~,2f seconds~%" ac-time)
+      (format t "TABAC complete in: ~,2f seconds~%" tabac-time)
       (format t "BMH complete in: ~,2f seconds~%"
 	      (loop :for el :in bmh-times
 		 :sum el)))

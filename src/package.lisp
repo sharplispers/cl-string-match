@@ -36,18 +36,21 @@
    :string-contains-kmp
    :string-contains-sor
    :string-contains-ac
+   :string-contains-tabac
    :initialize-bm
    :initialize-bmh
    :initialize-rk
    :initialize-kmp
    :initialize-sor
    :initialize-ac
+   :initialize-tabac
    :search-bm
    :search-bmh
    :search-rk
    :search-kmp
    :search-sor
    :search-ac
+   :search-tabac
 
    ;; Trie operations
    :empty-trie
@@ -58,7 +61,8 @@
    :trie-traverse-dfo
    :trie-contains
    :trie-pprint
-
+   :trie->tabular-ac
+   
    ;; Suffix tree
    :+infinity+
    :suffix-tree
@@ -69,7 +73,7 @@
    :suffix-tree-equals
    :suffix-tree-build-from-sexp
    :make-suffix-tree
-   
+
    :suffix-node
    :suffix-node-start
    :suffix-node-end

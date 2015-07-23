@@ -49,11 +49,12 @@
   "Each node of a trie contains a list of child nodes, a label (the
 letter) and a mark (some value attributed to the matching string)."
 
-  (id 1 :type fixnum) ; numeric node identifier, nodes counter in the root
+  (id 0 :type fixnum) ; numeric node identifier, nodes counter in the root
   children	      ; this is essentially a goto transition
   label		      ; character attributed to this node
   mark		      ; this is essentially an output function
   (fail nil :type (or null trie-node))	; fail transition
+  (depth 0 :type fixnum)
   )
 
 ;; --------------------------------------------------------
@@ -66,10 +67,11 @@ printer into an infinite loop."
   (declare (ignore depth))
   (check-type obj trie-node)
 
-  (format stream "#<trie-node ~a label: ~a mark: ~a>"
+  (format stream "#<trie-node ~a label: ~a mark: ~a depth: ~a>"
 	  (trie-node-id obj)
 	  (trie-node-label obj)
-          (trie-node-mark obj)))
+          (trie-node-mark obj)
+	  (trie-node-depth obj)))
 
 ;; --------------------------------------------------------
 
@@ -86,6 +88,7 @@ constructor derieved from the TRIE-NODE struct."
 			:id id
 			:label label
 			:mark mark
+			:depth (+ (trie-node-depth trie) 1)
 			:children (make-hash-table))))
     (setf (gethash label (trie-node-children trie))
 	  child)
@@ -210,13 +213,14 @@ specified file name."
   "Traverse the given trie and pretty-print it to the given stream.
 
 ROOT is the root node (optional)."
-  (declare #.*standard-debug-settings*)
+  ;; (declare #.*standard-optimize-settings*)
   (when trie
-    (format stream "~&~v@TNode[~A] ~A ~A; fail: [~a]"
+    (format stream "~&~v@TNode[~A] ~A ~A; depth: [~a] fail: [~a]"
 	    padding
 	    (trie-node-id trie)
 	    (trie-node-label trie)
 	    (trie-node-mark trie)
+	    (trie-node-depth trie)
 	    (if (eq (trie-node-fail trie) root)
 		"ROOT"
 		(if (eq trie (trie-node-fail trie))
@@ -303,7 +307,7 @@ Modifies nodes.
 
 Traverses the trie in the breadth-first-order (BFO)"
 
-  (declare #.*standard-debug-settings*)
+  (declare #.*standard-optimize-settings*)
 
   (let ((queue (make-instance 'jpl-queues:unbounded-fifo-queue))
 	(root trie))
@@ -355,10 +359,10 @@ Traverses the trie in the breadth-first-order (BFO)"
 
 	  ;; output(s) <- output(s) U output(f(s))
 
-	  ;; we don't handle concatenation of outputs - our focus is
-	  ;; matching just one pattern. Unlike the original algorithm
-	  ;; that will output the string that is matched by all
-	  ;; patterns.
+	  ;; IMPORTANT NOTE: we don't handle concatenation of outputs
+	  ;; - our focus is matching just one pattern. Unlike the
+	  ;; original algorithm that will output the string that is
+	  ;; matched by all patterns.
 	  #+ignore
 	  (setf (trie-node-mark child)
 		(concatenate 'list
@@ -377,7 +381,7 @@ Traverses the trie in the breadth-first-order (BFO)"
   "Returns a Trie that is used to look for the given patterns in the
 text. It can deal either with a single pattern or a list of patterns."
 
-  (declare #.*standard-debug-settings*)
+  (declare #.*standard-optimize-settings*)
   (let ((trie (trie-build (if (listp patterns)
 			      patterns
 			      (list patterns)))))
@@ -389,7 +393,8 @@ text. It can deal either with a single pattern or a list of patterns."
   "Looks for patterns that are indexed in the given trie and returns two values:
 start position of the first matching pattern and its index."
 
-  (declare #.*standard-debug-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type trie trie-node)
   (check-type txt simple-string)
 
   (iter
@@ -441,5 +446,110 @@ first occurence."
 			 (setf node (trie-find-child trie c)))
 		 :unless node :do (setf node trie))))
 	(if res res nil))))
+
+;; --------------------------------------------------------
+;; TABULAR IMPLEMENTATION OF THE Aho-Corasick DFA
+;; --------------------------------------------------------
+
+(define-constant +ac-alphabet+ 256)
+
+(defstruct tabac
+  (start -1 :type fixnum)	    ; starting state
+  trans				    ; transitions
+  final				    ; final states
+  match-len			    ; array that stores pattern length
+  )
+
+;; --------------------------------------------------------
+
+(defun trie->tabular-ac (trie)
+  "Gets a trie and transforms it into a table-based DFA for the
+Aho-Corasick automata."
+
+  (let* ((nodes-count (trie-node-id trie))
+	 (idx (make-tabac
+	       :start nodes-count
+	       :match-len (make-array (+ nodes-count 1) :initial-element -1)
+	       :trans (make-array (+ nodes-count 1))
+	       :final (make-array (+ nodes-count 1) :initial-element -1))))
+    (trie-traverse-dfo
+     trie
+     #'(lambda (node)
+	 (when (trie-node-mark node)
+	   ;; this node is a final transition
+	   (setf (aref (tabac-final idx)
+		       (trie-node-id node))
+		 (trie-node-mark node)
+		 (aref (tabac-match-len idx)
+		       (trie-node-id node))
+		 (trie-node-depth node)))
+	 ;; initialize transitions from this node with the failure
+	 ;; transition
+	 (let ((trans (make-array +ac-alphabet+
+				  :initial-element (trie-node-id (trie-node-fail node)))))
+	   (map-trie-children (node child)
+	     (setf (aref trans (char-code (trie-node-label child)))
+		   (trie-node-id child)))
+	   (setf (aref (tabac-trans idx) (trie-node-id node))
+		 trans))))
+    idx))
+
+;; --------------------------------------------------------
+
+(declaim (inline tabac-transition))
+(defun tabac-transition (idx state c)
+  "Returns a new state based on the given char from the current state."
+  (aref (aref (tabac-trans idx) state)
+	(char-code c)))
+
+;; --------------------------------------------------------
+
+(defun initialize-tabac (patterns)
+  "Returns a tabular FDA that is used to look for the given patterns
+in the text. It can deal either with a single pattern or a list of
+patterns."
+
+  (declare #.*standard-optimize-settings*)
+  (trie->tabular-ac (initialize-ac patterns)))
+
+;; --------------------------------------------------------
+
+(defun search-tabac (idx txt)
+  ;; this function generates 48 warnings when compiled on SBCL
+  (declare #.*standard-optimize-settings*)
+  (check-type idx tabac)
+  (check-type txt simple-string)
+
+  (iter
+    (for c in-string txt)
+    (for pos from 0 below (length txt))
+    (for state
+      first (tabac-transition idx (tabac-start idx) c)
+      then (tabac-transition idx state c))
+    (if (= state (tabac-start idx))
+	(progn
+	  (setf state (tabac-transition idx state c))))
+    (when (>= (the fixnum (aref (tabac-final idx) state))
+	      0)
+      (return (values (+ 1 (- pos (aref (tabac-match-len idx) state)))
+		      (aref (tabac-final idx) state))))))
+
+;; --------------------------------------------------------
+
+(defun string-contains-tabac (pat txt)
+  "Looks for the given pattern in the text and returns index of the
+first occurence."
+
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
+  (check-type txt simple-string)
+
+  (when (= 0 (length pat))
+    (return-from string-contains-tabac 0))
+
+  (when (= 0 (length txt))
+    (return-from string-contains-tabac nil))
+
+  (search-tabac (initialize-tabac pat) txt))
 
 ;; EOF
