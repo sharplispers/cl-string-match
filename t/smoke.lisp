@@ -27,7 +27,8 @@
     sm:string-contains-rk
     sm:string-contains-kmp
     sm:string-contains-sor
-    sm:string-contains-ac))
+    sm:string-contains-ac
+    sm:string-contains-tabac))
 
 ;; --------------------------------------------------------
 
