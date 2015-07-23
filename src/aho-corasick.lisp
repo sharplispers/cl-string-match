@@ -63,8 +63,8 @@ letter) and a mark (some value attributed to the matching string)."
 that turn our tree into a network with cycles, plunging the default
 printer into an infinite loop."
 
-  (declare (ignore depth)
-	   (type trie-node obj))
+  (declare (ignore depth))
+  (check-type obj trie-node)
 
   (format stream "#<trie-node ~a label: ~a mark: ~a>"
 	  (trie-node-id obj)
@@ -102,8 +102,8 @@ constructor derieved from the TRIE-NODE struct."
   ;;
   ;; Store identifier i of Pi at the terminal node of the
   ;; path
-  (declare (type simple-string kw)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type kw simple-string)
   (loop
      :with node = trie
      :for c :across kw
@@ -136,7 +136,7 @@ child node is bound to the CHILD variable."
 (defun trie-traverse-dfo (trie handler)
   "Traverse the trie in the Depth-First-Order and call the given
 handler function on each node.."
-  (declare (function handler))
+  (check-type handler function)
 
   (let ((stack nil))
     (push trie stack)
@@ -152,7 +152,7 @@ handler function on each node.."
 (defun trie-traverse-bfo (trie handler)
   "Traverse the trie in the Breadth-First-Order and call the given
 handler function on each node.."
-  (declare (function handler))
+  (check-type handler function)
 
   (let ((queue (make-instance 'jpl-queues:unbounded-fifo-queue)))
     (jpl-queues:enqueue trie queue)
@@ -196,7 +196,7 @@ node [shape = circle];~%")
 
 (defun trie-dump-dot-file (trie fname)
   "Dumps output of the TRIE-DUMP-DOT function to the file with the
-specified file name." 
+specified file name."
 
   (with-open-file (out fname
 		       :direction :output
@@ -284,8 +284,8 @@ Returns the length of the matched prefix."
 
 (defun trie-build (patterns &key (constructor #'make-trie-node))
   "Builds a Trie based on the given list of patterns."
-  (declare (type list patterns)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type patterns list)
 
   (let ((trie (empty-trie)))
     (loop :for pat :in patterns
@@ -389,8 +389,9 @@ text. It can deal either with a single pattern or a list of patterns."
   "Looks for patterns that are indexed in the given trie and returns two values:
 start position of the first matching pattern and its index."
 
-  (declare (type simple-string txt)
-	   #.*standard-debug-settings*)
+  (declare #.*standard-debug-settings*)
+  (check-type txt simple-string)
+
   (iter
     (with match-len = 0)
     (with node = trie)
@@ -422,9 +423,9 @@ start position of the first matching pattern and its index."
   "Looks for the given pattern in the text and returns index of the
 first occurence."
 
-  (declare #.*standard-optimize-settings*
-	   (type string pat)
-	   (type string txt))
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
+  (check-type txt simple-string)
 
   (if (= (length pat) 0)
       0

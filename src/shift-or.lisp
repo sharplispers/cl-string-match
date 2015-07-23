@@ -68,8 +68,9 @@
   "Make dump of the SOR structure more human-readable: in the CIDX
 print characters and their positions, decipher LIM."
 
-  (declare (ignore depth)
-	   (type sor obj))
+  (declare (ignore depth))
+  (check-type obj sor)
+
   (format stream "#S<sor cidx: ~a lim: ~a>"
 	  (iter
 	    (for i from 0 below (length (sor-cidx obj)))
@@ -81,13 +82,15 @@ print characters and their positions, decipher LIM."
 ;; --------------------------------------------------------
 
 (defun initialize-sor (pat)
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
+
   (let ((idx (make-sor :cidx (make-array +sor-alphabet+
 					 :initial-element (lognot 0)
 					 :element-type 'sor-ub32 )
 		       :pat-len (length pat)))
 	(marker #x1))
-    (declare (type sor-ub32 marker)
-	     (optimize safety debug))
+    (declare (type sor-ub32 marker))
 
     (iter
       (for i from 0 below (length pat))
@@ -111,10 +114,11 @@ print characters and their positions, decipher LIM."
 ;; --------------------------------------------------------
 
 (defun search-sor (idx txt  &key (start2 0) (end2 nil))
-  (declare (type simple-string txt)
-	   (type fixnum start2)
+  (declare (type fixnum start2)
 	   (type (or fixnum null) end2)
 	   #.*standard-optimize-settings*)
+  (check-type idx sor)
+  (check-type txt simple-string)
 
   (when (= 0 (sor-pat-len idx))
     (return-from search-sor 0))
@@ -133,9 +137,9 @@ print characters and their positions, decipher LIM."
 ;; --------------------------------------------------------
 
 (defun string-contains-sor (pat txt)
-  (declare (type simple-string pat)
-	   (type simple-string txt)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+   (check-type pat simple-string)
+   (check-type txt simple-string)
 
   (when (= 0 (length pat))
     (return-from string-contains-sor 0))

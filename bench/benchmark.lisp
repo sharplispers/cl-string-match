@@ -334,8 +334,9 @@ http://rosettacode.org/wiki/Count_occurrences_of_a_substring#Common_Lisp"
 ;; To run random benchmarks first compile the source file and execute
 ;; the following command:
 ;;
-;; sbcl --load benchmark --eval '(rnd-run)' --eval '(quit)'
+;; sbcl --load benchmark.fasl --eval '(rnd-run)' --eval '(quit)'
 ;; lx86cl --load benchmark --eval '(rnd-run)' --eval '(quit)'
+;; ecl -load benchmark.fas -eval '(rnd-run)' -eval '(quit)'
 
 (defparameter *alphabet*
   (concatenate 'list

@@ -1,8 +1,6 @@
 #!/bin/bash
 
-sbcl --noinform --eval '(ql:quickload "cl-string-match")' \
-                --eval '(ql:quickload "cl-ppcre")' \
-                --eval '(compile-file "benchmark.lisp")' \
+sbcl --noinform --eval '(compile-file "benchmark.lisp")' \
 		--eval '(quit)' > /dev/null
 
 sbcl --noinform --eval '(ql:quickload "cl-string-match")' \

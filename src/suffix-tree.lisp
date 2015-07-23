@@ -73,8 +73,8 @@ actual nodes as its children."
 ;; --------------------------------------------------------
 
 (defun suffix-tree-printer (obj stream depth)
-  (declare (ignore depth)
-	   (type suffix-tree obj))
+  (declare (ignore depth))
+  (check-type obj suffix-tree)
 
   (format stream "#<suffix-tree str: ~s has-root: ~a children:~%  ~{ ~a~% ~}>"
 	  (suffix-tree-str obj)
@@ -84,8 +84,9 @@ actual nodes as its children."
 ;; --------------------------------------------------------
 
 (defun suffix-node-printer (obj stream depth)
-  (declare (ignore depth)
-	   (type suffix-node obj))
+  (declare (ignore depth))
+  (check-type obj suffix-node)
+
   (format stream "#<node ~a start: ~a; end: ~a; children: ~{~a~} >"
           (suffix-node-id obj)
 	  (suffix-node-start obj)
@@ -95,7 +96,7 @@ actual nodes as its children."
 ;; --------------------------------------------------------
 
 (defun suffix-tree-char (tree i)
-  (declare (type suffix-tree tree))
+  (check-type tree suffix-tree)
   "Return the char that is located in the string at index i."
   (char (suffix-tree-str tree) i))
 
@@ -168,8 +169,8 @@ otherwise."
 (defun suffix-node-str (tree node)
   "Returns the string that corresponds to the edge pointing to this
 node."
-  (declare (type suffix-tree tree)
-           (type suffix-node node))
+  (check-type tree suffix-tree)
+  (check-type node suffix-node)
 
   #+debug-suffix-tree
   (when (< (suffix-node-end node)
@@ -265,8 +266,8 @@ implementation from: http://pastie.org/5925812"
 given node creates either Ukkonens suffix tree or simple suffix tree
 node."
 
-  (declare (type suffix-tree tree)
-	   (type suffix-node node))
+  (check-type tree suffix-tree)
+  (check-type node suffix-node)
 
   (let ((child-node (if (ukk-node-p node)
                         (make-ukk-node :start start
@@ -285,9 +286,9 @@ node."
 (defun suffix-node-insert-child (tree node child-node)
   "Adds a child node to the given NODE."
 
-  (declare (type suffix-tree tree)
-	   (type suffix-node node)
-	   (type suffix-node child-node))
+  (check-type tree suffix-tree)
+  (check-type node suffix-node)
+  (check-type child-node suffix-node)
 
   (setf (suffix-node-children node)
 	(remove child-node (suffix-node-children node)
@@ -345,9 +346,9 @@ C in the given suffix tree TREE."
   "Adds a suffix of a string STR designated by its START and END to
 the suffix tree TREE."
 
-  (declare (type suffix-tree tree)
-	   (type fixnum start)
-	   (type fixnum end))
+  (check-type tree suffix-tree)
+  (check-type start fixnum)
+  (check-type end fixnum)
 
   #+debug-suffix-tree
   (format t "~a: ADD-SUFFIX-SIMPLE: start=~a end=~a suf=~a~%" start start end
@@ -411,7 +412,8 @@ Essentially it operates as follows:
 Algorithm first ads a suffix Str[1..m] (entire string) to the
 tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 
-  (declare (type simple-string str))
+  (check-type str simple-string)
+
   (let ((tree (make-suffix-tree :str str
 				:root (make-suffix-node)))
 	(str-len (length str)))
@@ -444,6 +446,7 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 
 ;; --------------------------------------------------------
 
+(declaim (inline substr))
 (defun stbstr (str l r)
   "The +infinity+ is defined as the largest number (standard constant
 MOST-POSITIVE-FIXNUM), if the right index exceed to the length of the
@@ -453,6 +456,7 @@ list, the result is from left to the end of the list."
 
 ;; --------------------------------------------------------
 
+(declaim (inline ref-length))
 (defun ref-length (l r)
   (declare (type fixnum l)
            (type fixnum r))
@@ -462,7 +466,8 @@ list, the result is from left to the end of the list."
 
 (defun str-length (node)
   "Length of the substring in the arc."
-  (declare (type suffix-node node))
+  (check-type node suffix-node)
+
   (ref-length (suffix-node-start node)
               (suffix-node-end node)))
 
@@ -565,7 +570,7 @@ the given string length.
 Ukkonen's algorithm is an on-line algorithm and can operate on a
 stream of characters, adding one character at a time."
 
-  (declare (type simple-string str))
+  (check-type str simple-string)
 
   (let* ((tree (make-suffix-tree :str str
 				 :root (make-ukk-node)))
