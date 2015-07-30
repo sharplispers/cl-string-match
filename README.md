@@ -60,15 +60,18 @@ outperform standard search function by almost 18 times!
 USAGE
 =====
 
-cl-string-match is supported by Quicklisp and is known by its system name:
+CL-STRING-MATCH [![Quickdocs](http://quickdocs.org/badge/cl-string-match.svg)](http://quickdocs.org/cl-string-match/) is supported by Quicklisp and is known by its system name:
 
 ```lisp
 (ql:quickload :cl-string-match)
 ```
 
-Cl-string-match exports functions in `cl-string-match` package (nicknamed `sm`).
+CL-STRING-MATCH exports functions in `cl-string-match` package (that
+is also nicknamed as `sm`).
 
-Shortcuts look for given pattern `pat` in text `txt`. They are usually much slower but are easier to use:
+Shortcut functions search given pattern `pat` in text `txt`. They are
+usually much slower (because they build index structures every time
+they are called) but are easier to use:
 
 * `string-contains-brute` *pat* *txt* — Brute-force
 * `string-contains-bm` *pat* *txt* — Boyer-Moore
