@@ -48,8 +48,8 @@
 ;; --------------------------------------------------------
 
 (defun initialize-kmp (pat)
-  (declare (type simple-string pat)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
 
   (let* ((idx (make-kmp
 	       :pat pat
@@ -86,8 +86,8 @@
 ;; --------------------------------------------------------
 
 (defun search-kmp (idx txt)
-  (declare (type simple-string txt)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type txt simple-string)
 
   (when (= (kmp-pat-len idx) 0)
     (return-from search-kmp 0))
@@ -123,9 +123,9 @@
 ;; --------------------------------------------------------
 
 (defun string-contains-kmp (pat txt)
-  (declare (type string pat)
-	   (type string txt)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
+  (check-type txt simple-string)
 
   (when (= 0 (length pat))
     (return-from string-contains-kmp 0))
