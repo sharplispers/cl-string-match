@@ -53,7 +53,7 @@
 ;; --------------------------------------------------------
 
 (defstruct rk
-  (pat nil    :type (or null simple-string))
+  (pat ""     :type simple-string)
   (pat-hash 0 :type rk-ub32)
   (pat-len  0 :type rk-ub32)
   (alph-size +alph-size+ :type rk-ub32)
@@ -61,6 +61,7 @@
 
 ;; --------------------------------------------------------
 
+(declaim (inline horner-hash))
 (defun horner-hash (key end)
   "Horner hashing function implementation.
 
@@ -69,8 +70,10 @@ represented as a char array in time proportional to END. (We pass END
 as an argument so that we can use the function for both the pattern
 and the text.)"
 
-  (declare (type simple-string key)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*
+	   ;; we expect this function is called by trusted code
+	   (type simple-string key)
+	   (type fixnum end))
 
   (let ((h 0))
     (declare (type rk-ub32 h))
@@ -79,19 +82,40 @@ and the text.)"
        (setf h
 	     (mod (the rk-ub32
 		       (+ (the rk-ub32 (* (the rk-ub32 +alph-size+)
-				       (the rk-ub32 h)))
+					  (the rk-ub32 h)))
 			  (the rk-ub32 (char-code (char key j)))))
 		  (the rk-ub32 +big-prime+))))
     (return-from horner-hash (the rk-ub32 h))))
-
 ;; (declaim (ftype (function (simple-string fixnum) rk-ub32) horner-hash)
 ;;	 (inline horner-hash))
 
 ;; --------------------------------------------------------
 
+(declaim (inline check-rk-lv))
+(defun check-rk-lv (idx txt i)
+  "Las Vegas version: does pat[] match txt[i..i-M+1] ?"
+  (declare #.*standard-optimize-settings*
+	   ;; we expect this function is called by trusted code
+	   (type simple-string txt)
+	   (type rk idx))
+
+  (string= (rk-pat idx) txt
+	   :start2 i
+	   :end2 (+ i (rk-pat-len idx))))
+
+;; --------------------------------------------------------
+
+(declaim (inline check-rk-mk))
+(defun check-rk-mk (i)
+  "Monte Carlo version: always return true"
+  (declare (ignore i))
+  T)
+
+;; --------------------------------------------------------
+
 (defun initialize-rk (pat)
-  (declare (type string pat)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
 
   (let ((idx (make-rk
 	      :pat pat	; saving patter is required only for Las-Vegas
@@ -111,35 +135,11 @@ and the text.)"
 
 ;; --------------------------------------------------------
 
-(defun check-rk-lv (idx txt i)
-  "Las Vegas version: does pat[] match txt[i..i-M+1] ?"
-  (declare (type simple-string txt)
-	   (type rk idx)
-	   #.*standard-optimize-settings*)
-
-  (string= (rk-pat idx) txt
-	   :start2 i
-	   :end2 (+ i (rk-pat-len idx))))
-
-;;  (loop for j :from 0 :below (rk-pat-len idx) :when (char/= (char
-;;  (rk-pat idx) j) (char txt (+ i j))) :do (return-from check-rk-lv
-;;  nil))
-
-
-;; --------------------------------------------------------
-
-(defun check-rk-mk (i)
-  "Monte Carlo version: always return true"
-  (declare (ignore i))
-  T)
-
-;; --------------------------------------------------------
-
 (defun search-rk (idx txt-s)
   "Implementation of the Rabin-Karp substring search algorithm."
-  (declare (type simple-string txt-s)
-	   (type rk idx)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type txt-s simple-string)
+  (check-type idx rk)
 
   (when (= 0 (rk-pat-len idx))
     (return-from search-rk 0))
@@ -184,9 +184,9 @@ and the text.)"
 ;; --------------------------------------------------------
 
 (defun string-contains-rk (pat txt)
-  (declare (type simple-string pat)
-	   (type simple-string txt)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
+  (check-type txt simple-string)
 
   (when (= 0 (length pat))
     (return-from string-contains-rk 0))

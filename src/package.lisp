@@ -26,7 +26,7 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (defpackage :cl-string-match
-  (:use :common-lisp :alexandria :ascii-strings)
+  (:use :common-lisp :alexandria :iterate :ascii-strings)
   (:nicknames :sm)
   (:export
    :string-contains-brute
@@ -34,46 +34,58 @@
    :string-contains-bmh
    :string-contains-rk
    :string-contains-kmp
+   :string-contains-sor
    :string-contains-ac
+   :string-contains-tabac
    :initialize-bm
    :initialize-bmh
    :initialize-rk
    :initialize-kmp
+   :initialize-sor
    :initialize-ac
+   :initialize-tabac
    :search-bm
    :search-bmh
    :search-rk
    :search-kmp
+   :search-sor
    :search-ac
+   :search-tabac
 
    ;; Trie operations
    :empty-trie
    :trie-node
    :trie-build
    :trie-add-keyword
-   :trie-traverse
+   :trie-traverse-bfo
+   :trie-traverse-dfo
    :trie-contains
-
+   :trie-pprint
+   :trie->tabular-ac
+   
    ;; Suffix tree
    :+infinity+
    :suffix-tree
-   :suffix-tree.root
-   :suffix-tree.str
+   :suffix-tree-root
+   :suffix-tree-str
+   :suffix-tree-char
+   :suffix-tree-walk
+   :suffix-tree-equals
+   :suffix-tree-build-from-sexp
    :make-suffix-tree
-   :suffix-tree.char
-   :suffix-tree.walk
-   :suffix-tree.equals
-   :suffix-tree.build-from-sexp
+
    :suffix-node
-   :suffix-node.start
-   :suffix-node.end
-   :suffix-node.children
-   :suffix-node.add-child
-   :suffix-node.leafp
-   :suffix-node.map-over-children
-   :suffix-node.str
-   :suffix-node.equals
+   :suffix-node-start
+   :suffix-node-end
+   :suffix-node-children
+   :suffix-node-add-child
+   :suffix-node-leafp
+   :suffix-node-map-over-children
+   :suffix-node-str
+   :suffix-node-equals
+   :make-suffix-node
    :ukk-node
+   :ukk-node-suffix
    :make-ukk-node
    :build-suffix-tree-simple
    :build-suffix-tree-ukkonen
@@ -115,6 +127,12 @@
     (compilation-speed 0)
     #+:lispworks (hcl:fixnum-safety 0))
   "The standard optimize settings used by most declaration expressions.")
+
+;; --------------------------------------------------------
+
+(defvar *standard-debug-settings*
+  '(optimize safety debug)
+  "The standard debug settings to be used in functions under development.")
 
 ;; you can change it to the more debug-friendly settings by evaluating:
 ;; (setf *STANDARD-OPTIMIZE-SETTINGS* '(optimize (debug 3)))

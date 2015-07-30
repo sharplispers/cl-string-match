@@ -38,6 +38,9 @@
 ;; "Exact String Matching Algorithms" by Christian Charras and Thierry Lecroq
 ;;
 ;; http://www-igm.univ-mlv.fr/~lecroq/string/node18.html#SECTION00180
+;;
+;; It uses only the "Bad character skip" rule, and does not use the
+;; "Good suffix rule"
 
 (in-package :cl-string-match)
 
@@ -52,14 +55,14 @@
 			      (alphabet-size char-code-limit)
 			      (data-type 'simple-string))
 
-  (let* ((index-name (format-name "BMH~a" variant-tag))
-	 (initialize-name (format-name "INITIALIZE-BMH~a" variant-tag))
-	 (search-name (format-name "SEARCH-BMH~a" variant-tag))
-	 (matcher-name (format-name "STRING-CONTAINS-BMH~a" variant-tag))
-	 (make-index (format-name "MAKE-~a" index-name))
-	 (the-bad-char-skip (format-name "~a-BAD-CHAR-SKIP" index-name))
-	 (the-pat (format-name "~a-PAT" index-name))
-	 (the-pat-len (format-name "~a-PAT-LEN" index-name)))
+  (let* ((index-name           (format-name "BMH~a" variant-tag))
+	 (initialize-name      (format-name "INITIALIZE-BMH~a" variant-tag))
+	 (search-name          (format-name "SEARCH-BMH~a" variant-tag))
+	 (matcher-name         (format-name "STRING-CONTAINS-BMH~a" variant-tag))
+	 (make-index           (format-name "MAKE-~a" index-name))
+	 (the-bad-char-skip    (format-name "~a-BAD-CHAR-SKIP" index-name))
+	 (the-pat              (format-name "~a-PAT" index-name))
+	 (the-pat-len          (format-name "~a-PAT-LEN" index-name)))
     `(progn
 
        ;; --------------------------------------------------------
@@ -75,9 +78,8 @@
 	 "Preprocess the needle.
 Initialize the table to default value."
 
-	 (declare (type ,data-type pat)
-		  #.*standard-optimize-settings*)
-
+	 (declare #.*standard-optimize-settings*)
+	 (check-type pat ,data-type)
 	 ;; When a character is encountered that does not occur in the
 	 ;; needle, we can safely skip ahead for the whole length of the
 	 ;; needle.
@@ -102,11 +104,11 @@ Initialize the table to default value."
        (defun ,search-name (idx txt &key (start2 0) (end2 nil))
 	 "Search for pattern defined in the IDX in TXT."
 
-	 (declare (type ,data-type txt)
-		  (type fixnum start2)
-		  (type (or fixnum null) end2)
-		  #.*standard-optimize-settings*)
-
+	 (declare #.*standard-optimize-settings*)
+	 (check-type idx ,index-name)
+	 (check-type txt ,data-type)
+	 (check-type start2 fixnum)
+	 (check-type end2 (or null fixnum))
 	 (when (= 0 (,the-pat-len idx))
 	   (return-from ,search-name 0))
 	 (when (= 0 (length txt))
@@ -134,14 +136,13 @@ Initialize the table to default value."
        ;; --------------------------------------------------------
 
        (defun ,matcher-name (pat txt &key (start2 0) (end2 nil))
-	 (declare (type ,data-type pat)
-		  (type ,data-type txt)
-		  #.*standard-optimize-settings*)
-
+	 (declare #.*standard-optimize-settings*)
+	 (check-type pat ,data-type)
+	 (check-type txt ,data-type)
+	 (check-type start2 fixnum)
+	 (check-type end2 (or null fixnum))
 	 (,search-name (,initialize-name pat) txt
-		       :start2 start2 :end2 end2))
-
-       )))
+		       :start2 start2 :end2 end2)))))
 
 ;; --------------------------------------------------------
 

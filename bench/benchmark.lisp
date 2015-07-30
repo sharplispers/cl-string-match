@@ -1,4 +1,4 @@
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2013,2015 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,12 @@
 ;;
 ;; See also: http://clisp.hg.sourceforge.net/hgweb/clisp/clisp/file/tip/benchmarks/run-all.lisp
 
-(ql:quickload "cl-string-match")
-(ql:quickload "cl-ppcre")
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ql:quickload "cl-string-match")
+  (ql:quickload "cl-ppcre")
+  (declaim (optimize speed))
+  #+sbcl
+  (require :sb-sprof))
 
 ;; --------------------------------------------------------
 
@@ -91,10 +95,10 @@ Returns: the amount of elapsed time."
   (let ((start (get-internal-run-time))
 	ret
 	elapsed)
-    (loop :repeat +times+ :do (setq ret (apply function args)))
-    (setq elapsed (/ (- (get-internal-run-time) start)
+    (loop :repeat +times+ :do (setf ret (apply function args)))
+    (setf elapsed (/ (- (get-internal-run-time) start)
                      (float internal-time-units-per-second 1d0)))
-    (log-msg (format nil "~a	~3$~%" len elapsed))
+    ;; (log-msg (format nil "~a	~3$~%" len elapsed))
     elapsed))
 
 
@@ -246,6 +250,7 @@ with 20 different characters."
 ;; --------------------------------------------------------
 
 (defun run-benchmarks ()
+  #+ignore
   (with-open-file (out log-file
 		       :direction :output
 		       :if-exists :supersede)
@@ -332,7 +337,9 @@ http://rosettacode.org/wiki/Count_occurrences_of_a_substring#Common_Lisp"
 ;; To run random benchmarks first compile the source file and execute
 ;; the following command:
 ;;
-;; sbcl --load benchmark --eval '(rnd-run)' --eval '(quit)'
+;; sbcl --load benchmark.fasl --eval '(rnd-run)' --eval '(quit)'
+;; lx86cl --load benchmark --eval '(rnd-run)' --eval '(quit)'
+;; ecl -load benchmark.fas -eval '(rnd-run)' -eval '(quit)'
 
 (defparameter *alphabet*
   (concatenate 'list
@@ -363,6 +370,7 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 (defparameter random-needles
   '())
 
+
 (defparameter random-haystack
   (make-string 1024))
 
@@ -372,20 +380,40 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	(loop :for n :from 1 :to 17 :collect
 	   (fill-random-string (make-string (+ 5 (* n 2))) random-alphabet-size))))
 
+
 (defun fill-random-haystack ()
   (setf random-haystack
 	(fill-random-string random-haystack random-alphabet-size)))
 
+
+(defun store-system-type ()
+  "Saves information about the Lisp system that is running this
+benchmark into the system.txt file that can be used by GNU Plot or
+other applications when making charts/plots/summaries, etc."
+
+  (with-open-file (out "system.txt"
+		       :direction :output
+		       :if-exists :supersede
+		       :if-does-not-exist :create)
+    (format out "~a ~a" (lisp-implementation-type) (lisp-implementation-version))))
+
+
 (defun rnd-run ()
   (log-title "Random needles and haystacks with index")
+  (store-system-type)
 
-  (let ((sys-times '())
+  (let ((start (get-internal-run-time)) ; to measure total time per wall-clock
+	elapsed				; will be set in the end
+	(sys-times '())
 	(bf-times '())
 	(bm-times '())
 	(bmh-times '())
 	(bmh8-times '())
 	(rk-times '())
-	(kmp-times '()))
+	(kmp-times '())
+	(sor-times '())
+	(times 10))
+
     (fill-random-needles)
     (fill-random-haystack)
     ;; (format t "haystack: ~a~%" random-haystack)
@@ -398,16 +426,23 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	    (bmh-time 0.0d0)
 	    (bmh8-time 0.0d0)
 	    (rk-time 0.0d0)
-	    (kmp-time 0.0d0))
+	    (kmp-time 0.0d0)
+	    (sor-time 0.0d0))
 
-	(dotimes (n 10)
+	(dotimes (n times)
+	  ;; in order to better average performance it is possible to
+	  ;; re-generate a needle on every attempt, but this makes
+	  ;; multistring performance comparison with AC more difficult
 	  (fill-random-string needle random-alphabet-size)
 	  ;; (format t "needle: ~a~%" needle)
 	  (let ((bm-idx (sm:initialize-bm needle))
 		(bmh-idx (sm:initialize-bmh needle))
 		(bmh8-idx (sm:initialize-bmh8 needle))
 		(rk-idx (sm:initialize-rk needle))
-		(kmp-idx (sm:initialize-kmp needle)))
+		(kmp-idx (sm:initialize-kmp needle))
+		(sor-idx nil
+		 #+ignore
+		 (sm:initialize-sor needle)))
 
 	    (incf sys-time (bm-timer (length needle)
 				     #'search needle random-haystack))
@@ -422,7 +457,11 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	    (incf rk-time (bm-timer (length needle)
 				    #'sm:search-rk rk-idx random-haystack))
 	    (incf kmp-time (bm-timer (length needle)
-				     #'sm:search-kmp kmp-idx random-haystack)))
+				     #'sm:search-kmp kmp-idx random-haystack))
+	    (incf sor-time 0.0
+		  #+ignore
+		  (bm-timer (length needle)
+				     #'sm:search-sor sor-idx random-haystack)))
 	  (format t ".")
 	  (force-output))
 	(push sys-time sys-times)
@@ -431,18 +470,63 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	(push bmh-time bmh-times)
 	(push bmh8-time bmh8-times)
 	(push rk-time rk-times)
-	(push kmp-time kmp-times))
+	(push kmp-time kmp-times)
+	(push sor-time sor-times))
       (format t "~%"))
 
     (with-open-file (out "random.log"
 			 :direction :output
 			 :if-exists :supersede
 			 :if-does-not-exist :create)
-      (format out "\# l sys bf bm bmh bmh8 rk kmp~%")
+      (format out "\# l sys bf bm bmh bmh8 rk kmp sor~%")
       (map nil
-	   #'(lambda (n sys bf bm bmh bmh8 rk kmp)
-	       (format out "~a ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f~%" (length n)
-		       sys bf bm bmh bmh8 rk kmp))
-	   random-needles sys-times bf-times bm-times bmh-times bmh8-times rk-times kmp-times))
+	   #'(lambda (n sys bf bm bmh bmh8 rk kmp sor)
+	       (format out "~a ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f ~,2f~%" (length n)
+		       sys bf bm bmh bmh8 rk kmp sor))
+	   random-needles sys-times bf-times bm-times bmh-times bmh8-times rk-times kmp-times sor-times))
 
-    ) )
+    ;; Aho-Corasick
+    (let ((ac-idx (sm:initialize-ac random-needles))
+	  (ac-time 0.0d0)
+	  (tabac-idx (sm:initialize-tabac random-needles))
+	  (tabac-time 0.0d0))
+
+      ;; since we search for all needles at once, we have to perform
+      ;; our test only TIMES times.
+      (dotimes (n times)
+	(incf ac-time (bm-timer (length random-needles)
+				#'sm:search-ac ac-idx random-haystack)))
+      (dotimes (n times)
+	(incf tabac-time (bm-timer (length random-needles)
+				   #'sm:search-tabac tabac-idx random-haystack)))
+
+      (format t "AC complete in: ~,2f seconds~%" ac-time)
+      (format t "TABAC complete in: ~,2f seconds~%" tabac-time)
+      (format t "BMH complete in: ~,2f seconds~%"
+	      (loop :for el :in bmh-times
+		 :sum el)))
+
+    (setq elapsed (/ (- (get-internal-run-time) start)
+                     (float internal-time-units-per-second 1d0)))
+    (format t "Benchmarks complete in: ~,2f seconds~%" elapsed)))
+
+
+;; --------------------------------------------------------
+;; Profiling some implementations
+;; --------------------------------------------------------
+;;
+
+;; sbcl --load "benchmark.lisp" --eval "(profile-tabac)" --eval "(quit)"
+#+sbcl
+(defun profile-tabac ()
+  (fill-random-needles)
+  (fill-random-haystack)
+  (let ((tabac-idx (sm:initialize-tabac random-needles)))
+    (sb-sprof:with-profiling (:max-samples 10000
+					   :report :flat
+					   :loop nil)
+      (dotimes (i 10000)
+	(declare (ignore i))
+	(sm:search-tabac tabac-idx random-haystack)))))
+
+;; EOF

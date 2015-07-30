@@ -7,11 +7,13 @@ Currently it provides implementations of the following string matching
 algorithms (see [wiki for details](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference)):
 
 * Brute-force (also known as naïve algorithm)
-* Boyer-Moore (with mismatched character heuristic)
+* Boyer-Moore (with mismatched character heuristic and good suffix shift)
 * Boyer-Moore-Horspool algorithm
 * Knuth-Morris-Pratt algorithm
 * Rabin-Karp algorithm
-* Aho-Corasick algorithm (with finite set of patterns)
+* Shift-OR algorithm (single pattern)
+* Aho-Corasick algorithm (with finite set of patterns, forward
+  transition and fail function)
 * A simple backtracking regular expressions engine
   [re](https://github.com/massung/re) similar to that of the Lua
   programming language. At the moment it significantly underperforms
@@ -58,15 +60,18 @@ outperform standard search function by almost 18 times!
 USAGE
 =====
 
-cl-string-match is supported by Quicklisp and is known by its system name:
+CL-STRING-MATCH [![Quickdocs](http://quickdocs.org/badge/cl-string-match.svg)](http://quickdocs.org/cl-string-match/) is supported by Quicklisp and is known by its system name:
 
 ```lisp
 (ql:quickload :cl-string-match)
 ```
 
-Cl-string-match exports functions in `cl-string-match` package (nicknamed `sm`).
+CL-STRING-MATCH exports functions in `cl-string-match` package (that
+is also nicknamed as `sm`).
 
-Shortcuts look for given pattern `pat` in text `txt`. They are usually much slower but are easier to use:
+Shortcut functions search given pattern `pat` in text `txt`. They are
+usually much slower (because they build index structures every time
+they are called) but are easier to use:
 
 * `string-contains-brute` *pat* *txt* — Brute-force
 * `string-contains-bm` *pat* *txt* — Boyer-Moore
@@ -130,52 +135,9 @@ limit.
 TODO
 ====
 
-The project still lacks some important features and is under
-development. Following tasks are still to be implemented:
+The project still lacks some important features and is under constant
+development. Any kind of contributions or feedback are welcome.
 
-* Comprehensive unit test suite: test if the functions in this package
-  work properly
+Please take a look at the [list of open issues](https://bitbucket.org/vityok/cl-string-match/issues?status=new&status=open) or the [Project Roadmap](https://bitbucket.org/vityok/cl-string-match/wiki/Project%20Roadmap).
 
-* Better replication of the SEARCH function parameters, implement
-  search on generic sequences where possible, not just on
-  strings. Search on byte sequences/arrays should be possible.
-
-* Rabin-Karp algorithm is not implemented properly: type conversions
-  and native arithmetic operations bloat code and make it barely
-  readable.
-
-* Improve performance: some implementations (i.e. Aho-Corasick,
-  Rabin-Karp) are extremely slow compared with theoretical estimates.
-
-* Benchmark should include corner cases (general worst-case scenarios)
-  and also check correlation between needle and haystack sizes
-
-* It is possible to generate code for automata and compile it into
-  native code using standard Lisp facilities [as described by Peter
-  Seibel](http://gigamonkeys.wordpress.com/2007/07/27/compiling-queries-without-eval/)
-
-* Utilize random haystack for benchmarking similar to CL-IRREGSEXP
-
-* Finite-State automaton algorithm
-
-* Apostolico–Giancarlo algorithm
-
-* Bitap/Shift-or algorithm
-
-Algorithms with finite set of patterns:
-
-* Commentz-Walter algorithm
-
-* Wu-Manber algorithm (derivative of Bitap)
-
-* Rabin–Karp multipattern search algorithm
-
-* DAWG-match
-
-Additional algorithms:
-
-* Suffix tree and tree-based algorithms
-
-* Thompson NFA
-
-* Consider inexact matching and other algorithms on strings
+Visit [project Wiki](https://bitbucket.org/vityok/cl-string-match/wiki/Home) for additional information.
