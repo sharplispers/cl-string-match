@@ -3,7 +3,7 @@
 # gnuplot < random.gp
 
 set terminal png enhanced size 640,480
-set output "random.png"
+set output "random_" . system("cat system.txt") . ".png"
 
 set title "Benchmarking search on random strings\n{/=9 " . system("cat system.txt") . " " . system("date +%F") . "}"
 
