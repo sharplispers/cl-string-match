@@ -381,6 +381,10 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	(fill-random-string random-haystack random-alphabet-size)))
 
 (defun rnd-run ()
+  ;; TODO
+  ;; (lisp-implementation-type)
+  ;; (lisp-implementation-version)
+
   (log-title "Random needles and haystacks with index")
 
   (let ((start (get-internal-run-time)) ; to measure total time per wall-clock

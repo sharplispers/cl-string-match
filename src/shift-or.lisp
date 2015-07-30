@@ -114,17 +114,19 @@ print characters and their positions, decipher LIM."
 ;; --------------------------------------------------------
 
 (defun search-sor (idx txt  &key (start2 0) (end2 nil))
-  (declare (type fixnum start2)
-	   (type (or fixnum null) end2)
-	   #.*standard-optimize-settings*)
+  (declare #.*standard-optimize-settings*)
+
   (check-type idx sor)
   (check-type txt simple-string)
+  (check-type start2 fixnum)
+  (check-type end2 (or fixnum null))
 
   (when (= 0 (sor-pat-len idx))
     (return-from search-sor 0))
   (when (= 0 (length txt))
     (return-from search-sor nil))
 
+  ;; TODO: add type declarations to assist compiler
   (iter (with state = (the sor-ub32 (lognot 0)))
 	(for j from start2 below (if end2 end2 (length txt)))
 	(setf state
@@ -138,8 +140,8 @@ print characters and their positions, decipher LIM."
 
 (defun string-contains-sor (pat txt)
   (declare #.*standard-optimize-settings*)
-   (check-type pat simple-string)
-   (check-type txt simple-string)
+  (check-type pat simple-string)
+  (check-type txt simple-string)
 
   (when (= 0 (length pat))
     (return-from string-contains-sor 0))
