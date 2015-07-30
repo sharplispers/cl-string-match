@@ -29,15 +29,15 @@
 
 ;; --------------------------------------------------------
 
-(defmacro define-brute-matcher (variant-tag &key
-				(key-get 'char)
-				(key-cmp/= 'char/=)
-				(data-type 'simple-string))
+(defmacro define-brute-matcher (variant-tag
+				&key
+				  (key-get 'char)
+				  (key-cmp/= 'char/=)
+				  (data-type 'simple-string))
 
-  (let ((matcher-name-impl (format-name "%STRING-CONTAINS-BRUTE~A" variant-tag))
-	(matcher-name (format-name "STRING-CONTAINS-BRUTE~A" variant-tag)))
+  (let ((matcher-name (format-name "STRING-CONTAINS-BRUTE~A" variant-tag)))
     `(progn
-       (defun ,matcher-name-impl (pat txt &key (start1 0) end1 (start2 0) end2)
+       (defun ,matcher-name (pat txt &key (start1 0) end1 (start2 0) end2)
 	 "A Brute-force substring search implementation.
 
 Brute-force substring search requires O(N x M) character compares to
@@ -47,13 +47,14 @@ case.
 Algorithm described in: Chapter 5, p. 760 in
   'Algorithms', Robert Sedgewick and Kevin Wayne. 4th"
 
-	 (declare (type ,data-type pat)
-		  (type ,data-type txt)
-		  (type fixnum start1)
-		  (type (or null fixnum) end1)
-		  (type fixnum start2)
-		  (type (or null fixnum) end2)
-		  #.*standard-optimize-settings*)
+	 (declare #.*standard-optimize-settings*)
+
+	 (check-type pat ,data-type)
+	 (check-type txt ,data-type)
+	 (check-type start1 fixnum)
+	 (check-type end1 (or null fixnum))
+	 (check-type start2 fixnum)
+	 (check-type end2 (or null fixnum))
 
 	 (let ((pat-len (length pat))
 	       (txt-len (length txt)))
@@ -68,20 +69,9 @@ Algorithm described in: Chapter 5, p. 760 in
 		 :finally
 		 (when (= pat-pos end1)
 		   ;; found match
-		   (return-from ,matcher-name-impl txt-pos))))
+		   (return-from ,matcher-name txt-pos))))
 	   ;; no match found
-	   NIL))
-       (declaim (inline ,matcher-name-impl))
-
-       (defun ,matcher-name (pat txt &key (start1 0) end1 (start2 0) end2)
-	 (declare #.*standard-optimize-settings*)
-	 (check-type pat ,data-type)
-	 (check-type txt ,data-type)
-	 (check-type start1 fixnum)
-	 (check-type end1 (or null fixnum))
-	 (check-type start2 fixnum)
-	 (check-type end2 (or null fixnum))
-	 (,matcher-name-impl pat txt :start1 start1 :end1 end1 :start2 start2 :end2 end2)))))
+	   NIL)))))
 
 ;; --------------------------------------------------------
 

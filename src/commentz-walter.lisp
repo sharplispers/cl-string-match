@@ -60,8 +60,8 @@
 
 (defstruct (cw-node (:include trie-node))
   ;; we "inherit" properties: children label mark from the trie-node
-  depth ;; node depth (number of nodes from the root to this node)
-)
+  ;; depth ;; node depth (number of nodes from the root to this node)
+  )
 
 ;; --------------------------------------------------------
 
@@ -102,8 +102,8 @@ forward in text. Repeat.
 
 Commentz-Walter improves this basic algorithm by pre-computing values
 for the forward shift in text upon character mismatch."
-  (declare (type cw idx)
-	   (type simple-string txt))
+  (check-type idx cw)
+  (check-type txt simple-string)
 
   (let ((trie (cw-trie idx)))
     (loop
