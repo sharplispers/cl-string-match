@@ -1,4 +1,4 @@
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2013,2015 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -35,8 +35,11 @@
 ;; See also: http://clisp.hg.sourceforge.net/hgweb/clisp/clisp/file/tip/benchmarks/run-all.lisp
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
- (ql:quickload "cl-string-match")
- (ql:quickload "cl-ppcre"))
+  (ql:quickload "cl-string-match")
+  (ql:quickload "cl-ppcre")
+  (declaim (optimize speed))
+  #+sbcl
+  (require :sb-sprof))
 
 ;; --------------------------------------------------------
 
@@ -367,6 +370,7 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 (defparameter random-needles
   '())
 
+
 (defparameter random-haystack
   (make-string 1024))
 
@@ -376,16 +380,27 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 	(loop :for n :from 1 :to 17 :collect
 	   (fill-random-string (make-string (+ 5 (* n 2))) random-alphabet-size))))
 
+
 (defun fill-random-haystack ()
   (setf random-haystack
 	(fill-random-string random-haystack random-alphabet-size)))
 
-(defun rnd-run ()
-  ;; TODO
-  ;; (lisp-implementation-type)
-  ;; (lisp-implementation-version)
 
+(defun store-system-type ()
+  "Saves information about the Lisp system that is running this
+benchmark into the system.txt file that can be used by GNU Plot or
+other applications when making charts/plots/summaries, etc."
+
+  (with-open-file (out "system.txt"
+		       :direction :output
+		       :if-exists :supersede
+		       :if-does-not-exist :create)
+    (format out "~a ~a" (lisp-implementation-type) (lisp-implementation-version))))
+
+
+(defun rnd-run ()
   (log-title "Random needles and haystacks with index")
+  (store-system-type)
 
   (let ((start (get-internal-run-time)) ; to measure total time per wall-clock
 	elapsed				; will be set in the end
@@ -493,8 +508,25 @@ the master *ALPHABET* limited by the given ALPHABET-SIZE."
 
     (setq elapsed (/ (- (get-internal-run-time) start)
                      (float internal-time-units-per-second 1d0)))
-    (format t "Benchmarks complete in: ~,2f seconds~%" elapsed)
+    (format t "Benchmarks complete in: ~,2f seconds~%" elapsed)))
 
-    ))
+
+;; --------------------------------------------------------
+;; Profiling some implementations
+;; --------------------------------------------------------
+;;
+
+;; sbcl --load "benchmark.lisp" --eval "(profile-tabac)" --eval "(quit)"
+#+sbcl
+(defun profile-tabac ()
+  (fill-random-needles)
+  (fill-random-haystack)
+  (let ((tabac-idx (sm:initialize-tabac random-needles)))
+    (sb-sprof:with-profiling (:max-samples 10000
+					   :report :flat
+					   :loop nil)
+      (dotimes (i 10000)
+	(declare (ignore i))
+	(sm:search-tabac tabac-idx random-haystack)))))
 
 ;; EOF
