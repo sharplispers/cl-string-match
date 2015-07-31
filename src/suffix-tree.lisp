@@ -50,6 +50,10 @@
 
 ;; --------------------------------------------------------
 
+(defconstant +infinity+ MOST-POSITIVE-FIXNUM)
+
+;; --------------------------------------------------------
+
 (defstruct (suffix-tree (:print-function suffix-tree-printer))
   "ROOT is a SUFFIX-NODE with default values. It is intended to keep
 references to its children. ROOT is just a simple placeholder for the
@@ -470,10 +474,6 @@ list, the result is from left to the end of the list."
 
   (ref-length (suffix-node-start node)
               (suffix-node-end node)))
-
-;; --------------------------------------------------------
-
-(define-constant +infinity+ MOST-POSITIVE-FIXNUM)
 
 ;; --------------------------------------------------------
 

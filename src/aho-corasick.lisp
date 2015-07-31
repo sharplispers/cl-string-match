@@ -454,10 +454,10 @@ first occurence."
 (define-constant +ac-alphabet+ 256)
 
 (defstruct tabac
-  (start -1 :type fixnum)	    ; starting state
-  trans				    ; transitions
-  final				    ; final states
-  match-len			    ; array that stores pattern length
+  (start -1 :type fixnum)		; starting state
+  (trans nil) ; transitions
+  (final nil) ; final states
+  (match-len nil)	; array that stores pattern length
   )
 
 ;; --------------------------------------------------------
@@ -526,10 +526,12 @@ patterns."
     (for state
       first (tabac-transition idx (tabac-start idx) c)
       then (tabac-transition idx state c))
-    (if (= state (tabac-start idx))
+    (declare (type fixnum state)
+	     (type fixnum pos))
+    (if (= state (the fixnum (tabac-start idx)))
 	(progn
-	  (setf state (tabac-transition idx state c))))
-    (when (>= (the fixnum (aref (tabac-final idx) state))
+	  (setf state (the fixnum (tabac-transition idx state c)))))
+    (when (>= (the fixnum (elt (tabac-final idx) state))
 	      0)
       (return (values (+ 1 (- pos (aref (tabac-match-len idx) state)))
 		      (aref (tabac-final idx) state))))))
