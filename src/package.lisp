@@ -109,7 +109,11 @@
    #:match-string
    #:match-groups
    #:match-pos-start
-   #:match-pos-end))
+   #:match-pos-end
+
+   ;; UTILITIES
+   #:prefixed-with
+   #:suffixed-with))
 
 ;; --------------------------------------------------------
 
