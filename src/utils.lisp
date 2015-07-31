@@ -1,6 +1,6 @@
-;;; -*- package: CLSTRINGMATCH-TEST.SYSTEM; Syntax: Common-lisp; Base: 10 -*-
+;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2015, Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -25,29 +25,24 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-#|
-  This file is a part of cl-string-match library.
-|#
-
-(in-package :cl-user)
-
-(defpackage cl-string-match-test-asd
-  (:use :cl :asdf))
-(in-package :cl-string-match-test-asd)
+;; Different utility functions for dealing with strings or similar
+;; data structures that don't fit under conventional topics in this
+;; library.
 
 ;; --------------------------------------------------------
 
-(asdf:defsystem #:cl-string-match-test
-  :description
-  "Tests of the CL-STRING-MATCH functions."
-  :license "BSD"
-  :depends-on (:cl-string-match :lisp-unit)
-  :components ((:module "t"
-			:serial T
-			:components
-			((:file "package")
-			 (:file "smoke"))))
-  :perform (load-op :after (op c) (asdf:clear-system c)))
+(defun prefixed-with (txt pref)
+  "Returns T if the given string TXT is prefixed (starts with) the
+given prefix PREF."
+  (when (>= (length txt) (length pref))
+    (string= txt pref :end1 (length pref))))
+
+;; --------------------------------------------------------
+
+(defun suffixed-with (txt suff)
+  "Returns T if the given string TXT is suffixed (ends with) the
+given suffix SUFF."
+  (when (>= (length txt) (length suff))
+    (string= txt suff :start1 (- (length txt) (length suff)))))
 
 ;; EOF

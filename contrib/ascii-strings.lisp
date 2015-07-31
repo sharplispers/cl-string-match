@@ -85,7 +85,8 @@
 
 (in-package :ascii-strings)
 
-(declaim (optimize speed (safety 0)))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (declaim (optimize speed)))
 
 ;; --------------------------------------------------------
 
@@ -346,8 +347,12 @@
 ;; --------------------------------------------------------
 
 (defun ub-read-line (reader)
-  (declare (type ub-line-reader reader)
-           (optimize speed (safety 0)))
+  "Reads data into a pre-allocated buffer in the reader structure and
+returns an array displaced to the contents of the next line in that buffer."
+
+  (declare (optimize speed (safety 0)))
+
+  (check-type reader ub-line-reader)
 
   (when (ub-line-reader.eof reader)
     (return-from ub-read-line nil))
@@ -428,9 +433,9 @@
 SEQUENCE. This is meant as a memory-efficient replacement for the
 ordinary SUBSEQ that allocates a new sequence."
 
-  (declare (type vector sequence)
-           (type fixnum start)
-           (type (or null fixnum) end))
+  (check-type sequence vector)
+  (check-type start fixnum)
+  (check-type end (or null fixnum))
 
   (if (and (zerop start)
            (or (null end)
