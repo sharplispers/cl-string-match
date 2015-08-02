@@ -455,10 +455,13 @@ first occurence."
 
 (defstruct tabac
   (start -1 :type fixnum)		; starting state
-  (trans nil) ; transitions
-  (final nil) ; final states
-  (match-len nil)	; array that stores pattern length
-  )
+  (trans nil)				; transitions
+  ;; final states
+  (final (make-array 0 :element-type 'fixnum))
+  ;; array that stores corresponding pattern length
+  (match-len (make-array 0 :element-type 'fixnum)))
+
+;; (make-array 0 :element-type 'fixnum) :type (simple-array fixnum))
 
 ;; --------------------------------------------------------
 
