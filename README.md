@@ -33,7 +33,7 @@ Some algorithms (Brute-force, Boyer-Moore-Horspool) have parametric
 implementations making it possible to declare specific implementations
 for application-specific custom data types and data structures.
 
-This library is routinely tested on SBCL, Clozure CL and ABCL.
+This library is routinely tested on Steel Bank CL, Clozure CL, Embeddable CL and Armed Bear CL. Chances are really high that it will work on other platforms without a flaw.
 
 Check the [API Reference](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference) for more details.
 
