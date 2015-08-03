@@ -1,3 +1,10 @@
+2015-08-03  victor  <victor@vityok>
+
+	* src/aho-corasick.lisp after adding type declarations and forcing
+	the iter macro to declare its internal variables the search-tabac
+	function slightly outperforms multiple BMH searches of the same
+	random patterns.
+
 2015-07-23  victor  <victor@vityok>
 
 	* all: all implementations check-type of the given data in
