@@ -7,6 +7,8 @@
 ;; lx86cl --eval '(ql:quickload "CL-STRING-MATCH-TEST")' --eval '(test:run)' --eval '(quit)'
 ;; echo '(ql:quickload :CL-STRING-MATCH-TEST) (test:run) (quit)' | abcl
 ;; ecl -eval '(ql:quickload "CL-STRING-MATCH-TEST")' -eval '(test:run)' -eval '(quit)'
+;;
+;; Or just run the smoke-all.sh shell script.
 
 
 ;; --------------------------------------------------------

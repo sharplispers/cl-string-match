@@ -454,14 +454,16 @@ first occurence."
 (define-constant +ac-alphabet+ 256)
 
 (defstruct tabac
-  (start -1 :type fixnum)		; starting state
-  (trans nil)				; transitions
+  ;; initial state
+  (start -1 :type fixnum)
+  ;; transitions
+  (trans nil :type (or null (simple-array (or null (simple-array fixnum)))))
   ;; final states
-  (final (make-array 0 :element-type 'fixnum))
+  (final (make-array 0 :element-type 'fixnum)
+	 :type (simple-array fixnum))
   ;; array that stores corresponding pattern length
-  (match-len (make-array 0 :element-type 'fixnum)))
-
-;; (make-array 0 :element-type 'fixnum) :type (simple-array fixnum))
+  (match-len (make-array 0 :element-type 'fixnum)
+	     :type (simple-array fixnum)))
 
 ;; --------------------------------------------------------
 
@@ -472,9 +474,15 @@ Aho-Corasick automata."
   (let* ((nodes-count (trie-node-id trie))
 	 (idx (make-tabac
 	       :start nodes-count
-	       :match-len (make-array (+ nodes-count 1) :initial-element -1)
-	       :trans (make-array (+ nodes-count 1))
-	       :final (make-array (+ nodes-count 1) :initial-element -1))))
+	       :match-len (make-array (+ nodes-count 1)
+				      :initial-element -1
+				      :element-type 'fixnum)
+	       :trans (make-array (+ nodes-count 1)
+				  :initial-element nil
+				  :element-type '(or null (simple-array fixnum)))
+	       :final (make-array (+ nodes-count 1)
+				  :initial-element -1
+				  :element-type 'fixnum))))
     (trie-traverse-dfo
      trie
      #'(lambda (node)
@@ -489,7 +497,8 @@ Aho-Corasick automata."
 	 ;; initialize transitions from this node with the failure
 	 ;; transition
 	 (let ((trans (make-array +ac-alphabet+
-				  :initial-element (trie-node-id (trie-node-fail node)))))
+				  :initial-element (trie-node-id (trie-node-fail node))
+				  :element-type 'fixnum)))
 	   (map-trie-children (node child)
 	     (setf (aref trans (char-code (trie-node-label child)))
 		   (trie-node-id child)))
@@ -499,11 +508,15 @@ Aho-Corasick automata."
 
 ;; --------------------------------------------------------
 
-(declaim (inline tabac-transition))
+(declaim (inline tabac-transition)
+	 (ftype (function (tabac
+			   fixnum
+			   base-char)
+			  fixnum) tabac-transition))
 (defun tabac-transition (idx state c)
   "Returns a new state based on the given char from the current state."
-  (aref (aref (tabac-trans idx) state)
-	(char-code c)))
+  (the fixnum (aref (aref (tabac-trans idx) state)
+		    (char-code c))))
 
 ;; --------------------------------------------------------
 
@@ -518,15 +531,17 @@ patterns."
 ;; --------------------------------------------------------
 
 (defun search-tabac (idx txt)
-  ;; this function generates 48 warnings when compiled on SBCL
+  ;; this function generates 9 warnings when compiled on SBCL
   (declare #.*standard-optimize-settings*)
   (check-type idx tabac)
   (check-type txt simple-string)
 
   (iter
+    (declare (iterate:declare-variables))
     (for c in-string txt)
-    (for pos from 0 below (length txt))
-    (for state
+    (declare (type base-char c))
+    (for (the fixnum pos) from 0 below (the fixnum (length txt)))
+    (for (the fixnum state)
       first (tabac-transition idx (tabac-start idx) c)
       then (tabac-transition idx state c))
     (declare (type fixnum state)
@@ -534,10 +549,10 @@ patterns."
     (if (= state (the fixnum (tabac-start idx)))
 	(progn
 	  (setf state (the fixnum (tabac-transition idx state c)))))
-    (when (>= (the fixnum (elt (tabac-final idx) state))
+    (when (>= (the fixnum (aref (tabac-final idx) state))
 	      0)
-      (return (values (+ 1 (- pos (aref (tabac-match-len idx) state)))
-		      (aref (tabac-final idx) state))))))
+      (return (values (the fixnum (+ 1 (- pos (aref (tabac-match-len idx) state))))
+		      (the fixnum (aref (tabac-final idx) state)))))))
 
 ;; --------------------------------------------------------
 
