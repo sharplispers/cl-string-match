@@ -29,19 +29,21 @@
 ;; data structures that don't fit under conventional topics in this
 ;; library.
 
+(in-package :cl-string-match)
+
 ;; --------------------------------------------------------
 
 (defun prefixed-with (txt pref)
-  "Returns T if the given string TXT is prefixed (starts with) the
-given prefix PREF."
+  "Returns T if the given string `TXT` is prefixed (starts with) the
+given prefix `PREF`."
   (when (>= (length txt) (length pref))
     (string= txt pref :end1 (length pref))))
 
 ;; --------------------------------------------------------
 
 (defun suffixed-with (txt suff)
-  "Returns T if the given string TXT is suffixed (ends with) the
-given suffix SUFF."
+  "Returns T if the given string `TXT` is suffixed (ends with) the
+given suffix `SUFF`."
   (when (>= (length txt) (length suff))
     (string= txt suff :start1 (- (length txt) (length suff)))))
 
