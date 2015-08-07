@@ -91,29 +91,29 @@
    :build-suffix-tree-ukkonen
 
    ;; REGULAR EXPRESSIONS
-   #:re
-   #:re-match
+   :re
+   :re-match
 
    ;; macros
-   #:with-re
-   #:with-re-match
+   :with-re
+   :with-re-match
 
    ;; interface
-   #:compile-re
-   #:match-re
-   #:find-re
-   #:split-re
-   #:replace-re
+   :compile-re
+   :match-re
+   :find-re
+   :split-re
+   :replace-re
 
    ;; match readers
-   #:match-string
-   #:match-groups
-   #:match-pos-start
-   #:match-pos-end
+   :match-string
+   :match-groups
+   :match-pos-start
+   :match-pos-end
 
    ;; UTILITIES
-   #:prefixed-with
-   #:suffixed-with))
+   :prefixed-with
+   :suffixed-with))
 
 ;; --------------------------------------------------------
 

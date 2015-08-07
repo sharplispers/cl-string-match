@@ -47,7 +47,21 @@
 (defstruct (trie-node
 	     (:print-function trie-node-printer))
   "Each node of a trie contains a list of child nodes, a label (the
-letter) and a mark (some value attributed to the matching string)."
+letter) and a mark (some value attributed to the matching string).
+
+Trie root node is like all other nodes but its `ID` is used as an
+increment to create ids for new nodes.
+
+Slots:
+
+* `id` - unique node identifier, root node has the largest id.
+* `children` - a hash table with labels as keys, `trie-node` as
+  values.
+* `mark` - output function, when not null marks the last character of a
+  keyword and is returned as the search result.
+* `fail` - fail transition to another node.
+* `depth` - number of nodes from the root node to this node.
+"
 
   (id 0 :type fixnum) ; numeric node identifier, nodes counter in the root
   children	      ; this is essentially a goto transition
@@ -61,7 +75,7 @@ letter) and a mark (some value attributed to the matching string)."
 
 (defun trie-node-printer (obj stream depth)
   "We have to avoid standard Lisp printer because of the FAIL links
-that turn our tree into a network with cycles, plunging the default
+that turn our tree into a network with cycles, throwing the default
 printer into an infinite loop."
 
   (declare (ignore depth))
@@ -78,11 +92,11 @@ printer into an infinite loop."
 (defun trie-add-child (trie label mark &key (id 0) (constructor #'make-trie-node))
   "Add a child node to the given node with the given label and mark.
 
-Constructor can be either MAKE-TRIE-NODE or any other structure
-constructor derieved from the TRIE-NODE struct."
+Constructor can be either `MAKE-TRIE-NODE` or any other structure
+constructor derieved from the `TRIE-NODE` struct."
 
-  (declare #.*standard-optimize-settings*
-	   (function constructor))
+  (declare #.*standard-optimize-settings*)
+  (check-type constructor function)
 
   (let ((child (funcall constructor
 			:id id
@@ -97,16 +111,16 @@ constructor derieved from the TRIE-NODE struct."
 ;; --------------------------------------------------------
 
 (defun trie-add-keyword (trie kw idx &key (constructor #'make-trie-node))
-  ;; Starting at the root, follow the path labeled by chars
-  ;; of Pi
-  ;;
-  ;; If the path ends before Pi, continue it by adding new
-  ;; edges and nodes for the remaining characters of Pi
-  ;;
-  ;; Store identifier i of Pi at the terminal node of the
-  ;; path
+   "Starting at the root, follow the path labeled by chars of Pi
+
+If the path ends before Pi, continue it by adding new edges and nodes
+for the remaining characters of Pi.
+
+Store identifier i of Pi at the terminal node of the path."
+
   (declare #.*standard-optimize-settings*)
   (check-type kw simple-string)
+
   (loop
      :with node = trie
      :for c :across kw
@@ -138,7 +152,7 @@ child node is bound to the CHILD variable."
 
 (defun trie-traverse-dfo (trie handler)
   "Traverse the trie in the Depth-First-Order and call the given
-handler function on each node.."
+handler function on each node."
   (check-type handler function)
 
   (let ((stack nil))
@@ -454,6 +468,15 @@ first occurence."
 (define-constant +ac-alphabet+ 256)
 
 (defstruct tabac
+  "Defines an Aho-Corasick DFA based on tables.
+
+Slots:
+
+* `start` - initial state
+* `trans` - a table of transition tables
+* `final` - marks final states
+* `match-len` - stores length of the keyword corresponding to the final state"
+
   ;; initial state
   (start -1 :type fixnum)
   ;; transitions
@@ -468,8 +491,8 @@ first occurence."
 ;; --------------------------------------------------------
 
 (defun trie->tabular-ac (trie)
-  "Gets a trie and transforms it into a table-based DFA for the
-Aho-Corasick automata."
+  "Given an Aho-Corasick trie and transforms it into a table-based DFA
+for the Aho-Corasick automata."
 
   (let* ((nodes-count (trie-node-id trie))
 	 (idx (make-tabac
