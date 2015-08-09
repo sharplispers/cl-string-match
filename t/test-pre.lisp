@@ -20,10 +20,9 @@
 ;;;
 ;;; See comments marked with "todo" for corresponding comments.
 
-;; -----------------------------------------------------------------------------
+(in-package :cl-string-match-test)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (ql:quickload :cl-string-match))
+;; -----------------------------------------------------------------------------
 
 (defparameter *regexp-tests*
   '(
@@ -402,49 +401,37 @@
     ))
 
 
-(defun run-portable-re-tests ()
-
-  (print ";; *****************************************************************************")
-  (print ";; BEGIN OF TEST")
-  (print ";; -----------------------------------------------------------------------------")
+;; todo: make it a macro generating lispunit tests for every test to
+;; improve diagnosting of the failed tests
+(define-test run-portable-re-tests
   (dolist (test *regexp-tests*)
     (destructuring-bind (pattern str expected-compile-p expected-matched-p expected-results) test
-      (format t "~%pattern: ~A ~%string: ~A" pattern str)
+      ;; (format t "~%pattern: ~A ~%string: ~A" pattern str)
       (when expected-compile-p
 	(let ((matcher (sm:compile-re pattern)))
-	  (cond ((and matcher (not expected-compile-p))
-		 (format t "~%Shouldn't have compiled, but did ******************** TEST FAILED"))
-		((and (not matcher) expected-compile-p)
-		 (format t "~%Should have compiled, but didn't ******************** TEST FAILED"))
-		)
+	  ;;(format t "~%Shouldn't have compiled, but did ******************** TEST FAILED")
+	  (assert-false (and matcher (not expected-compile-p)))
+	  ;; (format t "~%Should have compiled, but didn't ******************** TEST FAILED")
+	  (assert-false (and (not matcher) expected-compile-p))
 	  (when matcher
 	    (let ((match (sm:find-re matcher str)))
-	      (cond ((and expected-matched-p (not match))
-		     (format t "~%Should have matched, but didn't ******************** TEST FAILED"))
-		    ((and (not expected-matched-p) match)
-		     (format t "~%Shouldn't have matched, but did ******************** TEST FAILED"))
-		    )
+	      ;; (format t "~%Should have matched, but didn't ******************** TEST FAILED")
+	      (assert-false (and expected-matched-p (not match)))
+	      ;; (format t "~%Shouldn't have matched, but did ******************** TEST FAILED")
+	      (assert-false (and (not expected-matched-p) match))
 	      (when match
-		(if (string= (car expected-results) (subseq str
-							    (sm:match-pos-start match)
-							    (sm:match-pos-end match)))
-		    (format t "~%Global match OK" )
-		    (format t "~%Global match ******************** TEST FAILED")
-		    )
+		;; (format t "~%Global match ******************** TEST FAILED")
+		(assert-true (string= (car expected-results)
+				      (subseq str
+					      (sm:match-pos-start match)
+					      (sm:match-pos-end match))))
 		;; todo: implement group match tests
 		#+ignore
 		(let ((num-groups (array-dimension (sm:match-groups match) 0))
 		      )
 		  (when (/= (length expected-results) num-groups)
 		    (format t "~%Number of groups ******************** TEST FAILED")
-		    )))
-	      ))))
-      )
-    (terpri))
-  (print ";; *****************************************************************************")
-  (print ";; END OF TEST")
-  (print ";; -----------------------------------------------------------------------------")
-  )
+		    ))))))))))
 
 
 ;; *****************************************************************************

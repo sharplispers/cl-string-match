@@ -4,7 +4,9 @@
 ;; some tests
 ;; --------------------------------------------------------
 
-(ql:quickload :ascii-strings)
+;; (ql:quickload :ascii-strings)
+
+(in-package :cl-string-match-test)
 
 (defun test-ub-read-line ()
   (with-open-file (in "test.txt"
@@ -36,22 +38,21 @@
        :finally (format t "file {~a} contains ~a lines~%" fname i))))
 
 
-(defun test-simple-strings ()
+(define-test test-simple-strings
   "Test simple string operations"
   (let* ((string1 (ascii:string-to-ub "abcdefgh123"))
          (string2 (ascii:string-to-ub "ABCDEFGH123"))
          (string1.1 (ascii:ub-subseq string1 1))
          (string1.1.1 (ascii:ub-subseq string1.1 1)))
-         
-    (assert (= (ascii:ub-char string1 1)
-               (ascii:ub-char string1.1 0)))
 
-    (assert (= (ascii:ub-char string1 2)
-               (ascii:ub-char string1.1.1 0)))
+    (assert-true (= (ascii:ub-char string1 1)
+		    (ascii:ub-char string1.1 0)))
 
-    (assert (= (ascii:ub-char string1.1 1)
-               (ascii:ub-char string1.1.1 0)))
+    (assert-true (= (ascii:ub-char string1 2)
+		    (ascii:ub-char string1.1.1 0)))
 
-    (assert (= (char-code #\c)
-               (ascii:ub-char string1.1.1 0)))
-    ) )
+    (assert-true (= (ascii:ub-char string1.1 1)
+		    (ascii:ub-char string1.1.1 0)))
+
+    (assert-true (= (char-code #\c)
+		    (ascii:ub-char string1.1.1 0)))))
