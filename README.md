@@ -1,4 +1,4 @@
-CL-STRING-MATCH aims at providing robust implementations of string
+CL-STRING-MATCH [![Quickdocs](http://quickdocs.org/badge/cl-string-match.svg)](http://quickdocs.org/cl-string-match/) aims at providing robust implementations of string
 matching algorithms. These algorithms are also called "[substring
 search](http://en.wikipedia.org/wiki/String_searching_algorithm)"
 or "subsequence search" algorithms.
@@ -29,9 +29,15 @@ Data structures:
 * Prefix trie
 * Suffix tree
 
+Utilities:
+
+* Testing whether a string has the given suffix or prefix (starts with
+  or ends with the pattern)
+
 Some algorithms (Brute-force, Boyer-Moore-Horspool) have parametric
-implementations making it possible to declare specific implementations
-for application-specific custom data types and data structures.
+implementations (code templates) making it possible to declare
+specific implementations for application-specific custom data types
+and data structures.
 
 This library is routinely tested on Steel Bank CL, Clozure CL, Embeddable CL and Armed Bear CL. Chances are really high that it will work on other platforms without a flaw.
 
@@ -54,7 +60,7 @@ implementation that is based on the brute-force algorithm.
 
 Benchmarks show that depending on environment and pattern of
 application, a Boyer-Moore-Horspool algorithm implementation can
-outperform standard search function by almost 18 times!
+outperform standard search function in SBCL by almost 18 times!
 
 
 USAGE
