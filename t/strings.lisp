@@ -41,7 +41,7 @@
 (define-test test-simple-strings
   "Test simple string operations"
   (let* ((string1 (ascii:string-to-ub "abcdefgh123"))
-         (string2 (ascii:string-to-ub "ABCDEFGH123"))
+         ;; (string2 (ascii:string-to-ub "ABCDEFGH123"))
          (string1.1 (ascii:ub-subseq string1 1))
          (string1.1.1 (ascii:ub-subseq string1.1 1)))
 

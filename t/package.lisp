@@ -2,7 +2,7 @@
 
 (defpackage :cl-string-match-test
   (:use :common-lisp :cl-string-match :lisp-unit)
-  (:nicknames :test)
+  (:nicknames :sm-test)
   (:export :run))
 
 ;; EOF
