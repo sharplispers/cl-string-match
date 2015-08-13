@@ -4,19 +4,35 @@
 ;; some tests
 ;; --------------------------------------------------------
 
-;; (ql:quickload :ascii-strings)
-
 (in-package :cl-string-match-test)
+
+;; --------------------------------------------------------
 
 (defun test-ub-read-line ()
   (with-open-file (in "test.txt"
                       :direction :input
-                      :element-type 'ub-char)
+                      :element-type 'ascii:ub-char)
     (loop :with reader = (ascii:make-ub-line-reader :stream in)
        :for i :from 0 :below 10
        :for line = (ascii:ub-read-line reader)
        :while line
        :do (format t "[~a]: ~a~%" i (ascii:ub-to-string line)))))
+
+;; --------------------------------------------------------
+
+(define-test test-ub-read-line-string
+    (with-open-file (in "test.txt"
+			:direction :input
+			:element-type 'ascii:ub-char)
+      (assert-equal 5
+		    (loop :with reader = (ascii:make-ub-line-reader :stream in)
+		       :for i :from 0 :below 10
+		       :for line = (ascii:ub-read-line-string reader)
+		       :while line
+		       :do (format t "[~a]: ~a~%" i line)
+		       :count line))))
+
+;; --------------------------------------------------------
 
 (defun test-ub-count-lines (fname)
   (with-open-file (in fname
@@ -28,6 +44,8 @@
        :while line
        :finally (format t "file {~a} contains ~a lines~%" fname i))))
 
+;; --------------------------------------------------------
+
 (defun test-count-lines (fname)
   (with-open-file (in fname
                       :direction :input)
@@ -37,10 +55,12 @@
        :while line
        :finally (format t "file {~a} contains ~a lines~%" fname i))))
 
+;; --------------------------------------------------------
 
 (define-test test-simple-strings
-  "Test simple string operations"
-  (let* ((string1 (ascii:string-to-ub "abcdefgh123"))
+    "Test simple string operations"
+  (let* ((the-string-1 "abcdefgh123")
+	 (string1 (ascii:string-to-ub the-string-1))
          ;; (string2 (ascii:string-to-ub "ABCDEFGH123"))
          (string1.1 (ascii:ub-subseq string1 1))
          (string1.1.1 (ascii:ub-subseq string1.1 1)))
@@ -55,4 +75,11 @@
 		    (ascii:ub-char string1.1.1 0)))
 
     (assert-true (= (char-code #\c)
-		    (ascii:ub-char string1.1.1 0)))))
+		    (ascii:ub-char string1.1.1 0)))
+
+    (assert-true (string= the-string-1
+			  (ascii:ub-to-string
+			   (ascii:string-to-ub the-string-1))))))
+
+
+;; EOF
