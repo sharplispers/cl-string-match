@@ -6,7 +6,7 @@
 ;;
 ;; This package aims at providing single-byte strings functionality
 ;; for Unicode-enabled Common Lisp implementations. Another aim is to
-;; reduce memory footpring and boost performance of the
+;; reduce memory footprint and boost performance of the
 ;; string-processing algorithms.
 
 (defpackage :ascii-strings
@@ -81,6 +81,7 @@
 
    ;; line reader
    :make-ub-line-reader
+   :ub-line-reader-file-position
    :ub-read-line
    :ub-read-line-string))
 
@@ -362,6 +363,31 @@ START, END the start and end offsets within the given USTR to
   ;; current position of the reader in the buffer
   (pos 0  :type fixnum)
   (eof nil :type boolean))
+
+;; --------------------------------------------------------
+
+(defun ub-line-reader-file-position (reader)
+  "Returns the current position within the stream according to the
+amount of information really read.
+
+When the buffer caches more information than was really read by one of
+UB-READ-LINE function the standard FILE-POSITION function will return
+position of the buffer that is larger than the position that was read
+by the user.
+
+Returned number can be used by the standard FILE-POSITION function to
+adjust the position within a stream."
+
+  (check-type reader ub-line-reader)
+
+  (with-slots (stream fill pos) reader
+    ;; the logic is rather simple: file-position will return position
+    ;; read till then end of the buffer (specified by the FILL slot)
+    ;; so we subtract it and then add the position advanced by the
+    ;; user that is specified by the POS slot
+    (+ (- (file-position stream)
+	  fill)
+       pos)))
 
 ;; --------------------------------------------------------
 
