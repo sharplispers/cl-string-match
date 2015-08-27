@@ -57,6 +57,19 @@
 
 ;; --------------------------------------------------------
 
+(define-test test-simple-chars
+  "Test if it is possible to encode/decode characters with codes
+within range 0..255 using standard Lisp functions CODE-CHAR and
+CHAR-CODE.
+
+See ticket #30"
+  (assert-false
+   (loop :for i :from 0 :below 256
+	 :unless (= (char-code (code-char i)) i)
+	 :return T)))
+
+;; --------------------------------------------------------
+
 (define-test test-simple-strings
     "Test simple string operations"
   (let* ((the-string-1 "abcdefgh123")
