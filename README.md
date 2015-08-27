@@ -39,7 +39,9 @@ implementations (code templates) making it possible to declare
 specific implementations for application-specific custom data types
 and data structures.
 
-This library is routinely tested on Steel Bank CL, Clozure CL, Embeddable CL and Armed Bear CL. Chances are really high that it will work on other platforms without a flaw.
+This library is routinely tested on Steel Bank CL, Clozure CL,
+Embeddable CL and Armed Bear CL. Chances are really high that it will
+work on other platforms without a flaw.
 
 Check the [API Reference](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference) for more details.
 
@@ -58,9 +60,11 @@ why do we need a yet another implementation? Answer is simple:
 advanced algorithms offer different benefits compared to the standard
 implementation that is based on the brute-force algorithm.
 
-Benchmarks show that depending on environment and pattern of
-application, a Boyer-Moore-Horspool algorithm implementation can
-outperform standard search function in SBCL by almost 18 times!
+[Benchmarks](https://bitbucket.org/vityok/cl-string-match/wiki/Benchmarks)
+show that depending on environment and pattern of application, a
+Boyer-Moore-Horspool algorithm implementation can outperform standard
+search function in SBCL by almost 18 times! Check the code in the
+`bench` folder for further details.
 
 
 USAGE
@@ -137,6 +141,18 @@ moment a version for the ASCII strings is offered: `initialize-bmh8`
 *pat* *txt* work for strings with characters inside the 256 char code
 limit.
 
+CONTRIB
+=======
+
+This project also contains code that is not directly invloved with the
+pattern search algorithms but nevertheless might be found useful for
+text handling/processing. Check the contrib folder in the repository
+for more details. Currently it contains:
+
+* `ascii-strings.lisp` aims to provide single-byte strings
+functionality for Unicode-enabled Common Lisp implementations. Another
+goal is to reduce memory footprint and boost performance of the
+string-processing tasks, i.e. `read-line`.
 
 TODO
 ====
