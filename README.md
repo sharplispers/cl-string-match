@@ -4,7 +4,7 @@ search](http://en.wikipedia.org/wiki/String_searching_algorithm)"
 or "subsequence search" algorithms.
 
 Currently it provides implementations of the following string matching
-algorithms (see [wiki for details](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference)):
+algorithms (see [wiki for details](https://bitbucket.org/vityok/cl-string-match/wiki/Manual)):
 
 * Brute-force (also known as naïve algorithm)
 * Boyer-Moore (with mismatched character heuristic and good suffix shift)
@@ -41,9 +41,10 @@ and data structures.
 
 This library is routinely tested on Steel Bank CL, Clozure CL,
 Embeddable CL and Armed Bear CL. Chances are really high that it will
-work on other platforms without a flaw.
+work on other platforms without problems (check its status on
+[CL-TEST-GRID](https://common-lisp.net/project/cl-test-grid/library/cl-string-match.html)).
 
-Check the [API Reference](https://bitbucket.org/vityok/cl-string-match/wiki/API_Reference) for more details.
+Check the [API Reference](http://quickdocs.org/cl-string-match/) for more details.
 
 Additional resources:
 
