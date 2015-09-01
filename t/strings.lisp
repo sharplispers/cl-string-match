@@ -8,15 +8,17 @@
 
 ;; --------------------------------------------------------
 
-(defun test-ub-read-line ()
+(define-test test-ub-read-line
   (with-open-file (in "test.txt"
-                      :direction :input
-                      :element-type 'ascii:ub-char)
-    (loop :with reader = (ascii:make-ub-line-reader :stream in)
-       :for i :from 0 :below 10
-       :for line = (ascii:ub-read-line reader)
-       :while line
-       :do (format t "[~a]: ~a~%" i (ascii:ub-to-string line)))))
+       :direction :input
+       :element-type 'ascii:ub-char)
+   (assert-equal 5
+		 (loop :with reader = (ascii:make-ub-line-reader :stream in)
+		       :for i :from 0 :below 10
+		       :for line = (ascii:ub-read-line reader)
+		       :while line
+		       :do (format t "read-line [~a]: ~a~%" i (ascii:ub-to-string line))
+		       :count line))))
 
 ;; --------------------------------------------------------
 
@@ -29,7 +31,7 @@
 		       :for i :from 0 :below 10
 		       :for line = (ascii:ub-read-line-string reader)
 		       :while line
-		       :do (format t "[~a]: ~a~%" i line)
+		       :do (format t "read-line-string [~a]: ~a~%" i line)
 		       :count line))))
 
 ;; --------------------------------------------------------

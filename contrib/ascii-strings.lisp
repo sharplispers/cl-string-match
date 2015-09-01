@@ -88,7 +88,8 @@
 (in-package :ascii-strings)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (declaim (optimize speed)))
+  (declaim (optimize (speed 3)
+		     (safety 0))))
 
 ;; --------------------------------------------------------
 
@@ -227,6 +228,9 @@
 
 ;; this function is ported from SBCL sources mipsstrops.lisp file and
 ;; is adopted for the ascii strings data types
+;;
+;; todo: implement remaining string comparison functions and properly
+;; handle nil values for start,end parameters
 (defun %ub-string-compare (string1 start1 end1 string2 start2 end2)
   (declare (ub-string string1 string2))
   (declare (fixnum start1 end1 start2 end2))
@@ -302,8 +306,7 @@ Lisp string.
 START, END the start and end offsets within the given USTR to
            translate into a standard string.
 "
-  (declare (optimize (speed 3) (safety 0))
-	   (type fixnum start))
+  (declare (type fixnum start))
   (check-type ustr (or ub-string ub-buffer))
 
   (let* ((%end (the fixnum (or end (length ustr))))
@@ -350,8 +353,7 @@ START, END the start and end offsets within the given USTR to
 
 ;; --------------------------------------------------------
 
-(defstruct (ub-line-reader
-             (:conc-name ub-line-reader-))
+(defstruct (ub-line-reader)
   stream
   (buffer (make-array +ub-line-reader-buffer-size+
                       :element-type 'ub-char)
@@ -391,28 +393,25 @@ adjust the position within a stream."
 
 ;; --------------------------------------------------------
 
-(defun ub-read-line (reader)
-  "Reads data into a pre-allocated buffer in the reader structure and
-returns an array displaced to the contents of the next line in that buffer."
-
-  (declare (optimize speed (safety 0)))
+(defun ub-read-line-raw (reader)
+  "Reads data into the pre-allocated buffer in the READER structure
+and returns two values: start and end positions of the line within the
+buffer that can be used to extract this line contents from the
+buffer."
 
   (check-type reader ub-line-reader)
 
   (when (ub-line-reader-eof reader)
-    (return-from ub-read-line nil))
+    (return-from ub-read-line-raw nil))
 
-  ;; (format t "UB-READ-LINE: pos: ~a~%" (ub-line-reader-pos reader))
   (let* ((old-pos (ub-line-reader-pos reader))
          (new-pos (loop :for i :from old-pos :below (ub-line-reader-fill reader)
-                     :until (= (aref (ub-line-reader-buffer reader) i)
-                               #.(char-code #\Newline))
-                     :finally (return i))))
+			:until (= (aref (ub-line-reader-buffer reader) i)
+				  #.(char-code #\Newline))
+			:finally (return i))))
 
     (declare (type fixnum old-pos)
              (type fixnum new-pos))
-
-    ;; (format t "pos: old=~a new=~a fill=~a~%" old-pos new-pos (ub-line-reader-fill reader))
 
     (if (and (= (ub-char (ub-line-reader-buffer reader)
                          new-pos)
@@ -423,53 +422,63 @@ returns an array displaced to the contents of the next line in that buffer."
                  (ub-line-reader-fill reader)))
         ;; we have found the end of the current line, advance the
         ;; position and return the new line
-        (let ((new-line (make-array (- new-pos old-pos)
-                                    :element-type 'ub-char
-                                    :displaced-to (ub-line-reader-buffer reader)
-                                    :displaced-index-offset old-pos)))
-          (setf (ub-line-reader-pos reader) (1+ new-pos))
+	(progn
+	  (setf (ub-line-reader-pos reader) (1+ new-pos))
+	  (return-from ub-read-line-raw (values old-pos new-pos)))
 
-          (return-from ub-read-line new-line))
+      ;; else
+      (progn
+	;; when the line ends in the next chunk of data, we have to
+	;; move the currently read incomplete line to the beginning
+	;; of the reader buffer, fill the rest of the buffer with
+	;; data from the stream and proceed with our task
+	(setf (ub-line-reader-fill reader) (- new-pos
+					      (ub-line-reader-pos reader))
+	      (ub-line-reader-pos reader)  0)
 
-        ;; else
-        (progn
-          ;; when the line ends in the next chunk of data, we have to
-          ;; move the currently read incomplete line to the beginning
-          ;; of the reader buffer, fill the rest of the buffer with
-          ;; data from the stream and proceed with our task
+	(replace (the ub-buffer (ub-line-reader-buffer reader))
+		 (the ub-buffer (ub-line-reader-buffer reader))
+		 :start1 0 :end1 (ub-line-reader-fill reader)
+		 :start2 old-pos :end2 new-pos)
 
-          ;; (format t "read the next chunk of data~%")
-          (setf (ub-line-reader-fill reader) (- new-pos
-                                                (ub-line-reader-pos reader))
-                (ub-line-reader-pos reader)  0)
+	(let ((old-fill (ub-line-reader-fill reader)))
 
-          (replace (the ub-buffer (ub-line-reader-buffer reader))
-                   (the ub-buffer (ub-line-reader-buffer reader))
-                   :start1 0 :end1 (ub-line-reader-fill reader)
-                   :start2 old-pos :end2 new-pos)
+	  (setf (ub-line-reader-fill reader)
+		(read-sequence (ub-line-reader-buffer reader)
+			       (ub-line-reader-stream reader)
+			       :start (ub-line-reader-fill reader)
+			       :end +ub-line-reader-buffer-size+))
+	  (if (= (ub-line-reader-fill reader) old-fill)
+	      (progn
+		;; end of file is reached, return the last line and
+		;; set the corresponding flag
+		(setf (ub-line-reader-eof reader) T)
+		(return-from ub-read-line-raw
+		  (values (ub-line-reader-pos reader)
+			  old-fill)))
 
-          (let ((old-fill (ub-line-reader-fill reader)))
+	    ;; read the complete line after the second part was
+	    ;; obtained from the disk
+	    (ub-read-line-raw reader)))))))
+(declaim (inline ub-read-line-raw))
 
-            (setf (ub-line-reader-fill reader)
-                  (read-sequence (ub-line-reader-buffer reader)
-                                 (ub-line-reader-stream reader)
-                                 :start (ub-line-reader-fill reader)
-                                 :end +ub-line-reader-buffer-size+))
-            (if (= (ub-line-reader-fill reader) old-fill)
-                (progn
-                  ;;(format t "eof~%")
+;; --------------------------------------------------------
 
-                  ;; end of file is reached, return the last line and
-                  ;; set the corresponding flag
-                  (setf (ub-line-reader-eof reader) T)
-                  (make-array (- old-fill (ub-line-reader-pos reader))
-                              :element-type 'ub-char
-                              :displaced-to (ub-line-reader-buffer reader)
-                              :displaced-index-offset (ub-line-reader-pos reader)))
+(defun ub-read-line (reader)
+  "Reads data into a pre-allocated buffer in the reader structure and
+returns an array displaced to the contents of the next line in that
+buffer."
 
-                ;; read the complete line after the second part was
-                ;; obtained from the disk
-                (ub-read-line reader)))))))
+  (check-type reader ub-line-reader)
+
+  (when (ub-line-reader-eof reader)
+    (return-from ub-read-line nil))
+
+  (multiple-value-bind (start end) (ub-read-line-raw reader)
+    (make-array (- end start)
+		:element-type 'ub-char
+		:displaced-to (ub-line-reader-buffer reader)
+		:displaced-index-offset start)))
 
 ;; --------------------------------------------------------
 
@@ -477,72 +486,14 @@ returns an array displaced to the contents of the next line in that buffer."
   "Reads data into a pre-allocated buffer in the reader structure and
 returns a standard Lisp string."
 
-  (declare (optimize (speed 3)
-		     (safety 0)))
-
   (check-type reader ub-line-reader)
 
   (when (ub-line-reader-eof reader)
     (return-from ub-read-line-string nil))
 
-  (let* ((old-pos (ub-line-reader-pos reader))
-         (new-pos (loop :for i :from old-pos :below (ub-line-reader-fill reader)
-                     :until (= (aref (ub-line-reader-buffer reader) i)
-                               #.(char-code #\Newline))
-                     :finally (return i))))
-
-    (declare (type fixnum old-pos)
-             (type fixnum new-pos))
-
-    (if (and (= (ub-char (ub-line-reader-buffer reader)
-                         new-pos)
-                #.(char-code #\Newline))
-             ;; we are not advancing forward, it looks like we've
-             ;; reached end of file and the last character is a newline
-             (/= old-pos
-                 (ub-line-reader-fill reader)))
-        ;; we have found the end of the current line, advance the
-        ;; position and return the new line
-        (let ((new-line (ub-to-string (ub-line-reader-buffer reader)
-				      :start old-pos :end new-pos)))
-          (setf (ub-line-reader-pos reader) (1+ new-pos))
-
-          (return-from ub-read-line-string new-line))
-
-        ;; else
-        (progn
-          ;; when the line ends in the next chunk of data, we have to
-          ;; move the currently read incomplete line to the beginning
-          ;; of the reader buffer, fill the rest of the buffer with
-          ;; data from the stream and proceed with our task
-          (setf (ub-line-reader-fill reader) (- new-pos
-                                                (ub-line-reader-pos reader))
-                (ub-line-reader-pos reader)  0)
-
-          (replace (the ub-buffer (ub-line-reader-buffer reader))
-                   (the ub-buffer (ub-line-reader-buffer reader))
-                   :start1 0 :end1 (ub-line-reader-fill reader)
-                   :start2 old-pos :end2 new-pos)
-
-          (let ((old-fill (ub-line-reader-fill reader)))
-
-            (setf (ub-line-reader-fill reader)
-                  (read-sequence (ub-line-reader-buffer reader)
-                                 (ub-line-reader-stream reader)
-                                 :start (ub-line-reader-fill reader)
-                                 :end +ub-line-reader-buffer-size+))
-            (if (= (ub-line-reader-fill reader) old-fill)
-                (progn
-                  ;; end of file is reached, return the last line and
-                  ;; set the corresponding flag
-                  (setf (ub-line-reader-eof reader) T)
-		  (return-from ub-read-line-string
-		    (ub-to-string (ub-line-reader-buffer reader)
-				  :start (ub-line-reader-pos reader) :end old-fill)))
-
-                ;; read the complete line after the second part was
-                ;; obtained from the disk
-                (ub-read-line-string reader)))))))
+  (multiple-value-bind (start end) (ub-read-line-raw reader)
+    (ub-to-string (ub-line-reader-buffer reader)
+		  :start start :end end)))
 
 ;; --------------------------------------------------------
 
