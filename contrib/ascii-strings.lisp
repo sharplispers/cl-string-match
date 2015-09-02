@@ -1,17 +1,20 @@
 ;;; ASCII strings: vectors made of unsigned bytes
 
-;; Functions and data types are similar to the standard Common Lisp
-;; functions and types but are prefixed with ub- to avoid naming
-;; conflicts.
-;;
-;; This package aims at providing single-byte strings functionality
-;; for Unicode-enabled Common Lisp implementations. Another aim is to
-;; reduce memory footprint and boost performance of the
-;; string-processing algorithms.
 
 (defpackage :ascii-strings
   (:use :common-lisp :alexandria)
   (:nicknames :ascii)
+  (:documentation "This library implements functions and data types
+similar to the standard Common Lisp functions and types but prefixed
+with ub- to avoid naming conflicts.
+
+This package aims at providing single-byte strings functionality
+for Unicode-enabled Common Lisp implementations. Another aim is to
+reduce memory footprint and boost performance of the
+string-processing algorithms.
+
+There are similar libraries/packages with slight differences. Check,
+for instance, com.informatimago.common-lisp.cesarum.ascii.")
   (:export
    ;; common functions and types
    :ub-char
@@ -83,6 +86,7 @@
    :make-ub-line-reader
    :ub-line-reader-file-position
    :ub-read-line
+   :ub-read-line-raw
    :ub-read-line-string))
 
 (in-package :ascii-strings)
@@ -397,7 +401,12 @@ adjust the position within a stream."
   "Reads data into the pre-allocated buffer in the READER structure
 and returns two values: start and end positions of the line within the
 buffer that can be used to extract this line contents from the
-buffer."
+buffer.
+
+Please note, that unlike the standard read-line or the
+liberal-read-line by jasonmelbye this function works with the
+Unix-type of lines - sequence of characters delimited by the Newline
+symbol."
 
   (check-type reader ub-line-reader)
 
