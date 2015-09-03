@@ -26,13 +26,24 @@
     (with-open-file (in "test.txt"
 			:direction :input
 			:element-type 'ascii:ub-char)
-      (assert-equal 5
-		    (loop :with reader = (ascii:make-ub-line-reader :stream in)
-		       :for i :from 0 :below 10
-		       :for line = (ascii:ub-read-line-string reader)
-		       :while line
-		       :do (format t "read-line-string [~a]: ~a~%" i line)
-		       :count line))))
+      (let ((reader (ascii:make-ub-line-reader :stream in)))
+	(assert-equal 5
+		      (loop
+			 :for i :from 0 :below 10
+			 :for line = (ascii:ub-read-line-string reader)
+			 :while line
+			 :do (format t "read-line-string [~a]: ~a~%" i line)
+			 :count line))
+	;; check if putting the reader into the start will yield the
+	;; same results as if it was just newly created
+	(ascii:ub-line-reader-file-position reader 0)
+	(assert-equal 5
+		      (loop
+			 :for i :from 0 :below 10
+			 :for line = (ascii:ub-read-line-string reader)
+			 :while line
+			 :do (format t "read-line-string.2 [~a]: ~a~%" i line)
+			 :count line)))))
 
 ;; --------------------------------------------------------
 

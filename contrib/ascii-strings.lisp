@@ -1,5 +1,4 @@
-;;; ASCII strings: vectors made of unsigned bytes
-
+;;; ASCII strings: vectors made of unsigned bytes (octets)
 
 (defpackage :ascii-strings
   (:use :common-lisp :alexandria)
@@ -14,7 +13,15 @@ reduce memory footprint and boost performance of the
 string-processing algorithms.
 
 There are similar libraries/packages with slight differences. Check,
-for instance, com.informatimago.common-lisp.cesarum.ascii.")
+for instance, com.informatimago.common-lisp.cesarum.ascii.
+
+
+This package also provides a faster alternative to the standard
+read-line function. A line reader is created by the
+make-ub-line-reader function, an ub-string is read by the
+ub-read-line, and a standard line can be read by the
+ub-read-line-string.")
+
   (:export
    ;; common functions and types
    :ub-char
@@ -84,6 +91,7 @@ for instance, com.informatimago.common-lisp.cesarum.ascii.")
 
    ;; line reader
    :make-ub-line-reader
+   :ub-line-reader-close
    :ub-line-reader-file-position
    :ub-read-line
    :ub-read-line-raw
@@ -97,16 +105,20 @@ for instance, com.informatimago.common-lisp.cesarum.ascii.")
 
 ;; --------------------------------------------------------
 
-(deftype ub-char () '(unsigned-byte 8))
+(deftype ub-char ()
+  "An octet. A number equal to the char code."
+  '(unsigned-byte 8))
 
-;; strings must be vectors to allow for fill pointers and
-;; displacement. However, SBCL does a better job on optimizations when
-;; it deals with simple arrays.
-(deftype ub-string () '(vector ub-char))
+(deftype ub-string ()
+  "Strings must be vectors to allow for fill pointers and
+displacement. However, SBCL does a better job on optimizations when it
+deals with simple arrays."
+  '(vector ub-char))
 
-;; buffer of octets should be a simple array to allow compiler
-;; optimizations
-(deftype ub-buffer () '(simple-array ub-char (*)))
+(deftype ub-buffer ()
+  "Buffer of octets is a simple array to allow compiler
+optimizations."
+  '(simple-array ub-char (*)))
 
 (define-constant ub-char-code-limit 256
   :documentation
@@ -141,12 +153,18 @@ for instance, com.informatimago.common-lisp.cesarum.ascii.")
 (defun ub-char>= (c1 c2)
   (>= c1 c2))
 
-(defun ub-CHAR-EQUAL ())
-(defun ub-CHAR-NOT-EQUAL ())
-(defun ub-CHAR-LESSP ())
-(defun ub-CHAR-GREATERP ())
-(defun ub-CHAR-NOT-GREATERP ())
-(defun ub-CHAR-NOT-LESSP ())
+(defun ub-CHAR-EQUAL ()
+  (error "TODO"))
+(defun ub-CHAR-NOT-EQUAL ()
+  (error "TODO"))
+(defun ub-CHAR-LESSP ()
+  (error "TODO"))
+(defun ub-CHAR-GREATERP ()
+  (error "TODO"))
+(defun ub-CHAR-NOT-GREATERP ()
+  (error "TODO"))
+(defun ub-CHAR-NOT-LESSP ()
+  (error "TODO"))
 
 ;; Function CHARACTER
 ;; Function CHARACTERP
@@ -161,13 +179,17 @@ for instance, com.informatimago.common-lisp.cesarum.ascii.")
   (or (ub-alpha-char-p c)
       (and (>= c 48) (<= c 57))))
 
-(defun ub-DIGIT-CHAR ())
+(defun ub-DIGIT-CHAR ()
+  (error "TODO"))
 
-(defun ub-DIGIT-CHAR-P ())
+(defun ub-DIGIT-CHAR-P ()
+  (error "TODO"))
 
-(defun ub-GRAPHIC-CHAR-P ())
+(defun ub-GRAPHIC-CHAR-P ()
+  (error "TODO"))
 
-(defun ub-STANDARD-CHAR-P ())
+(defun ub-STANDARD-CHAR-P ()
+  (error "TODO"))
 
 (declaim (inline ub-char-upcase))
 (defun ub-char-upcase (c)
@@ -193,6 +215,8 @@ for instance, com.informatimago.common-lisp.cesarum.ascii.")
 
 (declaim (inline ub-char-code))
 (defun ub-char-code (char)
+  "Returns a code of the ub-char. Since ub-char is a number (an
+octet), it is essentially an identity function."
   char)
 
 (declaim (inline ub-char-int))
@@ -205,11 +229,14 @@ for instance, com.informatimago.common-lisp.cesarum.ascii.")
   "This is like the standard CHAR-CODE but returns an octet."
   (ldb (byte 8 0) (char-code char)))
 
-(defun ub-CODE-CHAR ())
+(defun ub-CODE-CHAR ()
+  (error "TODO"))
 
-(defun ub-CHAR-NAME ())
+(defun ub-CHAR-NAME ()
+  (error "TODO"))
 
-(defun ub-NAME-CHAR ())
+(defun ub-NAME-CHAR ()
+  (error "TODO"))
 
 ;; --------------------------------------------------------
 ;; STRING FUNCTIONS
@@ -267,19 +294,28 @@ for instance, com.informatimago.common-lisp.cesarum.ascii.")
 
 ;; --------------------------------------------------------
 
-(defun ub-STRING-UPCASE ())
-(defun ub-STRING-DOWNCASE ())
-(defun ub-STRING-CAPITALIZE ())
+(defun ub-STRING-UPCASE ()
+  (error "TODO"))
+(defun ub-STRING-DOWNCASE ()
+  (error "TODO"))
+(defun ub-STRING-CAPITALIZE ()
+  (error "TODO"))
 
-(defun ub-NSTRING-UPCASE ())
-(defun ub-NSTRING-DOWNCASE ())
-(defun ub-NSTRING-CAPITALIZE ())
+(defun ub-NSTRING-UPCASE ()
+  (error "TODO"))
+(defun ub-NSTRING-DOWNCASE ()
+  (error "TODO"))
+(defun ub-NSTRING-CAPITALIZE ()
+  (error "TODO"))
 
-(defun ub-STRING-TRIM ())
+(defun ub-STRING-TRIM ()
+  (error "TODO"))
 
-(defun ub-STRING-LEFT-TRIM ())
+(defun ub-STRING-LEFT-TRIM ()
+  (error "TODO"))
 
-(defun ub-STRING-RIGHT-TRIM ())
+(defun ub-STRING-RIGHT-TRIM ()
+  (error "TODO"))
 
 ;; --------------------------------------------------------
 
@@ -288,17 +324,28 @@ for instance, com.informatimago.common-lisp.cesarum.ascii.")
 
 ;; --------------------------------------------------------
 
-(defun ub-STRING/= ())
-(defun ub-STRING< ())
-(defun ub-STRING> ())
-(defun ub-STRING<= ())
-(defun ub-STRING>= ())
-(defun ub-STRING-EQUAL ())
-(defun ub-STRING-NOT-EQUAL ())
-(defun ub-STRING-LESSP ())
-(defun ub-STRING-GREATERP ())
-(defun ub-STRING-NOT-GREATERP ())
-(defun ub-STRING-NOT-LESSP ())
+(defun ub-STRING/= ()
+  (error "TODO"))
+(defun ub-STRING< ()
+  (error "TODO"))
+(defun ub-STRING> ()
+  (error "TODO"))
+(defun ub-STRING<= ()
+  (error "TODO"))
+(defun ub-STRING>= ()
+  (error "TODO"))
+(defun ub-STRING-EQUAL ()
+  (error "TODO"))
+(defun ub-STRING-NOT-EQUAL ()
+  (error "TODO"))
+(defun ub-STRING-LESSP ()
+  (error "TODO"))
+(defun ub-STRING-GREATERP ()
+  (error "TODO"))
+(defun ub-STRING-NOT-GREATERP ()
+  (error "TODO"))
+(defun ub-STRING-NOT-LESSP ()
+  (error "TODO"))
 
 ;; --------------------------------------------------------
 ;; Data convertors
@@ -353,12 +400,24 @@ START, END the start and end offsets within the given USTR to
 ;; Reading lines from the input stream
 ;; --------------------------------------------------------
 
-(define-constant +ub-line-reader-buffer-size+ (* 1024 1024))
+(define-constant +ub-line-reader-buffer-size+ (* 1024 1024)
+  :documentation "Defines the size of the buffer used by the line
+reader in bytes.")
 
 ;; --------------------------------------------------------
 
 (defstruct (ub-line-reader)
-  stream
+  "Encapsulates a buffer and the state of the line reader. Created by
+the make-ub-line-reader function, and the every next line is obtained
+by one of the ub-read-line-* functions.
+
+You should not forget to close the underlying stream using either a
+standard close function or the ub-line-reader-close function.
+
+It is anticipated that the underlying stream is an input stream with
+element-type set to ub-char."
+
+  (stream nil :type (or null stream))
   (buffer (make-array +ub-line-reader-buffer-size+
                       :element-type 'ub-char)
           :type ub-buffer)
@@ -368,11 +427,12 @@ START, END the start and end offsets within the given USTR to
   (fill 0 :type fixnum)
   ;; current position of the reader in the buffer
   (pos 0  :type fixnum)
+  ;; set to T when the reader stumbles upon an end of file
   (eof nil :type boolean))
 
 ;; --------------------------------------------------------
 
-(defun ub-line-reader-file-position (reader)
+(defun ub-line-reader-file-position (reader &optional position)
   "Returns the current position within the stream according to the
 amount of information really read.
 
@@ -382,18 +442,42 @@ position of the buffer that is larger than the position that was read
 by the user.
 
 Returned number can be used by the standard FILE-POSITION function to
-adjust the position within a stream."
+adjust the position within a stream.
+
+When optional argument POSITION is supplied, the file position is
+adjusted accordingly in the underlying stream. The buffer is flushed."
 
   (check-type reader ub-line-reader)
 
-  (with-slots (stream fill pos) reader
-    ;; the logic is rather simple: file-position will return position
-    ;; read till then end of the buffer (specified by the FILL slot)
-    ;; so we subtract it and then add the position advanced by the
-    ;; user that is specified by the POS slot
-    (+ (- (file-position stream)
-	  fill)
-       pos)))
+  (if position
+      (with-slots (stream fill pos eof) reader
+	(file-position stream position)
+	(setf fill 0
+	      pos 0
+	      eof nil))
+
+      (with-slots (stream fill pos) reader
+	;; the logic is rather simple: file-position will return position
+	;; read till then end of the buffer (specified by the FILL slot)
+	;; so we subtract it and then add the position advanced by the
+	;; user that is specified by the POS slot
+	(+ (- (file-position stream)
+	      fill)
+	   pos))))
+
+;; --------------------------------------------------------
+
+(defun ub-line-reader-close (reader)
+  "Mimics a standard close function: closes the underlying stream and
+resets the reader to its initial state."
+
+  (check-type reader ub-line-reader)
+
+  (with-slots (stream fill pos eof) reader
+    (close stream)
+    (setf fill 0
+	  pos 0
+	  eof nil)))
 
 ;; --------------------------------------------------------
 
@@ -469,7 +553,6 @@ symbol."
 	    ;; read the complete line after the second part was
 	    ;; obtained from the disk
 	    (ub-read-line-raw reader)))))))
-(declaim (inline ub-read-line-raw))
 
 ;; --------------------------------------------------------
 
@@ -477,6 +560,7 @@ symbol."
   "Reads data into a pre-allocated buffer in the reader structure and
 returns an array displaced to the contents of the next line in that
 buffer."
+  (declare (inline ub-read-line-raw))
 
   (check-type reader ub-line-reader)
 
@@ -494,6 +578,7 @@ buffer."
 (defun ub-read-line-string (reader)
   "Reads data into a pre-allocated buffer in the reader structure and
 returns a standard Lisp string."
+  (declare (inline ub-read-line-raw))
 
   (check-type reader ub-line-reader)
 
