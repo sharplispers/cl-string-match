@@ -1,3 +1,8 @@
+2015-09-03  victor  <victor@vityok>
+
+	* contrib/ascii-strings.lisp improvements to documentation, added
+	line reader
+
 2015-08-03  victor  <victor@vityok>
 
 	* src/aho-corasick.lisp after adding type declarations and forcing
