@@ -27,6 +27,7 @@ ub-read-line-string.")
    :ub-char
    :ub-string
    :ub-buffer
+   :make-ub-buffer
    :ub-char-code-limit
    :ascii-char-code
 
@@ -86,8 +87,10 @@ ub-read-line-string.")
    ;; custom functions
    :ub-to-string
    :string-to-ub
+   :octets-to-ub
    :make-ub-string
    :ub-subseq
+   :make-substitution-table
 
    ;; line reader
    :make-ub-line-reader
@@ -119,6 +122,10 @@ deals with simple arrays."
   "Buffer of octets is a simple array to allow compiler
 optimizations."
   '(simple-array ub-char (*)))
+
+(defun make-ub-buffer (size)
+  "Allocate an ub-buffer of the given size."
+  (make-array size :element-type 'ub-char))
 
 (define-constant ub-char-code-limit 256
   :documentation
@@ -320,7 +327,8 @@ octet), it is essentially an identity function."
 ;; --------------------------------------------------------
 
 (defun ub-string= (string1 string2 &key (start1 0) end1 (start2 0) end2)
-  (not (%ub-string-compare string1 start1 end1 string2 start2 end2)))
+  (not (%ub-string-compare string1 start1 (or end1 (length string1))
+			   string2 start2 (or end2 (length string2)))))
 
 ;; --------------------------------------------------------
 
@@ -350,14 +358,34 @@ octet), it is essentially an identity function."
 ;; --------------------------------------------------------
 ;; Data convertors
 
-(defun ub-to-string (ustr &key (start 0) end)
+(defun make-substitution-table (subst)
+  (let ((tbl (make-ub-buffer UB-CHAR-CODE-LIMIT)))
+    ;; initialize the substitution table to replace the characters
+    ;; with their identities - resulting in no substitution
+    (loop :for u :from 0 :below UB-CHAR-CODE-LIMIT
+       :do (setf (aref tbl u) u))
+    ;; now process the substitutions - this is subset of all
+    ;; characters, user must specify only them and not everything else
+    (loop :for (key val) :in subst
+       :do (setf (aref tbl key) val))
+    tbl))
+
+(defvar *default-substitution-table*
+  (make-substitution-table '((0 #.(char-code #\?))))
+  "Substitution table used to convert ub-strings to the standard
+strings by default. Since character with code 0 is not very welcome in
+the world of C, we are converting it to an ordinary character.")
+
+(defun ub-to-string (ustr &key (start 0) end (subst *default-substitution-table*))
   "Converts either an UB-STRING or UB-BUFFER into a standard Common
 Lisp string.
 
 START, END the start and end offsets within the given USTR to
            translate into a standard string.
 "
-  (declare (type fixnum start))
+  (declare (type fixnum start)
+	   (type ub-buffer subst))
+
   (check-type ustr (or ub-string ub-buffer))
 
   (let* ((%end (the fixnum (or end (length ustr))))
@@ -367,26 +395,38 @@ START, END the start and end offsets within the given USTR to
       (ub-buffer
        (loop :for i :from 0 :below %length
 	  :do (setf (char str i)
-		    (code-char (aref (the ub-buffer ustr)
-				     (+ i start))))))
+		    (code-char (aref subst
+				     (aref (the ub-buffer ustr)
+					   (+ i start)))))))
       (ub-string
        (loop :for i :from 0 :below %length
 	  :do (setf (char str i)
-		    (code-char (aref ustr
-				     (+ i start)))))))
+		    (code-char (aref subst
+				     (aref ustr
+					   (+ i start))))))))
     str))
 
 ;; --------------------------------------------------------
 
 (defun string-to-ub (str)
   "Convert a standard Lisp String into an octets vector."
-  (declare (type simple-string str)
-           (optimize speed))
+  (declare (type simple-string str))
 
   (let ((ustr (make-ub-string (length str))))
     (loop :for i :from 0 :below (length str)
        :do (setf (aref ustr i)
                  (ascii-char-code (char str i))))
+    ustr))
+
+;; --------------------------------------------------------
+
+(defun octets-to-ub (vec)
+  "Convert a simple vector into an octets vector (ub-string)."
+
+  (let ((ustr (make-ub-string (length vec))))
+    (loop :for i :from 0 :below (length vec)
+       :do (setf (aref ustr i)
+                 (svref vec i)))
     ustr))
 
 ;; --------------------------------------------------------
