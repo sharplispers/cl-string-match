@@ -72,6 +72,28 @@ See ticket #30"
 
 ;; --------------------------------------------------------
 
+(define-test test-char-substitutions
+    "Test if ub-to-string properly replaces bad characters."
+  (let* ((str-1-ub (ascii:string-to-ub "abaca"))
+	 (st (ascii:make-substitution-table '((#.(char-code #\a)
+					       #.(char-code #\u)))))
+	 (str-1-def "ubucu")
+	 (str-2-str (ascii:ub-to-string
+		     (ascii:octets-to-ub #(0 #.(char-code #\a)
+					   0 #.(char-code #\a) 0))))
+	 (str-2-def "?a?a?"))
+
+    (assert-equal
+     str-1-def
+     (ascii:ub-to-string str-1-ub :subst st))
+
+    (assert-true
+     (ascii:ub-string=
+      (ascii:string-to-ub str-2-str)
+      (ascii:string-to-ub str-2-def)))))
+
+;; --------------------------------------------------------
+
 (define-test test-simple-strings
     "Test simple string operations"
   (let* ((the-string-1 "abcdefgh123")
