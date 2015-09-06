@@ -105,6 +105,21 @@ See ticket #30"
 
 ;; --------------------------------------------------------
 
+(define-test test-urandom-strings-reader
+    "Test reading random binary data."
+  (let ((times 10000))
+    (with-open-file (in "/dev/urandom"
+			:direction :input
+			:element-type 'ascii:ub-char)
+      (assert-equal times
+		    (loop :with reader = (ascii:make-ub-line-reader :stream in)
+		       :for i :from 0 :below times
+		       :for line = (ascii:ub-read-line reader)
+		       :while line
+		       :count line)))))
+
+;; --------------------------------------------------------
+
 (define-test test-simple-strings
     "Test simple string operations"
   (let* ((the-string-1 "abcdefgh123")
@@ -115,19 +130,48 @@ See ticket #30"
 
     (assert-true (= (ascii:ub-char string1 1)
 		    (ascii:ub-char string1.1 0)))
-
     (assert-true (= (ascii:ub-char string1 2)
 		    (ascii:ub-char string1.1.1 0)))
-
     (assert-true (= (ascii:ub-char string1.1 1)
 		    (ascii:ub-char string1.1.1 0)))
-
     (assert-true (= (char-code #\c)
 		    (ascii:ub-char string1.1.1 0)))
-
     (assert-true (string= the-string-1
 			  (ascii:ub-to-string
-			   (ascii:string-to-ub the-string-1))))))
+			   (ascii:string-to-ub the-string-1))))
+
+    ;; from the CLHS examples section
+    (assert-true
+     (ascii:ub-string= (ascii:string-to-ub "foo")
+		       (ascii:string-to-ub "foo")))
+    (assert-false
+     (ascii:ub-string= (ascii:string-to-ub "foo")
+		       (ascii:string-to-ub "Foo")))
+    (assert-false
+     (ascii:ub-string= (ascii:string-to-ub "foo")
+		       (ascii:string-to-ub "bar")))
+    (assert-true
+     (ascii:ub-string= (ascii:string-to-ub "together")
+		       (ascii:string-to-ub "frog")
+		       :start1 1 :end1 3 :start2 2))
+    ;; todo: (string-equal "foo" "Foo") =>  true
+    (assert-true
+     (ascii:ub-string= (ascii:string-to-ub "abcd")
+		       (ascii:string-to-ub "01234abcd9012")
+		       :start2 5 :end2 9))
+    (assert-equal
+     3
+     (ascii:ub-string< (ascii:string-to-ub "aaaa")
+		       (ascii:string-to-ub "aaab")))
+    (assert-equal
+     4
+     (ascii:ub-string>= (ascii:string-to-ub "aaaaa")
+			(ascii:string-to-ub "aaaa")))
+
+    ;; todo: (string-not-greaterp "Abcde" "abcdE") =>  5
+    ;; todo: (string-lessp "012AAAA789" "01aaab6" :start1 3 :end1 7 :start2 2 :end2 6) =>  6
+    ;; todo: (string-not-equal "AAAA" "aaaA") =>  false
+    ))
 
 
 ;; EOF
