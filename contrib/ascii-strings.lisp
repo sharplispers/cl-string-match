@@ -103,8 +103,12 @@ ub-read-line-string.")
 (in-package :ascii-strings)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (declaim (optimize (speed 3)
-		     (safety 0))))
+  (declaim
+   #-sm-debug-enabled
+   (optimize (speed 3)
+	     (safety 0))
+   #+sm-debug-enabled
+   (optimize safety debug)))
 
 ;; --------------------------------------------------------
 

@@ -62,7 +62,7 @@
    :trie-contains
    :trie-pprint
    :trie->tabular-ac
-   
+
    ;; Suffix tree
    :+infinity+
    :suffix-tree
@@ -123,23 +123,29 @@
 ;; reader will have an idea about this variable when parsing other
 ;; package source files
 (defvar *standard-optimize-settings*
+
+  #-sm-debug-enabled
   '(optimize
     (speed 3)
     (safety 0)
     (space 0)
-    (debug 1)
+    (debug 0)
     (compilation-speed 0)
     #+:lispworks (hcl:fixnum-safety 0))
-  "The standard optimize settings used by most declaration expressions.")
+
+  #+sm-debug-enabled
+  '(optimize safety debug)
+
+  "The standard optimize settings used by most declaration
+expressions. Tuned for best performance by default, but when the
+SM-DEBUG-ENABLED keyword is present in the *FEATURES* list, makes
+debug and safety its priority at the expense of everything else.")
 
 ;; --------------------------------------------------------
 
 (defvar *standard-debug-settings*
   '(optimize safety debug)
   "The standard debug settings to be used in functions under development.")
-
-;; you can change it to the more debug-friendly settings by evaluating:
-;; (setf *STANDARD-OPTIMIZE-SETTINGS* '(optimize (debug 3)))
 
 ;; --------------------------------------------------------
 
