@@ -76,6 +76,17 @@ actual nodes as its children."
 
 ;; --------------------------------------------------------
 
+(defstruct (ukk-node (:include suffix-node))
+  "Ukkonen's algorithm relies on the suffix link technique. Some other
+ algorithms might also rely on it but the naive suffix tree algorithm
+ does not require it.
+
+ This structure extends the standard suffix tree node structure with
+ the suffix link slot."
+  (suffix nil))
+
+;; --------------------------------------------------------
+
 (defun suffix-tree-printer (obj stream depth)
   (declare (ignore depth))
   (check-type obj suffix-tree)
@@ -439,16 +450,7 @@ tree. Then it proceeds adding suffices Str[i..m] (i=2..m) to the tree."
 ;;
 ;; --------------------------------------------------------
 
-(defstruct (ukk-node (:include suffix-node))
-  "Ukkonen's algorithm relies on the suffix link technique. Some other
- algorithms might also rely on it but the naive suffix tree algorithm
- does not require it.
-
- This structure extends the standard suffix tree node structure with
- the suffix link slot."
-  (suffix nil))
-
-;; --------------------------------------------------------
+;; The ukk-node structure is defstruct-ed in this file above
 
 (declaim (inline substr))
 (defun stbstr (str l r)
