@@ -6,3 +6,5 @@ text handling/processing. Currently it contains:
   functionality for Unicode-enabled Common Lisp
   implementations. Another goal is to reduce memory footprint and
   boost performance of the string-processing tasks, i.e. `read-line`.
+
+* `scanf.lisp` a trivial scanf-like functionality implementation
