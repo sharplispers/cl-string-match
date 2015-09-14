@@ -44,13 +44,20 @@
 
 (in-package :trivial-scanf)
 
-;; --------------------------------------------------------
+#+ignore
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (declaim
+   #-sm-debug-enabled
+   (optimize (speed 3)
+	     (safety 0))
+   #+sm-debug-enabled
+   (optimize safety debug)))
 
-(defun sscanf (fmt str &key (start 0) end))
+;; --------------------------------------------------------
 
 (defun fscanf (fmt stream &key (start 0)))
 
-(defun scanf (fmt str &key (start 0))
+(defun scanf (fmt str &key (start 0) end)
   "Parse the given string according to the fmt
 
 Each returned value corresponds properly with each successive
@@ -82,7 +89,7 @@ The following conversions are available:
    matches a single input `%' character.  No conversion is done, and
    assignment does not occur.
 
- d Matches an optionally signed decimal integer; result is an int.
+ d Matches an optionally signed decimal integer.
 
  i Matches an optionally signed integer.  The integer is read in base
    16 if it begins with `0x' or `0X', in base 8 if it begins with `0',
@@ -135,51 +142,125 @@ The following conversions are available:
 
   (let ((fmt-pos 0)
 	(fmt-len (length fmt))
-	(str-pos start)
 	(results '()))
-    (iter
-      ;; todo: what if the string is too short?
-      (while (< fmt-pos fmt-len))
-      (for c = (char fmt fmt-pos))
-      (case c
-	;; directive
-	(#\%
-	 ;; todo: handle more directives
-	 (incf fmt-pos)
-	 (case (char fmt fmt-pos)
-	   (#\d
-	    ;; read and store a decimal integer
-	    (multiple-value-bind (int end-pos)
-		(parse-integer str :start str-pos :junk-allowed T)
-	      (push int results)
-	      (setf str-pos end-pos)))
-	   (#\f
-	    (error "not yet implemented"))
-	   (#\c
-	    ;; read and store a single character
-	    (push (char str str-pos) results)
-	    (incf str-pos))
-	   (#\%
-	    ;; handle '%' similar to an ordinary character,
-	    (unless (char= #\% (char str str-pos))
-	      (error "mismatch"))
-	    (incf str-pos))
-	   (otherwise
-	    (error "invalid directive")))
-	 ;; advance to the next format character
-	 (incf fmt-pos))
 
-	;; an ordinary character
-	(otherwise
-	 (unless (char= (char str str-pos)
-			(char fmt fmt-pos))
-	   (error "mismatch"))
-	 (incf str-pos)
-	 (incf fmt-pos))))
+    (with-string-parsing (str :start start :end (or end (length str)))
+      (labels ((parse-int ()
+		 (let ((sign (case (current)
+			       (#\- (advance) T)
+			       (#\+ (advance) NIL)
+			       (otherwise NIL))))
 
-    (let ((rresults (reverse results)))
+		   (bind (int-str (skip-while digit-char-p))
+		     (let ((num (parse-integer int-str)))
+		       #+sfn-debug (format t "num: ~a~%" num)
+		       (if sign
+			   (return-from parse-int (- 0 num))
+			   (return-from parse-int num)))))))
+	(iter
+	  ;; todo: what if the string is too short?
+	  (while (< fmt-pos fmt-len))
+	  (for c = (char fmt fmt-pos))
+	  #+sfn-debug (format t "str: ~a fmt[~a]: ~a~%" (current) fmt-pos c)
+	  (case c
+	    ;; directive
+	    (#\%
+	     ;; todo: handle more directives and their parameters
+	     (incf fmt-pos)
+	     #+sfn-debug (format t "directive: ~a~%" (char fmt fmt-pos))
 
-      (push str-pos rresults)
-      rresults)))
+	     ;; DISPATCHING DIRECTIVE
+	     (case (char fmt fmt-pos)
+	       ;; an optionally signed decimal integer
+	       ((#\d #\u)
+		(let ((n (parse-int)))
+		  (push n results)
+		  #+sfn-debug
+		  (format t "parsing int ~a: ~a~%" n results)))
+
+	       ;; The integer is read in base 16 if it begins with
+	       ;; `0x' or `0X', in base 8 if it begins with `0',and in
+	       ;; base 10 otherwise
+	       (#\i
+		(error "not yet implemented"))
+
+	       ;; Matches an octal integer
+	       (#\o
+		(error "not yet implemented"))
+
+	       ;; a floating-point number
+	       ((#\a #\A #\e #\E #\f #\F #\g #\G)
+		(error "not yet implemented"))
+
+	       ;; Matches a sequence of non-white-space characters The
+	       ;; input string stops at white space or at the maximum
+	       ;; field width, whichever occurs first.
+	       ((#\s #\S)
+		(error "not yet implemented"))
+
+	       ;; Matches a sequence of width count characters
+	       ;; (default 1) The usual skip of leading white space is
+	       ;; suppressed. To skip white space first, use an
+	       ;; explicit space in the format.
+	       ((#\c #\C)
+		(push (current) results)
+		(advance))
+
+	       ;; Matches a nonempty sequence of characters from the
+	       ;; specified set of accepted characters The usual skip
+	       ;; of leading white space is suppressed.  The string is
+	       ;; to be made up of characters in (or not in) a
+	       ;; particular set; the set is defined by the characters
+	       ;; between the open bracket [ character and a close
+	       ;; bracket ] character.  The set excludes those
+	       ;; characters if the first character after the open
+	       ;; bracket is a circumflex ^.  To include a close
+	       ;; bracket in the set, make it the first character
+	       ;; after the open bracket or the circumflex; any other
+	       ;; position will end the set.  The hyphen character -
+	       ;; is also special; when placed between two other
+	       ;; characters, it adds all intervening characters to
+	       ;; the set.  To include a hyphen, make it the last
+	       ;; character before the final close bracket.  For
+	       ;; instance, `[^]0-9-]' means the set ``everything
+	       ;; except close bracket, zero through nine, and
+	       ;; hyphen''. The string ends with the appearance of a
+	       ;; character not in the (or,with a circumflex, in) set
+	       ;; or when the field width runs out.
+	       (#\[
+		(error "not yet implemented"))
+
+	       ;; Nothing is expected; instead, the number of
+	       ;; characters consumed thus far from the input is
+	       ;; stored in results list.  This is not a conversion,
+	       ;; although it can be suppressed with the * flag.
+	       (#\n
+		(push (pos) results))
+
+	       ;; handle '%' similar to an ordinary character,
+	       (#\%
+		(unless (char= #\% (current))
+		  ;; mismatch
+		  (return-from scanf))
+		(advance))
+
+	       (otherwise
+		(error "invalid directive")))
+	     ;; advance to the next format character
+	     (incf fmt-pos))
+
+	    ;; whitespace
+	    ((#\Space #\Tab #\Newline)
+	     (skip* #\Space #\Tab #\Newline)
+	     (incf fmt-pos))
+
+	    ;; an ordinary character
+	    (otherwise
+	     (unless (char= (current)
+			    (char fmt fmt-pos))
+	       (return-from scanf))
+	     (advance)
+	     (incf fmt-pos))))))
+    (reverse results)))
 
 ;; EOF
