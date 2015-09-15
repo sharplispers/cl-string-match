@@ -145,14 +145,20 @@ The following conversions are available:
 	(results '()))
 
     (with-string-parsing (str :start start :end (or end (length str)))
-      (labels ((parse-int ()
-		 (let ((sign (case (current)
-			       (#\- (advance) T)
-			       (#\+ (advance) NIL)
-			       (otherwise NIL))))
+      (labels ((parse-int (&key (radix 10) ; decimal by default
+				(width MOST-POSITIVE-FIXNUM)) ; poor mans inifinity
+		 (let* ((width% (or width MOST-POSITIVE-FIXNUM))
+			(start-pos (pos))
+			(sign (case (current)
+				(#\- (advance) T)
+				(#\+ (advance) NIL)
+				(otherwise NIL))))
 
-		   (bind (int-str (skip-while digit-char-p))
-		     (let ((num (parse-integer int-str)))
+		   (bind (int-str (skip-while
+				   #'(lambda (c)
+				       (and (< (- (pos) start-pos) width%)
+					    (digit-char-p c radix)))))
+		     (let ((num (parse-integer int-str :radix radix)))
 		       #+sfn-debug (format t "num: ~a~%" num)
 		       (if sign
 			   (return-from parse-int (- 0 num))
@@ -163,98 +169,149 @@ The following conversions are available:
 	  (for c = (char fmt fmt-pos))
 	  #+sfn-debug (format t "str: ~a fmt[~a]: ~a~%" (current) fmt-pos c)
 	  (case c
-	    ;; directive
+	    ;; a directive
 	    (#\%
 	     ;; todo: handle more directives and their parameters
 	     (incf fmt-pos)
 	     #+sfn-debug (format t "directive: ~a~%" (char fmt fmt-pos))
+	     (let* ((suppress?
+		     ;; Suppresses assignment. The conversion that
+		     ;; follows occurs as usual, but the result of the
+		     ;; conversion is simply discarded
+		     (if (char= (char fmt fmt-pos) #\*)
+			 (incf fmt-pos)
+			 NIL))
+		    (width?
+		     ;; In addition to this flag, there may be an
+		     ;; optional maximum field width, expressed as a
+		     ;; decimal integer, between the % and the
+		     ;; conversion.
+		     (if (digit-char-p (char fmt fmt-pos))
+			 (multiple-value-bind (num new-pos)
+			     (parse-integer fmt :start fmt-pos :junk-allowed T)
+			   (setf fmt-pos new-pos)
+			   num)
+			 NIL)))
 
-	     ;; DISPATCHING DIRECTIVE
-	     (case (char fmt fmt-pos)
-	       ;; an optionally signed decimal integer
-	       ((#\d #\u)
-		(let ((n (parse-int)))
-		  (push n results)
-		  #+sfn-debug
-		  (format t "parsing int ~a: ~a~%" n results)))
+	       ;; DISPATCHING CONVERSION DIRECTIVE
+	       (case (char fmt fmt-pos)
+		 ;; an optionally signed decimal integer
+		 ((#\d #\u)
+		  (let ((n (parse-int :width width?)))
+		    (unless suppress?
+		      (push n results))))
 
-	       ;; The integer is read in base 16 if it begins with
-	       ;; `0x' or `0X', in base 8 if it begins with `0',and in
-	       ;; base 10 otherwise
-	       (#\i
-		(error "not yet implemented"))
+		 ;; The integer is read in base 16 if it begins with
+		 ;; `0x' or `0X', in base 8 if it begins with `0',and in
+		 ;; base 10 otherwise
+		 (#\i
+		  (let ((n
+			 (if (char= #\0 (current))
+			     (progn
+			       (advance)
+			       (if (or (char= #\x (current))
+				       (char= #\X (current)))
+				   (progn
+				     (advance)
+				     (parse-int :radix 16 :width width?))
+				   (parse-int :radix 8 :width width?)))
+			     (parse-int :radix 10 :width width?))))
+		    (unless suppress?
+		      (push n results))))
 
-	       ;; Matches an octal integer
-	       (#\o
-		(error "not yet implemented"))
+		 ;; Matches an octal integer
+		 (#\o
+		  (let ((n (parse-int :radix 8 :width width?)))
+		    (unless suppress?
+		      (push n results))))
 
-	       ;; a floating-point number
-	       ((#\a #\A #\e #\E #\f #\F #\g #\G)
-		(error "not yet implemented"))
+		 ;; a floating-point number
+		 ((#\a #\A #\e #\E #\f #\F #\g #\G)
+		  (error "not yet implemented"))
 
-	       ;; Matches a sequence of non-white-space characters The
-	       ;; input string stops at white space or at the maximum
-	       ;; field width, whichever occurs first.
-	       ((#\s #\S)
-		(error "not yet implemented"))
+		 ;; Matches a sequence of non-white-space characters The
+		 ;; input string stops at white space or at the maximum
+		 ;; field width, whichever occurs first.
+		 ((#\s #\S)
+		  (let ((start-pos (pos))
+			(width (or width? MOST-POSITIVE-FIXNUM)))
+		    (bind (str (skip-until
+				#'(lambda (c)
+				    (or (char= c #\Space)
+					(char= c #\Tab)
+					(char= c #\Newline)
+					(>= (- (pos) start-pos) width)))))
+		      (unless suppress?
+			(push str results)))))
 
-	       ;; Matches a sequence of width count characters
-	       ;; (default 1) The usual skip of leading white space is
-	       ;; suppressed. To skip white space first, use an
-	       ;; explicit space in the format.
-	       ((#\c #\C)
-		(push (current) results)
-		(advance))
+		 ;; Matches a sequence of width count characters
+		 ;; (default 1) The usual skip of leading white space is
+		 ;; suppressed. To skip white space first, use an
+		 ;; explicit space in the format.
+		 ((#\c #\C)
+		  (if width?
+		      (progn
+			(let ((chars))
+			  (dotimes (i width?)
+			    (push (current) chars)
+			    (advance))
+			  (unless suppress?
+			    (push (reverse chars) results))))
+		      (progn
+			(unless suppress?
+			  (push (current) results))
+			(advance))))
 
-	       ;; Matches a nonempty sequence of characters from the
-	       ;; specified set of accepted characters The usual skip
-	       ;; of leading white space is suppressed.  The string is
-	       ;; to be made up of characters in (or not in) a
-	       ;; particular set; the set is defined by the characters
-	       ;; between the open bracket [ character and a close
-	       ;; bracket ] character.  The set excludes those
-	       ;; characters if the first character after the open
-	       ;; bracket is a circumflex ^.  To include a close
-	       ;; bracket in the set, make it the first character
-	       ;; after the open bracket or the circumflex; any other
-	       ;; position will end the set.  The hyphen character -
-	       ;; is also special; when placed between two other
-	       ;; characters, it adds all intervening characters to
-	       ;; the set.  To include a hyphen, make it the last
-	       ;; character before the final close bracket.  For
-	       ;; instance, `[^]0-9-]' means the set ``everything
-	       ;; except close bracket, zero through nine, and
-	       ;; hyphen''. The string ends with the appearance of a
-	       ;; character not in the (or,with a circumflex, in) set
-	       ;; or when the field width runs out.
-	       (#\[
-		(error "not yet implemented"))
+		 ;; Matches a nonempty sequence of characters from the
+		 ;; specified set of accepted characters The usual skip
+		 ;; of leading white space is suppressed.  The string is
+		 ;; to be made up of characters in (or not in) a
+		 ;; particular set; the set is defined by the characters
+		 ;; between the open bracket [ character and a close
+		 ;; bracket ] character.  The set excludes those
+		 ;; characters if the first character after the open
+		 ;; bracket is a circumflex ^.  To include a close
+		 ;; bracket in the set, make it the first character
+		 ;; after the open bracket or the circumflex; any other
+		 ;; position will end the set.  The hyphen character -
+		 ;; is also special; when placed between two other
+		 ;; characters, it adds all intervening characters to
+		 ;; the set.  To include a hyphen, make it the last
+		 ;; character before the final close bracket.  For
+		 ;; instance, `[^]0-9-]' means the set ``everything
+		 ;; except close bracket, zero through nine, and
+		 ;; hyphen''. The string ends with the appearance of a
+		 ;; character not in the (or,with a circumflex, in) set
+		 ;; or when the field width runs out.
+		 (#\[
+		  (error "not yet implemented"))
 
-	       ;; Nothing is expected; instead, the number of
-	       ;; characters consumed thus far from the input is
-	       ;; stored in results list.  This is not a conversion,
-	       ;; although it can be suppressed with the * flag.
-	       (#\n
-		(push (pos) results))
+		 ;; Nothing is expected; instead, the number of
+		 ;; characters consumed thus far from the input is
+		 ;; stored in results list.  This is not a conversion,
+		 ;; although it can be suppressed with the * flag.
+		 (#\n
+		  (unless suppress?
+		    (push (pos) results)))
 
-	       ;; handle '%' similar to an ordinary character,
-	       (#\%
-		(unless (char= #\% (current))
-		  ;; mismatch
-		  (return-from scanf))
-		(advance))
+		 ;; handle '%' similar to an ordinary character,
+		 (#\%
+		  (unless (char= #\% (current))
+		    ;; mismatch
+		    (return-from scanf))
+		  (advance))
 
-	       (otherwise
-		(error "invalid directive")))
-	     ;; advance to the next format character
-	     (incf fmt-pos))
+		 (otherwise
+		  (error (format nil "invalid directive: ~a" (char fmt fmt-pos)))))
+	       ;; advance to the next format character
+	       (incf fmt-pos)))
 
-	    ;; whitespace
+	    ;; WHITESPACE
 	    ((#\Space #\Tab #\Newline)
 	     (skip* #\Space #\Tab #\Newline)
 	     (incf fmt-pos))
 
-	    ;; an ordinary character
+	    ;; AN ORDINARY CHARACTER
 	    (otherwise
 	     (unless (char= (current)
 			    (char fmt fmt-pos))
