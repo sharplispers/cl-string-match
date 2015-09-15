@@ -40,7 +40,7 @@
   :description
   "A trivial scanf-like functionality implementation."
   :license "BSD"
-  :depends-on (:alexandria :iterate :proc-parse)
+  :depends-on (:alexandria :iterate :proc-parse :parse-float)
   :components ((:module "contrib"
 			:serial T
 			:components
