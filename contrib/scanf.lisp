@@ -44,7 +44,6 @@
 
 (in-package :trivial-scanf)
 
-#+ignore
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (declaim
    #-sm-debug-enabled
@@ -55,7 +54,10 @@
 
 ;; --------------------------------------------------------
 
-(defun fscanf (fmt stream &key (start 0)))
+(defun fscanf (fmt stream &key (start 0))
+  (error "not yet implemented"))
+
+;; --------------------------------------------------------
 
 (defun scanf (fmt str &key (start 0) end)
   "Parse the given string according to the fmt
@@ -146,7 +148,9 @@ The following conversions are available:
 
     (with-string-parsing (str :start start :end (or end (length str)))
       (labels ((parse-int (&key (radix 10) ; decimal by default
-				(width MOST-POSITIVE-FIXNUM)) ; poor mans inifinity
+				(width MOST-POSITIVE-FIXNUM) ; poor mans inifinity
+				(suppress NIL) ; do we really need it?
+				)
 		 (let* ((width% (or width MOST-POSITIVE-FIXNUM))
 			(start-pos (pos))
 			(sign (case (current)
@@ -158,11 +162,12 @@ The following conversions are available:
 				   #'(lambda (c)
 				       (and (< (- (pos) start-pos) width%)
 					    (digit-char-p c radix)))))
-		     (let ((num (parse-integer int-str :radix radix)))
-		       #+sfn-debug (format t "num: ~a~%" num)
-		       (if sign
-			   (return-from parse-int (- 0 num))
-			   (return-from parse-int num)))))))
+		     (unless suppress
+		       (let ((num (parse-integer int-str :radix radix)))
+			 #+sfn-debug (format t "num: ~a~%" num)
+			 (if sign
+			     (return-from parse-int (- 0 num))
+			     (return-from parse-int num))))))))
 	(iter
 	  ;; todo: what if the string is too short?
 	  (while (< fmt-pos fmt-len))
@@ -197,7 +202,7 @@ The following conversions are available:
 	       (case (char fmt fmt-pos)
 		 ;; an optionally signed decimal integer
 		 ((#\d #\u)
-		  (let ((n (parse-int :width width?)))
+		  (let ((n (parse-int :width width? :suppress suppress?)))
 		    (unless suppress?
 		      (push n results))))
 
@@ -213,15 +218,15 @@ The following conversions are available:
 				       (char= #\X (current)))
 				   (progn
 				     (advance)
-				     (parse-int :radix 16 :width width?))
-				   (parse-int :radix 8 :width width?)))
-			     (parse-int :radix 10 :width width?))))
+				     (parse-int :radix 16 :width width? :suppress suppress?))
+				   (parse-int :radix 8 :width width? :suppress suppress?)))
+			     (parse-int :radix 10 :width width? :suppress suppress?))))
 		    (unless suppress?
 		      (push n results))))
 
 		 ;; Matches an octal integer
 		 (#\o
-		  (let ((n (parse-int :radix 8 :width width?)))
+		  (let ((n (parse-int :radix 8 :width width? :suppress suppress?)))
 		    (unless suppress?
 		      (push n results))))
 
@@ -240,6 +245,8 @@ The following conversions are available:
 				    (or (char= c #\Space)
 					(char= c #\Tab)
 					(char= c #\Newline)
+					(char= c #\Return)
+					(char= c #\Page)
 					(>= (- (pos) start-pos) width)))))
 		      (unless suppress?
 			(push str results)))))
@@ -253,7 +260,8 @@ The following conversions are available:
 		      (progn
 			(let ((chars))
 			  (dotimes (i width?)
-			    (push (current) chars)
+			    (unless suppress?
+			      (push (current) chars))
 			    (advance))
 			  (unless suppress?
 			    (push (reverse chars) results))))
@@ -284,7 +292,21 @@ The following conversions are available:
 		 ;; character not in the (or,with a circumflex, in) set
 		 ;; or when the field width runs out.
 		 (#\[
-		  (error "not yet implemented"))
+		  (incf fmt-pos)
+		  ;; todo: rest of processing
+		  (let* ((exclude? (if (char= #\^ (char fmt fmt-pos))
+				       (progn (incf fmt-pos) T)
+				       NIL))
+			 (chars-set (loop for c = (char fmt fmt-pos)
+				       until (char= c #\] )
+				       do (incf fmt-pos)
+				       collect c)))
+		    (if (not exclude?)
+			(bind (str (skip-while
+				    #'(lambda (c)
+					(position c chars-set))))
+			  (unless suppress?
+			    (push str results))))))
 
 		 ;; Nothing is expected; instead, the number of
 		 ;; characters consumed thus far from the input is
@@ -307,8 +329,8 @@ The following conversions are available:
 	       (incf fmt-pos)))
 
 	    ;; WHITESPACE
-	    ((#\Space #\Tab #\Newline)
-	     (skip* #\Space #\Tab #\Newline)
+	    ((#\Space #\Tab #\Return #\Newline #\Page)
+	     (skip* #\Space #\Tab #\Return #\Newline #\Page)
 	     (incf fmt-pos))
 
 	    ;; AN ORDINARY CHARACTER

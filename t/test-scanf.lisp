@@ -37,6 +37,13 @@
 
 ;; --------------------------------------------------------
 
+(define-test test-scanf-chars-set
+  (:tag :contrib :scanf)
+  (assert-equal '("abc")
+		(snf:scanf "%[cba]" "abc")))
+
+;; --------------------------------------------------------
+
 (define-test test-scanf-whitespace
   (:tag :contrib :scanf)
   (assert-equal '(#\c #\d)
