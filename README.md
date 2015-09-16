@@ -155,6 +155,10 @@ functionality for Unicode-enabled Common Lisp implementations. Another
 goal is to reduce memory footprint and boost performance of the
 string-processing tasks, i.e. `read-line`.
 
+* `trivial-scanf` implements a subset of the original POSIX standard
+`scanf(3)` function features.
+
+
 TODO
 ====
 
