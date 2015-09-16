@@ -35,7 +35,14 @@
 (defpackage :trivial-scanf
   (:use :common-lisp :alexandria :iterate :proc-parse)
   (:nicknames :snf)
-  (:documentation "A trivial scanf implementation in Common Lisp.")
+  (:documentation "A trivial scanf implementation in Common Lisp.
+
+It is not totally compatible with the POSIX scanf(3) function. See
+documentation for the `scanf' function for description of implemented
+features subset.
+
+The `scanf' function can be used to extract necessary information from
+strings or for matching them against a simple pattern.")
 
   (:export
    :scanf))
@@ -149,7 +156,10 @@ The following conversions are available:
    thus far from the input is stored in results list.  This is not a
    conversion, although it can be suppressed with the * flag.
 
-"
+Returns:
+
+  Returns a list of extracted data using specified conversions in the
+  order that they appear or NIL otherwise. "
 
   (let ((fmt-pos 0)
 	(fmt-len (length fmt))
