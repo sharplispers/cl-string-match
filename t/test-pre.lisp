@@ -404,6 +404,7 @@
 ;; todo: make it a macro generating lispunit tests for every test to
 ;; improve diagnosting of the failed tests
 (define-test run-portable-re-tests
+  (:tag :contrib :pre)
   (dolist (test *regexp-tests*)
     (destructuring-bind (pattern str expected-compile-p expected-matched-p expected-results) test
       ;; (format t "~%pattern: ~A ~%string: ~A" pattern str)
@@ -436,6 +437,9 @@
 		    (format t "~%Number of groups ******************** TEST FAILED")
 		    ))))))))))
 
+
+(defun run-pre ()
+  (run-tags '(:pre) :cl-string-match-test))
 
 ;; *****************************************************************************
 ;; END OF FILE

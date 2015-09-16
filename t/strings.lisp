@@ -9,45 +9,48 @@
 ;; --------------------------------------------------------
 
 (define-test test-ub-read-line
+  (:tag :contrib :ascii-strings)
   (with-open-file (in "test.txt"
-       :direction :input
-       :element-type 'ascii:ub-char)
-   (assert-equal 5
-		 (loop :with reader = (ascii:make-ub-line-reader :stream in)
-		       :for i :from 0 :below 10
-		       :for line = (ascii:ub-read-line reader)
-		       :while line
-		       :do (format t "read-line [~a]: ~a~%" i (ascii:ub-to-string line))
-		       :count line))))
+		      :direction :input
+		      :element-type 'ascii:ub-char)
+    (assert-equal 5
+		  (loop :with reader = (ascii:make-ub-line-reader :stream in)
+		     :for i :from 0 :below 10
+		     :for line = (ascii:ub-read-line reader)
+		     :while line
+		     :do (format t "read-line [~a]: ~a~%" i (ascii:ub-to-string line))
+		     :count line))))
 
 ;; --------------------------------------------------------
 
 (define-test test-ub-read-line-string
-    (with-open-file (in "test.txt"
-			:direction :input
-			:element-type 'ascii:ub-char)
-      (let ((reader (ascii:make-ub-line-reader :stream in)))
-	(assert-equal 5
-		      (loop
-			 :for i :from 0 :below 10
-			 :for line = (ascii:ub-read-line-string reader)
-			 :while line
-			 :do (format t "read-line-string [~a]: ~a~%" i line)
-			 :count line))
-	;; check if putting the reader into the start will yield the
-	;; same results as if it was just newly created
-	(ascii:ub-line-reader-file-position reader 0)
-	(assert-equal 5
-		      (loop
-			 :for i :from 0 :below 10
-			 :for line = (ascii:ub-read-line-string reader)
-			 :while line
-			 :do (format t "read-line-string.2 [~a]: ~a~%" i line)
-			 :count line)))))
+  (:tag :contrib :ascii-strings)
+  (with-open-file (in "test.txt"
+		      :direction :input
+		      :element-type 'ascii:ub-char)
+    (let ((reader (ascii:make-ub-line-reader :stream in)))
+      (assert-equal 5
+		    (loop
+		       :for i :from 0 :below 10
+		       :for line = (ascii:ub-read-line-string reader)
+		       :while line
+		       :do (format t "read-line-string [~a]: ~a~%" i line)
+		       :count line))
+      ;; check if putting the reader into the start will yield the
+      ;; same results as if it was just newly created
+      (ascii:ub-line-reader-file-position reader 0)
+      (assert-equal 5
+		    (loop
+		       :for i :from 0 :below 10
+		       :for line = (ascii:ub-read-line-string reader)
+		       :while line
+		       :do (format t "read-line-string.2 [~a]: ~a~%" i line)
+		       :count line)))))
 
 ;; --------------------------------------------------------
 
 (defun test-ub-count-lines (fname)
+  (:tag :contrib :ascii-strings)
   (with-open-file (in fname
                       :direction :input
                       :element-type 'ascii:ub-char)
@@ -60,6 +63,7 @@
 ;; --------------------------------------------------------
 
 (defun test-count-lines (fname)
+  (:tag :contrib :ascii-strings)
   (with-open-file (in fname
                       :direction :input)
     (loop
@@ -76,15 +80,17 @@ within range 0..255 using standard Lisp functions CODE-CHAR and
 CHAR-CODE.
 
 See ticket #30"
+  (:tag :contrib :ascii-strings)
   (assert-false
    (loop :for i :from 0 :below 256
-	 :unless (= (char-code (code-char i)) i)
-	 :return T)))
+      :unless (= (char-code (code-char i)) i)
+      :return T)))
 
 ;; --------------------------------------------------------
 
 (define-test test-char-substitutions
-    "Test if ub-to-string properly replaces bad characters."
+  "Test if ub-to-string properly replaces bad characters."
+  (:tag :contrib :ascii-strings)
   (let* ((str-1-ub (ascii:string-to-ub "abaca"))
 	 (st (ascii:make-substitution-table '((#.(char-code #\a)
 					       #.(char-code #\u)))))
@@ -106,7 +112,8 @@ See ticket #30"
 ;; --------------------------------------------------------
 
 (define-test test-urandom-strings-reader
-    "Test reading random binary data."
+  "Test reading random binary data."
+  (:tag :contrib :ascii-strings)
   (let ((times 10000))
     (with-open-file (in "/dev/urandom"
 			:direction :input
@@ -121,7 +128,8 @@ See ticket #30"
 ;; --------------------------------------------------------
 
 (define-test test-simple-strings
-    "Test simple string operations"
+  "Test simple string operations"
+  (:tag :contrib :ascii-strings)
   (let* ((the-string-1 "abcdefgh123")
 	 (string1 (ascii:string-to-ub the-string-1))
          ;; (string2 (ascii:string-to-ub "ABCDEFGH123"))
@@ -173,5 +181,9 @@ See ticket #30"
     ;; todo: (string-not-equal "AAAA" "aaaA") =>  false
     ))
 
+;; --------------------------------------------------------
+
+(defun run-strings ()
+  (run-tags '(:ascii-strings) :cl-string-match-test))
 
 ;; EOF

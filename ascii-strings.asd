@@ -41,6 +41,8 @@
   "Operations on ASCII strings. Essentially this can be any kind of
 single-byte encoded strings."
   :license "BSD"
+  :author "Vityok https://bitbucket.org/vityok"
+  :version "2015.9.16"
   :depends-on (:alexandria :babel)
   :components ((:module "contrib"
 			:serial T

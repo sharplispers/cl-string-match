@@ -40,6 +40,8 @@
   :description
   "A trivial scanf-like functionality implementation."
   :license "BSD"
+  :author "Vityok https://bitbucket.org/vityok"
+  :version "2015.9.16"
   :depends-on (:alexandria :iterate :proc-parse :parse-float)
   :components ((:module "contrib"
 			:serial T

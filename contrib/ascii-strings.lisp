@@ -15,12 +15,14 @@ string-processing algorithms.
 There are similar libraries/packages with slight differences. Check,
 for instance, com.informatimago.common-lisp.cesarum.ascii.
 
-
 This package also provides a faster alternative to the standard
 read-line function. A line reader is created by the
 make-ub-line-reader function, an ub-string is read by the
 ub-read-line, and a standard line can be read by the
-ub-read-line-string.")
+ub-read-line-string.
+
+Please note, that while ASCII uses 7-bits per character, this library
+works with octets, using 8-bits per character.")
 
   (:export
    ;; common functions and types
