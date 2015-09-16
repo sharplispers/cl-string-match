@@ -44,18 +44,27 @@
 
 (in-package :trivial-scanf)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (declaim
-   #-sm-debug-enabled
-   (optimize (speed 3)
-	     (safety 0))
-   #+sm-debug-enabled
-   (optimize safety debug)))
+(declaim (optimize speed))
 
 ;; --------------------------------------------------------
 
 (defun fscanf (fmt stream &key (start 0))
   (error "not yet implemented"))
+
+;; --------------------------------------------------------
+
+(defun pred-char= (c)
+  "Returns a function of one argument that tests it for equality with
+the char C."
+  #'(lambda (x) (char= x c)))
+
+;; --------------------------------------------------------
+
+(defun pred-char-range (left right)
+  "Returns a function of one argument that tests if it is within a
+character range limited with LEFT and RIGHT."
+  #'(lambda (c) (and (char>= c left)
+		     (char<= c right))))
 
 ;; --------------------------------------------------------
 
@@ -105,7 +114,7 @@ The following conversions are available:
  x, X  Matches an optionally signed hexadecimal integer.
 
  a, A, e, E, f, F, g, G
-   Matches a floating-point number in the style of strtod(3).
+   Matches a floating-point number in the style of PARSE-FLOAT.
 
  s Matches a sequence of non-white-space characters The input string
    stops at white space or at the maximum field width, whichever
@@ -147,27 +156,116 @@ The following conversions are available:
 	(results '()))
 
     (with-string-parsing (str :start start :end (or end (length str)))
-      (labels ((parse-int (&key (radix 10) ; decimal by default
+      (labels ((PARSE-INT (&key (radix 10) ; decimal by default
 				(width MOST-POSITIVE-FIXNUM) ; poor mans inifinity
 				(suppress NIL) ; do we really need it?
 				)
 		 (let* ((width% (or width MOST-POSITIVE-FIXNUM))
-			(start-pos (pos))
-			(sign (case (current)
-				(#\- (advance) T)
-				(#\+ (advance) NIL)
-				(otherwise NIL))))
+			(start-pos (pos)))
 
-		   (bind (int-str (skip-while
-				   #'(lambda (c)
-				       (and (< (- (pos) start-pos) width%)
-					    (digit-char-p c radix)))))
+		   (bind (int-str
+			  (when (or (char= (current) #\-)
+				    (char= (current) #\+))
+			    (advance))
+			  (skip-while
+			   #'(lambda (c)
+			       (and (< (- (pos) start-pos) width%)
+				    (digit-char-p c radix)))))
 		     (unless suppress
 		       (let ((num (parse-integer int-str :radix radix)))
 			 #+sfn-debug (format t "num: ~a~%" num)
-			 (if sign
-			     (return-from parse-int (- 0 num))
-			     (return-from parse-int num))))))))
+			 (return-from parse-int num))))))
+
+	       (PARSE-FLOAT (&key (width MOST-POSITIVE-FIXNUM) ; poor mans inifinity
+				  (suppress NIL) ; do we really need it?
+				  )
+		 ;; a floating-point number consists of a integer
+		 ;; part, decimal part separated from the integer part
+		 ;; with a dot, and an optional exponent part:
+		 ;;
+		 ;; for example: 0.999e+3; 999.0; 999 are all valid
+		 ;; floating-point numbers that this function handles
+		 (let* ((width% (or width MOST-POSITIVE-FIXNUM))
+			(start-pos (pos)))
+
+		   (bind (float-str
+			  ;; integer part
+			  (when (or (char= (current) #\-)
+				    (char= (current) #\+))
+			    (advance))
+			  (skip-while
+			   #'(lambda (c)
+			       (and (< (- (pos) start-pos) width%)
+				    (digit-char-p c))))
+			  (when (char= (current) #\.)
+			    (advance)
+			    ;; decimal part
+			    (skip-while
+			     #'(lambda (c)
+				 (and (< (- (pos) start-pos) width%)
+				      (digit-char-p c))))
+			    ;; exponent part
+			    (when (char-equal (current) #\e)
+			      (advance)
+			      (when (or (char= (current) #\-)
+					(char= (current) #\+))
+				(advance))
+			      (skip-while
+			       #'(lambda (c)
+				   (and (< (- (pos) start-pos) width%)
+					(digit-char-p c)))))))
+		     (unless suppress
+		       (let ((num (parse-float:parse-float float-str)))
+			 #+sfn-debug (format t "num: ~a~%" num)
+			 (return-from parse-float num))))))
+
+
+	       (TRANSLATE-CHAR-SEQ ()
+		 ;; this function is called when the directive
+		 ;; dispatcher stumbles upon a [ directive. It parses
+		 ;; format string starting from the fmt-pos and
+		 ;; generates a list of functions of one argument that
+		 ;; test if the given char satisfies a condition from
+		 ;; the format directive. Exclusion flag is handled by
+		 ;; the callee
+		 (let* ((predicates nil))
+		   (when (char= (char fmt fmt-pos) #\])
+		     (push #'(lambda (c) (char= c #\])) predicates)
+		     (incf fmt-pos))
+
+		   (iter
+		     ;; because of the range operation we will deal
+		     ;; with the characters in triples
+		     (for c1 = (and (< fmt-pos fmt-len) (char fmt fmt-pos)))
+		     (for c2 = (and (< (+ fmt-pos 1) fmt-len) (char fmt (+ fmt-pos 1))))
+		     (for c3 = (and (< (+ fmt-pos 2) fmt-len) (char fmt (+ fmt-pos 2))))
+		     (until (or (null c1) (char= c1 #\] )))
+		     (push
+		      (if (and c2 (char= c2 #\-))
+			  ;; might be a range op
+			  (if (and c3 (char= c3 #\]))
+			      ;; no, it is not, just a dash
+			      (progn
+				(incf fmt-pos)
+				(pred-char= c1))
+			      ;; it is a range op
+			      (progn
+				(incf fmt-pos 3)
+				(pred-char-range c1 c3)))
+			  ;; no dash, just a char
+			  (progn
+			    (incf fmt-pos)
+			    (pred-char= c1)))
+		      predicates))
+		   predicates))
+
+	       (PREDICATE-MATCHES (preds c)
+		 ;; returns T if at least one predicate in the preds
+		 ;; list matches with the character c
+		 (iter
+		   (for pred in preds)
+		   (when (funcall pred c)
+		     (return-from PREDICATE-MATCHES T)))))
 	(iter
 	  ;; todo: what if the string is too short?
 	  (while (< fmt-pos fmt-len))
@@ -232,7 +330,9 @@ The following conversions are available:
 
 		 ;; a floating-point number
 		 ((#\a #\A #\e #\E #\f #\F #\g #\G)
-		  (error "not yet implemented"))
+		  (let ((n (parse-float :width width? :suppress suppress?)))
+		    (unless suppress?
+		      (push n results))))
 
 		 ;; Matches a sequence of non-white-space characters The
 		 ;; input string stops at white space or at the maximum
@@ -297,16 +397,14 @@ The following conversions are available:
 		  (let* ((exclude? (if (char= #\^ (char fmt fmt-pos))
 				       (progn (incf fmt-pos) T)
 				       NIL))
-			 (chars-set (loop for c = (char fmt fmt-pos)
-				       until (char= c #\] )
-				       do (incf fmt-pos)
-				       collect c)))
-		    (if (not exclude?)
-			(bind (str (skip-while
-				    #'(lambda (c)
-					(position c chars-set))))
-			  (unless suppress?
-			    (push str results))))))
+			 (predicates (translate-char-seq)))
+
+		    (bind (str
+			   (if exclude?
+			       (skip-until #'(lambda (c) (predicate-matches predicates c)))
+			       (skip-while #'(lambda (c) (predicate-matches predicates c)))))
+		      (unless suppress?
+			(push str results)))))
 
 		 ;; Nothing is expected; instead, the number of
 		 ;; characters consumed thus far from the input is
