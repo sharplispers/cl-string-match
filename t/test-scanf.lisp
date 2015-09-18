@@ -36,13 +36,12 @@
 		(snf:scanf " %i " "0xAmmm"))
   (assert-equal '(1)
 		(snf:scanf " %i " "0199"))
-  ;; floating-point number equality comparison is a bit tricky, but we
-  ;; risk it here
-  (assert-equal '(999.0)
+
+  (assert-float-equal '(999.0)
 		(snf:scanf " %f " "0.999e+3"))
-  (assert-equal '(999.0)
+  (assert-float-equal '(999.0)
 		(snf:scanf " %f " "  999.0 "))
-  (assert-equal '(999.0)
+  (assert-float-equal '(999.0)
 		(snf:scanf " %f " "  999 ")))
 
 ;; --------------------------------------------------------
@@ -84,6 +83,19 @@
   (assert-equal '("123")
 		(snf:scanf "  %3s "
 			   "  12345 ")))
+
+;; --------------------------------------------------------
+
+(define-test test-scanf-mismatch
+  ;; Test how scanf function behaves with invalid input string
+  (:tag :contrib :scanf)
+  (assert-false (snf:scanf "abd" "abc"))
+  
+  (assert-false (snf:scanf "ab%d" "abc"))
+  (assert-equal '(#\c)
+		(snf:scanf "ab%c%d" "abcd"))
+  (assert-equal '(#\c)
+		(snf:scanf "ab%c%f" "abcd")))
 
 ;; --------------------------------------------------------
 

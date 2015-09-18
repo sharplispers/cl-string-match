@@ -10,5 +10,6 @@ text handling/processing. Currently it contains:
 * `scanf.lisp` a trivial scanf-like functionality implementation. It
   is not totally compatible with the standard POSIX scanf, however,
   implements a decent subset of its functionality. Can be used as a
-  simplier and more robust substitute for extracting data than
-  CL-PPCRE.
+  simplier and more robust replacement for extracting data than
+  CL-PPCRE. In some cases, it can be used for trivial pattern
+  matching.
