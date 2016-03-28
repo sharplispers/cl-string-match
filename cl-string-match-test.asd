@@ -42,7 +42,7 @@
   :description
   "Tests of the CL-STRING-MATCH functions."
   :license "BSD"
-  :depends-on (:cl-string-match :lisp-unit :ascii-strings :trivial-scanf)
+  :depends-on (:cl-string-match :lisp-unit :ascii-strings :simple-scanf)
   :components ((:module "t"
 			:serial T
 			:components

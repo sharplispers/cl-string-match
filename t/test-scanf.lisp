@@ -1,5 +1,5 @@
 ;; --------------------------------------------------------
-;; Unit tests for the trivial-scanf implementation
+;; Unit tests for the simple-scanf implementation
 ;; --------------------------------------------------------
 
 (in-package :cl-string-match-test)
@@ -90,7 +90,7 @@
   ;; Test how scanf function behaves with invalid input string
   (:tag :contrib :scanf)
   (assert-false (snf:scanf "abd" "abc"))
-  
+
   (assert-false (snf:scanf "ab%d" "abc"))
   (assert-equal '(#\c)
 		(snf:scanf "ab%c%d" "abcd"))
