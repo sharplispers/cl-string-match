@@ -1,4 +1,4 @@
-;;; -*- package: TRIVIAL-SCANF.SYSTEM; Syntax: Common-lisp; Base: 10 -*-
+;;; -*- package: SIMPLE-SCANF.SYSTEM; Syntax: Common-lisp; Base: 10 -*-
 
 ;; Copyright (c) 2015, Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
@@ -26,22 +26,22 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (unless (find-package :trivial-scanf.system)
-    (defpackage :trivial-scanf.system
+  (unless (find-package :simple-scanf.system)
+    (defpackage :simple-scanf.system
       (:use :common-lisp :asdf))))
 
 ;; --------------------------------------------------------
 
-(in-package :trivial-scanf.system)
+(in-package :simple-scanf.system)
 
 ;; --------------------------------------------------------
 
-(asdf:defsystem #:trivial-scanf
+(asdf:defsystem #:simple-scanf
   :description
-  "A trivial scanf-like functionality implementation."
+  "A simple scanf-like functionality implementation."
   :license "BSD"
   :author "Vityok https://bitbucket.org/vityok"
-  :version "2015.9.16"
+  :version "2016.3.28"
   :depends-on (:alexandria :iterate :proc-parse :parse-float)
   :components ((:module "contrib"
 			:serial T
