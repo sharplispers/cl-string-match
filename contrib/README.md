@@ -7,9 +7,8 @@ text handling/processing. Currently it contains:
   implementations. Another goal is to reduce memory footprint and
   boost performance of the string-processing tasks, i.e. `read-line`.
 
-* `scanf.lisp` a trivial scanf-like functionality implementation. It
-  is not totally compatible with the standard POSIX scanf, however,
+* `scanf.lisp` a simple scanf-like functionality implementation. It is
+  not totally compatible with the standard POSIX scanf, however,
   implements a decent subset of its functionality. Can be used as a
   simplier and more robust replacement for extracting data than
-  CL-PPCRE. In some cases, it can be used for trivial pattern
-  matching.
+  CL-PPCRE. In some cases, it can be used for simple pattern matching.

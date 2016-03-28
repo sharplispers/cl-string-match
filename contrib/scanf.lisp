@@ -1,4 +1,4 @@
-;;; A trivial scanf implementation in Lisp
+;;; A simple scanf implementation in Lisp
 
 ;; There are two ways to implement the scanf function:
 ;;
@@ -32,10 +32,10 @@
 ;; * under sponsorship from the FreeBSD Foundation.
 
 
-(defpackage :trivial-scanf
+(defpackage :simple-scanf
   (:use :common-lisp :alexandria :iterate :proc-parse)
   (:nicknames :snf)
-  (:documentation "A trivial scanf implementation in Common Lisp.
+  (:documentation "A simple scanf implementation in Common Lisp.
 
 It is not totally compatible with the POSIX scanf(3) function. See
 documentation for the `scanf' function for description of implemented
@@ -49,7 +49,7 @@ strings or for matching them against a simple pattern.")
 
 ;; --------------------------------------------------------
 
-(in-package :trivial-scanf)
+(in-package :simple-scanf)
 
 (declaim (optimize speed))
 
