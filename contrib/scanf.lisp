@@ -368,6 +368,27 @@ Returns:
 			(return-from scanf (values (postprocess-results results) nil)))
 		      (push n results))))
 
+		 ;; Matches a hexadecimal integer, lets it optionally
+		 ;; start with `0x' or `0X'
+		 (#\x
+		  (let ((n
+			 (if (char= #\0 (current))
+			     (progn
+			       (advance)
+			       (if (or (char= #\x (current))
+				       (char= #\X (current)))
+				   (progn
+				     (advance)
+				     (parse-int :radix 16 :width width? :suppress suppress?))
+				   ;; zero is a legit hex int, return it
+				   0))
+			     (parse-int :radix 16 :width width? :suppress suppress?))))
+		    (unless suppress?
+		      (unless n
+			;; mismatch
+			(return-from scanf (values (postprocess-results results) nil)))
+		      (push n results))))
+
 		 ;; a floating-point number
 		 ((#\a #\A #\e #\E #\f #\F #\g #\G)
 		  (let ((n (parse-float :width width? :suppress suppress?)))
