@@ -131,7 +131,16 @@ and the text works."
 	(assert-equal 3 pos)
 	(assert-equal 2 idx))
       (multiple-value-bind (pos idx)
+	  (search-compiled-ac ctrie "___his")
+	(assert-equal 3 pos)
+	(assert-equal 2 idx))
+      
+      (multiple-value-bind (pos idx)
 	  (search-ac trie "___h_s")
+	(assert-equal nil pos)
+	(assert-equal nil idx))
+      (multiple-value-bind (pos idx)
+	  (search-compiled-ac ctrie "___h_s")
 	(assert-equal nil pos)
 	(assert-equal nil idx))))
 
