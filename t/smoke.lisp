@@ -107,14 +107,24 @@ and the text works."
     ;; test Aho-Corasick implementation how it deals with multiple
     ;; patterns search
 
-    (let ((trie (initialize-ac '("he" "she" "his" "hers")))
-	  (trie2 (initialize-ac '("announce" "annual" "annually")))
-	  (trie3 (initialize-ac '("atatata" "tatat" "acgatat"))))
+    (let* ((trie (initialize-ac '("he" "she" "his" "hers")))
+           (trie2 (initialize-ac '("announce" "annual" "annually")))
+           (trie3 (initialize-ac '("atatata" "tatat" "acgatat")))
+
+           (ctrie (trie->compiled-ac trie))
+           (ctrie2 (trie->compiled-ac trie2))
+           (ctrie3 (trie->compiled-ac trie3)))
+
       (assert-equal 0 (search-ac trie "she"))
+      (assert-equal 0 (search-compiled-ac ctrie "she"))
       (assert-equal 1 (search-ac trie "_she"))
+      (assert-equal 1 (search-compiled-ac ctrie "_she"))
       (assert-equal nil (search-ac trie "_sh_"))
+      (assert-equal nil (search-compiled-ac ctrie "_sh_"))
       (assert-equal 0 (search-ac trie2 "annual_announce"))
+      (assert-equal 0 (search-compiled-ac ctrie2 "annual_announce"))
       (assert-equal 8 (search-ac trie3 "agatacgatatatac"))
+      (assert-equal 8 (search-compiled-ac ctrie3 "agatacgatatatac"))
 
       (multiple-value-bind (pos idx)
 	  (search-ac trie "___his")

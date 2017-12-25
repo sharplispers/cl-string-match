@@ -42,7 +42,8 @@
 matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
   :license "BSD"
   :author "Vityok https://bitbucket.org/vityok"
-  :version "2015.9.16"
+  :homepage "https://bitbucket.org/vityok/cl-string-match"
+  :version "2017.12.25"
   :depends-on (:alexandria
 	       :ascii-strings
 	       :yacc	; Portable RE
@@ -61,6 +62,7 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
 			 (:file "knuth-morris-pratt")
 			 (:file "shift-or")
 			 (:file "aho-corasick")
+                         (:file "compiled-aho-corasick")
 			 (:file "suffix-tree")
 			 (:file "pre"))))
   :in-order-to ((test-op (load-op cl-string-match-test))))
