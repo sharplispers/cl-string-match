@@ -102,7 +102,7 @@ dispatched in case forms depending on the current character."
                     (go ,(node-id->tag (trie-node-fail node)))))
                 dispatches)))))
 
-    ;; assemble it all into one place
+    ;; assemble it all into one piece
     `(lambda (,str)
        (block ,main-block
          (let ((,match-len 0))
