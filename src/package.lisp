@@ -1,6 +1,6 @@
 ;;; -*- package: CL-USER; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2013, 2017 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,7 @@
 ;; ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 
 (defpackage :cl-string-match
   (:use :common-lisp :alexandria :iterate :ascii-strings)
@@ -51,6 +52,10 @@
    :search-sor
    :search-ac
    :search-tabac
+
+   ;; Compiled Aho-Corasick
+   :trie->compiled-ac
+   :search-compiled-ac
 
    ;; Trie operations
    :empty-trie

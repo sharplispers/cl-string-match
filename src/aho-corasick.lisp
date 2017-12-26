@@ -140,7 +140,13 @@ Store identifier i of Pi at the terminal node of the path."
 
 (defmacro map-trie-children ((parent child) &body body)
   "Perform the given BODY on the children of the given PARENT. The
-child node is bound to the CHILD variable."
+child node is bound to the CHILD variable.
+
+Example:
+
+  (map-trie-children (node child)
+      (push child stack))
+"
   (let ((key (gensym)))
     `(maphash
       #'(lambda (,key ,child)

@@ -75,16 +75,17 @@
 ;; --------------------------------------------------------
 
 (define-test test-simple-chars
-  "Test if it is possible to encode/decode characters with codes
+    "Test if it is possible to encode/decode characters with codes
 within range 0..255 using standard Lisp functions CODE-CHAR and
 CHAR-CODE.
 
 See ticket #30"
   (:tag :contrib :ascii-strings)
-  (assert-false
-   (loop :for i :from 0 :below 256
-      :unless (= (char-code (code-char i)) i)
-      :return T)))
+  (let ((val 
+         (loop :for i :from 0 :below 256
+            :unless (= (char-code (code-char i)) i)
+            :return T)))
+    (assert-false val)))
 
 ;; --------------------------------------------------------
 
