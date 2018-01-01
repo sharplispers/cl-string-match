@@ -4,17 +4,29 @@
 
 ## Table of Contents
 
-- [1 Single pattern search][8daa]
-- [2 Multiple pattern search][ffe3]
-- [3 Regular expressions][df99]
-    - [3.1 Portable RE by Massung][4e8e]
+- [1 cl-string-match ASDF System Details][03b3]
+- [2 Single pattern search][8daa]
+- [3 Multiple pattern search][ffe3]
+- [4 Regular expressions][df99]
+    - [4.1 Portable RE by Massung][4e8e]
 
 ###### \[in package CL-STRING-MATCH\]
-`CL-STRING-MATCH` String and pattern matching library reference.
+[`CL-STRING-MATCH`][03b3] String and pattern matching library reference.
+
+<a id='x-28-22cl-string-match-22-20ASDF-2FSYSTEM-3ASYSTEM-29'></a>
+
+## 1 cl-string-match ASDF System Details
+
+- Version: 2017.12.25
+- Description: Provides implementations of the standard sub-string search (string
+matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc.
+- Licence: BSD
+- Author: Vityok https://bitbucket.org/vityok
+- Homepage: [https://bitbucket.org/vityok/cl-string-match](https://bitbucket.org/vityok/cl-string-match)
 
 <a id='x-28CL-STRING-MATCH-3A-40SINGLE-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29'></a>
 
-## 1 Single pattern search
+## 2 Single pattern search
 
 Looking for a single pattern in a string
 
@@ -33,7 +45,7 @@ Looking for a single pattern in a string
 
 <a id='x-28CL-STRING-MATCH-3A-40MULTI-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29'></a>
 
-## 2 Multiple pattern search
+## 3 Multiple pattern search
 
 Looking for multiple patterns in a string
 
@@ -46,13 +58,13 @@ Looking for multiple patterns in a string
 
 <a id='x-28CL-STRING-MATCH-3A-40REGEXP-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29'></a>
 
-## 3 Regular expressions
+## 4 Regular expressions
 
 Parsing and interpreting regular expressions
 
 <a id='x-28CL-STRING-MATCH-3A-40PRE-REGEXP-SECTION-20MGL-PAX-3ASECTION-29'></a>
 
-### 3.1 Portable RE by Massung
+### 4.1 Portable RE by Massung
 
 This code was modified to make it portable accross different
 Common Lisp implementations. The biggest difference is the regular
@@ -141,6 +153,7 @@ Cox.
 
 - [generic-function] **MATCH-POS-END** *OBJECT*
 
+  [03b3]: #x-28-22cl-string-match-22-20ASDF-2FSYSTEM-3ASYSTEM-29 "(\"cl-string-match\" ASDF/SYSTEM:SYSTEM)"
   [4e8e]: #x-28CL-STRING-MATCH-3A-40PRE-REGEXP-SECTION-20MGL-PAX-3ASECTION-29 "Portable RE by Massung"
   [8daa]: #x-28CL-STRING-MATCH-3A-40SINGLE-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29 "Single pattern search"
   [df99]: #x-28CL-STRING-MATCH-3A-40REGEXP-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29 "Regular expressions"
