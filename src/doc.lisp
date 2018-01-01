@@ -60,7 +60,7 @@
                           :direction :output
                           :if-does-not-exist :create
                           :if-exists :supersede)
-    (document @cl-string-match-manual :stream stream)
+    (describe @cl-string-match-manual stream)
     (print-markdown-footer stream)))
 
 (defun print-markdown-footer (stream)
