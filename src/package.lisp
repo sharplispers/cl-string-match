@@ -26,8 +26,9 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-(defpackage :cl-string-match
-  (:use :common-lisp :alexandria :iterate :ascii-strings)
+(mgl-pax:define-package :cl-string-match
+    (:documentation "String matching functions and methods.")
+  (:use #:common-lisp #:alexandria #:iterate #:ascii-strings #:mgl-pax)
   (:nicknames :sm)
   (:export
    :string-contains-brute
