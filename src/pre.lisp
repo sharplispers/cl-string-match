@@ -21,27 +21,45 @@
 ;;;; specific language governing permissions and limitations
 ;;;; under the License.
 
-;;; This code was modified to make it portable accross different
-;;; Common Lisp implementations. The biggest difference is the regular
-;;; expressions parser: the original library used "defparser" facility
-;;; that is specific to LispWorks and is not available elsewhere.
-;;;
-;;; Another modification is to rename the "thread" structure with its
-;;; "make-thread" constructor into less controversial "re-thread" and
-;;; "make-re-thread".
-;;;
-;;; Special thanks to Chun Tian (binghe) <binghe.lisp@gmail.com> for
-;;; his defparser-to-yacc function in the ASN.1 library.
-;;;
-;;; It uses the simple non-recursive backtracking implementation from
-;;; the:
-;;;
-;;;  Regular Expression Matching: the Virtual Machine Approach
-;;;  https://swtch.com/~rsc/regexp/regexp2.html
-;;;
-;;; paper by Russ Cox.
 
 (in-package :cl-string-match)
+
+;; --------------------------------------------------------
+
+(defsection @pre-regexp-section (:title "Portable RE by Massung")
+  "This code was modified to make it portable accross different
+Common Lisp implementations. The biggest difference is the regular
+expressions parser: the original library used \"defparser\" facility
+that is specific to LispWorks and is not available elsewhere.
+
+Another modification is to rename the \"thread\" structure with its
+\"make-thread\" constructor into less controversial \"re-thread\" and
+\"make-re-thread\".
+
+Special thanks to Chun Tian (binghe) <binghe.lisp@gmail.com> for
+his defparser-to-yacc function in the ASN.1 library.
+
+It uses the simple non-recursive backtracking implementation from the:
+[Regular Expression Matching: the Virtual Machine
+Approach](https://swtch.com/~rsc/regexp/regexp2.html) paper by Russ
+Cox.
+"
+  (re class)
+  (re-match class)
+  (with-re macro)
+  (with-re-match macro)
+   (compile-re function)
+   (match-re function)
+   (find-re function)
+   (split-re function)
+   (replace-re function)
+
+   ;; match readers
+   (match-string generic-function)
+   (match-groups generic-function)
+   (match-pos-start generic-function)
+   (match-pos-end generic-function)
+)
 
 ;; --------------------------------------------------------
 
