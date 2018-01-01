@@ -34,6 +34,7 @@
 
 (defsection @cl-string-match-manual (:title "CL-STRING-MATCH Manual")
   "CL-STRING-MATCH String and pattern matching library reference."
+  (cl-string-match asdf:system)
   (@single-pattern-search section)
   (@multi-pattern-search section)
   (@regexp-pattern-search section))
