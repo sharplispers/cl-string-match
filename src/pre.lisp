@@ -43,23 +43,90 @@ It uses the simple non-recursive backtracking implementation from the:
 [Regular Expression Matching: the Virtual Machine
 Approach](https://swtch.com/~rsc/regexp/regexp2.html) paper by Russ
 Cox.
+
 "
   (re class)
   (re-match class)
-  (with-re macro)
-  (with-re-match macro)
-   (compile-re function)
-   (match-re function)
-   (find-re function)
-   (split-re function)
-   (replace-re function)
 
-   ;; match readers
-   (match-string generic-function)
-   (match-groups generic-function)
-   (match-pos-start generic-function)
-   (match-pos-end generic-function)
-)
+  (@pre-compiling-patterns-section section)
+  (@pre-basic-matching-section section)
+  (with-re-match macro)
+
+  (match-re function)
+  (find-re function)
+  (split-re function)
+  (replace-re function)
+
+  )
+
+(defsection @pre-compiling-patterns-section (:title "Compiling Patterns")
+  "To create a RE object, you can either use the COMPILE-RE function or the `#/` dispatch macro.
+
+        CL-USER > (compile-re \"%d+\")
+        #<RE \"%d+\">
+
+        CL-USER > #/%d+/
+        #<RE \"%d+\">
+
+Both work equally well, but the dispatch macro will compile the
+pattern at read-time. The RE class has a [load
+form](http://www.lispworks.com/documentation/HyperSpec/Body/f_mk_ld_.htm#make-load-form)
+and so can be saved to a FASL file.
+
+*HINT: when using the read macro, use a backslash to escape the `/`
+ and other characters that might mess with syntax coloring.*
+
+Finally, the WITH-RE macro let's you user either strings or RE
+objects in a body of code. If a string is passed as the pattern, then
+it will be compiled before the body is evaluated.
+
+        CL-USER > (with-re (re \"%d+\") re)
+        #<RE \"%d+\">
+
+*Note*: All pattern matching functions use the WITH-RE macro, and so
+the pattern argument can be either a string or a pre-compiled RE
+object.
+"
+  (compile-re function)
+  (with-re macro))
+
+;; --------------------------------------------------------
+
+(defsection @pre-basic-matching-section (:title "Basic Pattern Matching")
+
+  "The heart of all pattern matching is the `match-re` function."
+
+  (match-re function)
+        
+  "It will match `string` against `pattern` and return a `re-match`
+object on success or `nil` on failure. The `start` and `end` arguments
+limit the scope of the match and default to the entire string. If
+`exact` is `t` then the pattern has to consume the entire string (from
+start to end).
+
+        CL-USER > (match-re \"%d+\" \"abc 123\")
+        NIL
+        
+        CL-USER > (match-re \"%a+\" \"abc 123\")
+        #<RE-MATCH \"abc\">
+
+Once you have successfully matched and have a `RE-MATCH` object, you
+can use the following reader functions to inspect it:"
+
+  (match-string (reader re-match))
+  (match-groups (reader re-match))
+  (match-pos-start (reader re-match))
+  (match-pos-end (reader re-match))
+
+  "Try peeking into a match...
+
+        CL-USER > (inspect (match-re \"(a(b(c)))\" \"abc 123\"))
+        MATCH          \"abc\"
+        GROUPS         (\"abc\" \"bc\" \"c\")
+        START-POS      0
+        END-POS        3
+"
+  )
 
 ;; --------------------------------------------------------
 

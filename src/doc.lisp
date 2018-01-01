@@ -54,14 +54,16 @@
 ;; --------------------------------------------------------
 
 (defun update-md ()
-  (with-open-file (stream (ensure-directories-exist
-                           (asdf:system-relative-pathname
-                            :cl-string-match "doc/md/sm-manual.md"))
-                          :direction :output
-                          :if-does-not-exist :create
-                          :if-exists :supersede)
-    (describe @cl-string-match-manual stream)
-    (print-markdown-footer stream)))
+  (let ((mgl-pax:*DOCUMENT-LINK-CODE* NIL)
+	(mgl-pax:*DOCUMENT-LINK-SECTIONS* NIL))
+    (with-open-file (stream (ensure-directories-exist
+			     (asdf:system-relative-pathname
+			      :cl-string-match "doc/md/sm-manual.md"))
+			    :direction :output
+			    :if-does-not-exist :create
+			    :if-exists :supersede)
+      (document @cl-string-match-manual :stream stream)
+      (print-markdown-footer stream))))
 
 (defun print-markdown-footer (stream)
   (format stream "~%* * *~%")
