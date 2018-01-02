@@ -1,6 +1,6 @@
 ;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2013, 2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -25,24 +25,31 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
-;;; Boyer-Moore-Horspool algorithm
-;;; simplification of the Boyer-Moore algorithm;
-
-;;; * preprocessing phase in O(m+s) time and O(s) space complexity;
-;;; * searching phase in O(mn) time complexity;
-;;; * the average number of comparisons for one text character is between 1/s and 2/(s+1).
-
-;; implementation based on the description from the book
-;;
-;; "Exact String Matching Algorithms" by Christian Charras and Thierry Lecroq
-;;
-;; http://www-igm.univ-mlv.fr/~lecroq/string/node18.html#SECTION00180
-;;
-;; It uses only the "Bad character skip" rule, and does not use the
-;; "Good suffix rule"
-
 (in-package :cl-string-match)
+
+;; --------------------------------------------------------
+
+(defsection @boyer-moore-horspool-section (:title "Boyer-Moore-Horspool algorithm")
+    "Boyer-Moore-Horspool algorithm is a simplification of the
+Boyer-Moore algorithm;
+
+* preprocessing phase in O(m+s) time and O(s) space complexity;
+* searching phase in O(mn) time complexity;
+* the average number of comparisons for one text character is between 1/s and 2/(s+1).
+
+implementation based on the description from the book
+
+\"[Exact String Matching
+Algorithms](http://www-igm.univ-mlv.fr/~lecroq/string/node18.html#SECTION00180)\"
+by Christian Charras and Thierry Lecroq
+
+It uses only the \"Bad character skip\" rule, and does not use the
+\"Good suffix rule\"
+"
+  (define-bmh-matcher macro)
+  (initialize-bmh8 function)
+  (search-bmh8 function)
+  (string-contains-bmh8 function))
 
 ;; --------------------------------------------------------
 

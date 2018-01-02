@@ -1,6 +1,6 @@
 ;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2013, 2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -26,6 +26,22 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 (in-package :cl-string-match)
+
+;; --------------------------------------------------------
+
+(defsection @brute-force-section (:title "Brute force")
+  "A Brute-force algorithm is one of the simpliest but less robust among
+the substring search algorithms.
+
+CL-STRING-MATCH offers a code template for application specific
+sequence and data types: DEFINE-BRUTE-MATCHER and two pre-defined
+brute search functions, one for a standard Lisp
+string (STRING-CONTAINS-BRUTE) and another for unsigned-byte (8 bits
+per char) strings (STRING-CONTAINS-BRUTE-UB).
+"
+  (define-brute-matcher macro)
+  (string-contains-brute function)
+  (string-contains-brute-ub function))
 
 ;; --------------------------------------------------------
 
@@ -56,32 +72,31 @@ Algorithm described in: Chapter 5, p. 760 in
 	 (check-type start2 fixnum)
 	 (check-type end2 (or null fixnum))
 
-	 (let ((pat-len (length pat))
-	       (txt-len (length txt)))
-	   ;; we don't check if the start and end parameters are valid
-	   (setq end1 (if end1 (the fixnum end1) pat-len))
-	   (setq end2 (if end2 (the fixnum end2) txt-len))
-
-	   (loop :for txt-pos fixnum :from start2 :to (- end2 end1) :do
-	      (loop :for pat-pos fixnum :from start1 :below end1
-		 :until (,key-cmp/= (,key-get txt (- (+ txt-pos pat-pos) start1))
-				    (,key-get pat pat-pos))
-		 :finally
-		 (when (= pat-pos end1)
-		   ;; found match
-		   (return-from ,matcher-name txt-pos))))
-	   ;; no match found
-	   NIL)))))
+         (iter
+           (with pat-len = (length pat))
+           (with txt-len = (length txt))
+           ;; we don't check if the start and end parameters are valid
+           (with end1 = (if end1 (the fixnum end1) pat-len))
+           (with end2 = (if end2 (the fixnum end2) txt-len))
+           (for txt-pos from start2 to (- end2 end1))
+           (iter
+             (for pat-pos from start1 below end1)
+             (until (,key-cmp/= (,key-get txt (- (+ txt-pos pat-pos) start1))
+                                (,key-get pat pat-pos)))
+             (finally
+              (when (= pat-pos end1)
+                ;; found match
+                (return-from ,matcher-name txt-pos)))))
+         ;; no match found
+         NIL))))
 
 ;; --------------------------------------------------------
 
 (define-brute-matcher "")
 
-(define-brute-matcher "-ub"
+(define-brute-matcher "-UB"
     :key-get ub-char
     :key-cmp/= ub-char/=
     :data-type ub-string)
-
-(export 'string-contains-brute-ub)
 
 ;; EOF

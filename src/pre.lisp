@@ -45,22 +45,19 @@ Approach](https://swtch.com/~rsc/regexp/regexp2.html) paper by Russ
 Cox.
 
 "
-  (re class)
-  (re-match class)
-
   (@pre-compiling-patterns-section section)
   (@pre-basic-matching-section section)
-  (with-re-match macro)
+  (@pre-pattern-scanning-section section)
+  (@pre-pattern-splitting-section section)
+  (@pre-pattern-replacing-section section)
+  (@pre-groups-section section)
+  (@pre-with-re-match-section section))
 
-  (match-re function)
-  (find-re function)
-  (split-re function)
-  (replace-re function)
-
-  )
+;; --------------------------------------------------------
 
 (defsection @pre-compiling-patterns-section (:title "Compiling Patterns")
-  "To create a RE object, you can either use the COMPILE-RE function or the `#/` dispatch macro.
+  "To create a RE object, you can either use the COMPILE-RE function or
+the `#/` dispatch macro.
 
         CL-USER > (compile-re \"%d+\")
         #<RE \"%d+\">
@@ -87,6 +84,8 @@ it will be compiled before the body is evaluated.
 the pattern argument can be either a string or a pre-compiled RE
 object.
 "
+  (re class)
+  (re-match class)
   (compile-re function)
   (with-re macro))
 
@@ -94,11 +93,11 @@ object.
 
 (defsection @pre-basic-matching-section (:title "Basic Pattern Matching")
 
-  "The heart of all pattern matching is the `match-re` function."
+  "The heart of all pattern matching is the MATCH-RE function."
 
   (match-re function)
-        
-  "It will match `string` against `pattern` and return a `re-match`
+
+  "It will match `string` against `pattern` and return a RE-MATCH
 object on success or `nil` on failure. The `start` and `end` arguments
 limit the scope of the match and default to the entire string. If
 `exact` is `t` then the pattern has to consume the entire string (from
@@ -106,11 +105,11 @@ start to end).
 
         CL-USER > (match-re \"%d+\" \"abc 123\")
         NIL
-        
+
         CL-USER > (match-re \"%a+\" \"abc 123\")
         #<RE-MATCH \"abc\">
 
-Once you have successfully matched and have a `RE-MATCH` object, you
+Once you have successfully matched and have a RE-MATCH object, you
 can use the following reader functions to inspect it:"
 
   (match-string (reader re-match))
@@ -127,6 +126,124 @@ can use the following reader functions to inspect it:"
         END-POS        3
 "
   )
+
+;; --------------------------------------------------------
+
+(defsection @pre-pattern-scanning-section (:title "Pattern Scanning")
+  "To find a pattern match anywhere in a string use the FIND-RE function.
+
+	(find-re pattern string &key start end all)
+
+It will scan `string` looking for matches to `pattern`. If `all` is
+non-`nil` then a list of all matches found is returned, otherwise it
+will simply be the first match.
+
+	CL-USER > (find-re \"%d+\" \"abc 123\")
+	#<RE-MATCH \"123\">
+
+	CL-USER > (find-re \"[^%s]+\" \"abc 123\" :all t)
+	(#<RE-MATCH \"abc\">
+	 #<RE-MATCH \"123\">)
+"
+  (find-re function))
+
+;; --------------------------------------------------------
+
+(defsection @pre-pattern-splitting-section (:title "Splitting by Pattern")
+
+  "Once patterns have been matched, splitting a string from the
+matches is trivial.
+
+	(split-re pattern string &key start end all coalesce-seps)
+
+If `all` is true, then a list of all sub-sequences in
+`string` (delimited by `pattern`) are returned, otherwise just the
+first and the rest of the string.
+
+If `coalesce-seps` is true the sub-sequences that are empty will be
+excluded from the results. This argument is ignored if `all` is `nil`.
+
+	CL-USER > (split-re \",\" \"1,2,3\")
+	\"1\"
+	\"2,3\"
+
+	CL-USER > (split-re \",\" \"1,2,,,abc,3,,\" :all t :coalesce-seps t)
+	(\"1\" \"2\" \"abc\" \"3\")
+"
+  (split-re function))
+
+;; --------------------------------------------------------
+
+(defsection @pre-pattern-replacing-section (:title "Replacing by Pattern")
+  "The REPLACE-RE function scans the string looking for matching
+sub-sequences that will be replaced with another string.
+
+	(replace-re pattern with string &key start end all)
+
+If `with` is a function, then the function is called with the RE-MATCH
+object, replacing the pattern with the return value. Otherwise the
+value is used as-is. As with FIND-RE and SPLIT-RE, if `all` is true,
+then the pattern is globally replaced.
+
+	CL-USER > (replace-re \"%d+\" #\\* \"1 2 3\")
+	\"* 2 3\"
+
+	CL-USER > (replace-re \"%a+\" #'(lambda (m) (length (match-string m))) \"a bc def\" :all t)
+	\"1 2 3\"
+
+*NOTE: The string returned by REPLACE-RE is a completely new
+ string. This is true even if `pattern` isn't found in the string.*
+"
+  (replace-re function))
+
+;; --------------------------------------------------------
+
+  (defsection @pre-groups-section (:title "Groups")
+    "Using parenthesis in a pattern will cause the matching text to be
+groups in the returned `re-match` object. The MATCH-GROUPS function
+will return a list of all the captured strings in the match.
+
+	CL-USER > (match-groups (match-re #/(%d+)(%a+)/ \"123abc\"))
+	(\"123\" \"abc\")
+
+Captures can be nested, but are always returned in the order they are
+**opened**.
+
+	CL-USER > (match-groups (match-re #/(a(b(c)))(d)/ \"abcd\"))
+	(\"abc\" \"bc\" \"c\" \"d\")
+
+*HINT: you can always use the MATCH-STRING function to get at the full
+ text that was matched and there's no need to capture the entire
+ pattern.*
+"
+    (match-groups (reader re-match)))
+
+;; --------------------------------------------------------
+
+(defsection @pre-with-re-match-section (:title "The `with-re-match` Macro")
+  "Whe WITH-RE-MATCH macro can be used to assist in extracting the
+matched patterns and groups.
+
+	(with-re-match ((var match-expr &key no-match) &body body)
+
+If the result of `match-expr` is `nil`, then `no-match` is returned
+and `body` is not executed.
+
+While in the body of the macro, `$$` will be bound to the
+`match-string` and the groups will be bound to `$1`, `$2`, ...,
+`$9`. Any groups beyond the first 9 are bound in a list to `$_`.
+
+	CL-USER > (with-re-match (m (match-re \"(%a+)(%s+)(%d+)\" \"abc 123\"))
+	            (string-append $3 $2 $1)))
+	\"123 abc\"
+
+	CL-USER > (flet ((initial (m)
+	                   (with-re-match (v m)
+	                     (format nil \"~a.\" $1))))
+	            (replace-re #/(%a)%a+%s*/ #'initial \"Lisp In Small Pieces\" :all t))
+	\"L.I.S.P.\"
+"
+  (with-re-match macro))
 
 ;; --------------------------------------------------------
 

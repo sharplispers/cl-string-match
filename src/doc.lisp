@@ -32,6 +32,8 @@
 
 (in-package :cl-string-match)
 
+;; --------------------------------------------------------
+
 (defsection @cl-string-match-manual (:title "CL-STRING-MATCH Manual")
   "CL-STRING-MATCH String and pattern matching library reference."
   (cl-string-match asdf:system)
@@ -41,11 +43,16 @@
 
 (defsection @single-pattern-search (:title "Single pattern search")
   "Looking for a single pattern in a string"
-  (string-contains-brute function))
+  (@brute-force-section section)
+  (@boyer-moore-section section)
+  (@boyer-moore-horspool-section section)
+  (@rabin-karp-section section)
+  (@knuth-morris-pratt-section section)
+  (@shift-or-section section))
 
 (defsection @multi-pattern-search (:title "Multiple pattern search")
   "Looking for multiple patterns in a string"
-  (search-ac function))
+  (@aho-corasick-section section))
 
 (defsection @regexp-pattern-search (:title "Regular expressions")
   "Parsing and interpreting regular expressions"

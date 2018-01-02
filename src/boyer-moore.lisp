@@ -1,6 +1,6 @@
 ;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2013, 2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -26,22 +26,30 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-;; The following implementation is based on algorithm described in:
-;;
-;; Algorithm described in: Chapter 5, p. 772 in
-;;  “Algorithms”, Robert Sedgewick and Kevin Wayne. 4th
-;;
-;; ``Efficient Text Searching in Java'' By Laura Werner.
-;; (appeared in Java Report, February 1999)
-;;
-;; http://icu-project.org/docs/papers/efficient_text_searching_in_java.html
-;;
-;; And some other sources.
-;;
-;; Current implementation uses bad character and good suffix skip
-;; heuristics.
 
 (in-package :cl-string-match)
+
+;; --------------------------------------------------------
+
+(defsection @boyer-moore-section (:title "Boyer-Moore algorithm")
+  "The following implementation is based on algorithm described in:
+
+Algorithm described in: Chapter 5, p. 772 in
+ “Algorithms”, Robert Sedgewick and Kevin Wayne. 4th
+
+``Efficient Text Searching in Java'' By Laura Werner.
+(appeared in Java Report, February 1999)
+
+http://icu-project.org/docs/papers/efficient_text_searching_in_java.html
+
+And some other sources.
+
+Current implementation uses bad character and good suffix skip
+heuristics."
+
+  (initialize-bm function)
+  (search-bm function)
+  (string-contains-bm function))
 
 ;; --------------------------------------------------------
 

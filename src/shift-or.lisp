@@ -1,6 +1,6 @@
 ;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2015, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2015, 2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -25,20 +25,28 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-;;; Shift-OR single pattern search algorithm implementation
-;;
-;; Used
-;;
-;;  http://www-igm.univ-mlv.fr/~lecroq/string/node6.html#SECTION0060
-;;
-;; As the blueprint for this implementation.
-;;
-;; At the moment existing implementation of the Shift-OR search
-;; algorithm is over 1.5 times slower than the standard SEARCH
-;; function on SBCL and much more sluggish than the fast search
-;; implementations offered by this library (BMH first of all).
 
 (in-package :cl-string-match)
+
+;; --------------------------------------------------------
+
+(defsection @shift-or-section (:title "Shift-OR algorithm")
+  "Shift-OR single pattern search algorithm implementation.
+
+Used
+
+ http://www-igm.univ-mlv.fr/~lecroq/string/node6.html#SECTION0060
+
+As the blueprint for this implementation.
+
+At the moment existing implementation of the Shift-OR search
+algorithm is over 1.5 times slower than the standard SEARCH
+function on SBCL and much more sluggish than the fast search
+implementations offered by this library (BMH first of all).
+"
+  (initialize-sor function)
+  (search-sor function)
+  (string-contains-sor function))
 
 ;; --------------------------------------------------------
 

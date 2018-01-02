@@ -26,21 +26,25 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-;; additional information can be found at:
-;;
-;; http://www.geeksforgeeks.org/searching-for-patterns-set-3-rabin-karp-algorithm/
-;;
-;; or:
-;;
-;; http://www-igm.univ-mlv.fr/~lecroq/string/node5.html
-;;
-;; Parts of the source code are modeled after the Java implementation
-;; by Robert Sedgewick and Kevin Wayne:
-;;
-;; http://algs4.cs.princeton.edu/53substring/RabinKarp.java.html
-
-
 (in-package :cl-string-match)
+
+(defsection @rabin-karp-section (:title "Rabin-Karp algorithm")
+  "additional information can be found at:
+
+http://www.geeksforgeeks.org/searching-for-patterns-set-3-rabin-karp-algorithm/
+
+or:
+
+http://www-igm.univ-mlv.fr/~lecroq/string/node5.html
+
+Parts of the source code are modeled after the Java implementation
+by Robert Sedgewick and Kevin Wayne:
+
+http://algs4.cs.princeton.edu/53substring/RabinKarp.java.html
+"
+  (initialize-rk function)
+  (search-rk function)
+  (string-contains-rk function))
 
 ;; --------------------------------------------------------
 

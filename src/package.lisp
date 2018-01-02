@@ -32,6 +32,8 @@
   (:nicknames :sm)
   (:export
    :string-contains-brute
+   :string-contains-brute-ub
+
    :string-contains-bm
    :string-contains-bmh
    :string-contains-rk
