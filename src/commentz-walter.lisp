@@ -26,7 +26,11 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ;; TODO: Commentz-Walter algorithm implementation
-;; 
+;;
+;; NIST Definition: A multiple string matching algorithm that compares
+;; from the end of the pattern, like Boyer-Moore, using a finite state
+;; machine, like Aho-Corasick.
+;;
 ;; devoted to the backward pattern matching of a finite set of
 ;; patterns. It uses:
 ;;
