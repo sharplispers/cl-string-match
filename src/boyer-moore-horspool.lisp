@@ -80,6 +80,16 @@ It uses only the \"Bad character skip\" rule, and does not use the
 	 (pat-len 0 :type fixnum))
 
        ;; --------------------------------------------------------
+       ;; Some Lisp systems/compilers require additional information
+       ;; to determine how to recreate the constant object
+       ;;
+       ;; from:
+       ;; https://stackoverflow.com/questions/346695/no-make-load-form-error-with-openmcl-common-lisp#347448
+       (defmethod cl:make-load-form ((obj ,index-name) &optional env)
+         (declare (ignore env))
+         (make-load-form-saving-slots obj))
+
+       ;; --------------------------------------------------------
 
        (defun ,initialize-name (pat)
 	 "Preprocess the needle.
