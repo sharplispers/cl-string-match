@@ -25,15 +25,6 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-;;; Aho-Corasick algorithm implementation
-;;
-;; Based on description in:
-;;
-;; Biosequence Algorithms, Spring 2005.
-;; Lecture 4: Set Matching and Aho-Corasick Algorithm
-;; Pekka Kilpelainen. University of Kuopio, Department of Computer Science
-;;
-;; Downloaded from: http://www.cs.uku.fi/~kilpelai/BSA05/lectures/slides04.pdf
 ;;
 ;;
 ;; TODO: check if the algorithm is really implemented like it must be,
@@ -41,6 +32,28 @@
 ;; little bit more simple now than described in different books
 
 (in-package :cl-string-match)
+
+;; --------------------------------------------------------
+
+(defsection @aho-corasick-section (:title "Aho-Corasick algorithm")
+
+  "Based on description in:
+
+* Biosequence Algorithms, Spring 2005.  Lecture 4: [Set Matching and
+Aho-Corasick
+Algorithm](http://www.cs.uku.fi/~kilpelai/BSA05/lectures/slides04.pdf)
+Pekka Kilpelainen. University of Kuopio, Department of Computer
+Science
+
+"
+  (empty-trie function)
+  (trie-add-keyword function)
+  (trie-contains function)
+  (trie-contains-prefix function)
+  (trie-build function)
+  (initialize-ac function)
+  (search-ac function)
+  (string-contains-ac function))
 
 ;; --------------------------------------------------------
 

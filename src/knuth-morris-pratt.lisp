@@ -1,6 +1,6 @@
 ;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2013, 2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -26,16 +26,23 @@
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-;; The following implementation is based on algorithm described in:
-;;
-;; Algorithm described in: Chapter 5, p. 768 in
-;;  “Algorithms”, Robert Sedgewick and Kevin Wayne. 4th
-;;
-;; Based on implementation by:
-;;  “Knuth-Morris-Pratt vs. Boyer–Moore in LISP.” by ZBR
-;;   http://www.ioremap.net/archive/other/lisp/optimized-bm-kmp-string-test.lisp
-
 (in-package :cl-string-match)
+
+;; --------------------------------------------------------
+
+(defsection @knuth-morris-pratt-section (:title "Knuth-Morris-Pratt algorithm")
+  "The following implementation is based on algorithm described in:
+
+Algorithm described in: Chapter 5, p. 768 in
+ “Algorithms”, Robert Sedgewick and Kevin Wayne. 4th
+
+Based on implementation by: “[Knuth-Morris-Pratt vs. Boyer–Moore in
+LISP](http://www.ioremap.net/archive/other/lisp/optimized-bm-kmp-string-test.lisp).”
+by ZBR
+"
+  (initialize-kmp function)
+  (search-kmp function)
+  (string-contains-kmp function))
 
 ;; --------------------------------------------------------
 

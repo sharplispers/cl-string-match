@@ -43,13 +43,13 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
   :license "BSD"
   :author "Vityok https://bitbucket.org/vityok"
   :homepage "https://bitbucket.org/vityok/cl-string-match"
-  :version "2017.12.25"
+  :version "2018.01.02"
   :depends-on (:alexandria
 	       :ascii-strings
 	       :yacc	; Portable RE
 	       :jpl-queues	; Aho-Corasick
 	       :iterate	; at least Aho-Corasick
-	       :mgl-pax ; for to generate docs
+	       :mgl-pax ; to generate docs
 	       )
   :components ((:module "src"
 			:serial T
