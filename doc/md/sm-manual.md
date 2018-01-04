@@ -12,6 +12,10 @@
     - 2.6 Shift-OR algorithm
 - 3 Multiple pattern search
     - 3.1 Aho-Corasick algorithm
+        - 3.1.1 Building a Trie
+        - 3.1.2 Basic implementation
+        - 3.1.3 Based on tables
+        - 3.1.4 Compiled to native code
 - 4 Regular expressions
     - 4.1 Portable RE by Massung
         - 4.1.1 Compiling Patterns
@@ -40,7 +44,8 @@ Looking for a single pattern in a string
 
 ### 2.1 Brute force
 
-A Brute-force algorithm is one of the simpliest but less robust among
+A Brute-force substring search implementation.
+Brute-force algorithm is one of the simpliest but less robust among
 the substring search algorithms.
 
 `CL-STRING-MATCH` offers a code template for application specific
@@ -49,29 +54,40 @@ brute search functions, one for a standard Lisp
 string (`STRING-CONTAINS-BRUTE`) and another for unsigned-byte (8 bits
 per char) strings (`STRING-CONTAINS-BRUTE-UB`).
 
+Brute-force substring search requires O(n x m) character compares to
+search for a pattern of length m in a text of length n, in the worst
+case.
+
+Algorithm described in: Chapter 5, p. 760 in 'Algorithms', Robert
+  Sedgewick and Kevin Wayne. 4th
+
 - [macro] **DEFINE-BRUTE-MATCHER** *VARIANT-TAG &KEY (KEY-GET 'CHAR) (KEY-CMP/= 'CHAR/=) (DATA-TYPE 'SIMPLE-STRING)*
 
-- [function] **STRING-CONTAINS-BRUTE** 
+    Expands into a function definition performing a brute search.
+    
+    The function will be named `STRING-CONTAINS-BRUTE` suffixed with the
+    `VARIANT-TAG`.
+    
+    `KEY-GET` is the getter function of two elements: sequence and index of
+    element within this sequence.
+    
+    `KEY-CMP/=` is comparator, that given two elements returns `T` when they
+    are not equal.
+    
+    `DATA-TYPE` is the type of the sequence over which the search is
+    performed.
 
-    A Brute-force substring search implementation.
-    
-    Brute-force substring search requires O(N x M) character compares to
-    search for a pattern of length M in a text of length N, in the worst
-    case.
-    
-    Algorithm described in: Chapter 5, p. 760 in
-      'Algorithms', Robert Sedgewick and Kevin Wayne. 4th
+- [function] **STRING-CONTAINS-BRUTE** *PAT TXT &KEY START1 END1 START2 END2*
 
-- [function] **STRING-CONTAINS-BRUTE-UB** 
+    Search for the given substring `PAT` in the given text
+    `TXT`. Search can optionally be performed over fragments delimeted by
+    `START1`, `END1` for the pattern and `START2`, `END2` for the text.
 
-    A Brute-force substring search implementation.
-    
-    Brute-force substring search requires O(N x M) character compares to
-    search for a pattern of length M in a text of length N, in the worst
-    case.
-    
-    Algorithm described in: Chapter 5, p. 760 in
-      'Algorithms', Robert Sedgewick and Kevin Wayne. 4th
+- [function] **STRING-CONTAINS-BRUTE-UB** *PAT TXT &KEY START1 END1 START2 END2*
+
+    Search for the given substring `PAT` in the given text
+    `TXT`. Search can optionally be performed over fragments delimeted by
+    `START1`, `END1` for the pattern and `START2`, `END2` for the text.
 
 ### 2.2 Boyer-Moore algorithm
 
@@ -90,13 +106,13 @@ And some other sources.
 Current implementation uses bad character and good suffix skip
 heuristics.
 
-- [function] **INITIALIZE-BM** 
+- [function] **INITIALIZE-BM** *PAT*
 
-- [function] **SEARCH-BM** 
+- [function] **SEARCH-BM** *IDX TXT*
 
     Search for pattern bm in txt.
 
-- [function] **STRING-CONTAINS-BM** 
+- [function] **STRING-CONTAINS-BM** *PAT TXT*
 
 ### 2.3 Boyer-Moore-Horspool algorithm
 
@@ -120,16 +136,16 @@ It uses only the "Bad character skip" rule, and does not use the
 
 - [macro] **DEFINE-BMH-MATCHER** *VARIANT-TAG &KEY (KEY-GET 'CHAR) (KEY-CODE 'CHAR-CODE) (KEY-CMP= 'CHAR=) (EMPTY-PAT "") (ALPHABET-SIZE CHAR-CODE-LIMIT) (DATA-TYPE 'SIMPLE-STRING)*
 
-- [function] **INITIALIZE-BMH8** 
+- [function] **INITIALIZE-BMH8** *PAT*
 
     Preprocess the needle.
     Initialize the table to default value.
 
-- [function] **SEARCH-BMH8** 
+- [function] **SEARCH-BMH8** *IDX TXT &KEY START2 END2*
 
     Search for pattern defined in the `IDX` in `TXT`.
 
-- [function] **STRING-CONTAINS-BMH8** 
+- [function] **STRING-CONTAINS-BMH8** *PAT TXT &KEY START2 END2*
 
 ### 2.4 Rabin-Karp algorithm
 
@@ -146,13 +162,13 @@ by Robert Sedgewick and Kevin Wayne:
 
 http://algs4.cs.princeton.edu/53substring/RabinKarp.java.html
 
-- [function] **INITIALIZE-RK** 
+- [function] **INITIALIZE-RK** *PAT*
 
-- [function] **SEARCH-RK** 
+- [function] **SEARCH-RK** *IDX TXT-S*
 
     Implementation of the Rabin-Karp substring search algorithm.
 
-- [function] **STRING-CONTAINS-RK** 
+- [function] **STRING-CONTAINS-RK** *PAT TXT*
 
 ### 2.5 Knuth-Morris-Pratt algorithm
 
@@ -165,11 +181,11 @@ Based on implementation by: “[Knuth-Morris-Pratt vs. Boyer–Moore in
 LISP](http://www.ioremap.net/archive/other/lisp/optimized-bm-kmp-string-test.lisp).”
 by ZBR
 
-- [function] **INITIALIZE-KMP** 
+- [function] **INITIALIZE-KMP** *PAT*
 
-- [function] **SEARCH-KMP** 
+- [function] **SEARCH-KMP** *IDX TXT*
 
-- [function] **STRING-CONTAINS-KMP** 
+- [function] **STRING-CONTAINS-KMP** *PAT TXT*
 
 ### 2.6 Shift-OR algorithm
 
@@ -186,11 +202,11 @@ algorithm is over 1.5 times slower than the standard `SEARCH`
 function on SBCL and much more sluggish than the fast search
 implementations offered by this library (`BMH` first of all).
 
-- [function] **INITIALIZE-SOR** 
+- [function] **INITIALIZE-SOR** *PAT*
 
-- [function] **SEARCH-SOR** 
+- [function] **SEARCH-SOR** *IDX TXT &KEY START2 END2*
 
-- [function] **STRING-CONTAINS-SOR** 
+- [function] **STRING-CONTAINS-SOR** *PAT TXT*
 
 ## 3 Multiple pattern search
 
@@ -207,11 +223,13 @@ Pekka Kilpelainen. University of Kuopio, Department of Computer
 Science
 
 
+#### 3.1.1 Building a Trie
+
 - [function] **EMPTY-TRIE** 
 
     Creates a new instance and returns an empty trie.
 
-- [function] **TRIE-ADD-KEYWORD** 
+- [function] **TRIE-ADD-KEYWORD** *TRIE KW IDX &KEY CONSTRUCTOR*
 
     Starting at the root, follow the path labeled by chars of Pi
     
@@ -220,34 +238,89 @@ Science
     
     Store identifier i of Pi at the terminal node of the path.
 
-- [function] **TRIE-CONTAINS** 
+- [function] **TRIE-CONTAINS** *TRIE S*
 
-    Returns `T` if the given `TRIE` contains the given string S.
+    Returns `T` if the given `TRIE` contains the given string `S`.
 
-- [function] **TRIE-CONTAINS-PREFIX** 
+- [function] **TRIE-CONTAINS-PREFIX** *TRIE S*
 
-    Checks if the given `TRIE` contains some prefix of the given string S.
+    Checks if the given `TRIE` contains some prefix of the given string `S`.
     
     Returns the length of the matched prefix.
 
-- [function] **TRIE-BUILD** 
+- [function] **TRIE-BUILD** *PATTERNS &KEY CONSTRUCTOR*
 
     Builds a Trie based on the given list of patterns.
 
-- [function] **INITIALIZE-AC** 
+#### 3.1.2 Basic implementation
+
+- [function] **INITIALIZE-AC** *PATTERNS*
 
     Returns a Trie that is used to look for the given patterns in the
     text. It can deal either with a single pattern or a list of patterns.
 
-- [function] **SEARCH-AC** 
+- [function] **SEARCH-AC** *TRIE TXT &KEY GREEDY*
 
-    Looks for patterns that are indexed in the given trie and returns two values:
-    start position of the first matching pattern and its index.
+    Looks for patterns that are indexed in the given trie and returns
+    two multiple-value values: start position of the first matching
+    pattern and its mark.
+    
+    If `GREEDY` is `T` then instead of returning upon first match the
+    algorithm continues it search until the end and returns a list of all
+    marks that matched.
+    
+    So, for example:
+    
+    ```lisp
+    (let ((idx (initialize-ac '("atatata" "tatat" "acgatat"))))
+          (search-ac idx "agatacgatatata"))
+    ;; => 4 (2)
+    ```
+    
+    means that the third pattern matched starting from position
+    4. Function returns immediately after it found this match. On the other hand:
+    
+    ```lisp
+    (let ((idx (initialize-ac '("atatata" "tatat" "acgatat"))))
+          (search-ac idx "agatacgatatata" :greedy T))
+    ;; => (2 1 0)
+    ```
+    
+    Discovers all matching patterns, but it doesn't report where the
+    matching excerpts start. Function runs till it reaches end of text.
 
-- [function] **STRING-CONTAINS-AC** 
+- [function] **STRING-CONTAINS-AC** *PAT TXT*
 
     Looks for the given pattern in the text and returns index of the
     first occurence.
+
+#### 3.1.3 Based on tables
+
+- [function] **INITIALIZE-TABAC** *PATTERNS*
+
+    Returns a tabular FDA that is used to look for the given patterns
+    in the text. It can deal either with a single pattern or a list of
+    patterns.
+
+- [function] **SEARCH-TABAC** *IDX TXT*
+
+#### 3.1.4 Compiled to native code
+
+There is a yet another way to implement the Aho-Corasick algorithm:
+translate the DFA defined by the Trie into a computer program and
+compile it to machine code.
+
+- [function] **TRIE-\>COMPILED-AC** *TRIE*
+
+    Returns a compiled function for the given Aho-Corasick trie.
+
+- [function] **SEARCH-COMPILED-AC** *SEARCH-FUNCTION TXT*
+
+    Using a compiled trie, given as the `SEARCH-FUNCTION`, look for
+    matches in the given text `TXT`.
+    
+    Returns start of the matching fragment and the matching mark from the
+    given trie.
 
 ## 4 Regular expressions
 
@@ -322,7 +395,7 @@ object.
 
 The heart of all pattern matching is the `MATCH-RE` function.
 
-- [function] **MATCH-RE** *PATTERN S &KEY (START 0) (END (LENGTH S)) (OFFSET 0) EXACT*
+- [function] **MATCH-RE** *PATTERN S &KEY START END OFFSET EXACT*
 
     Test a pattern re against a string.
 
@@ -375,7 +448,7 @@ will simply be the first match.
      #<RE-MATCH "123">)
 
 
-- [function] **FIND-RE** *PATTERN S &KEY (START 0) (END (LENGTH S)) (OFFSET 0) ALL*
+- [function] **FIND-RE** *PATTERN S &KEY START END OFFSET ALL*
 
     Find a regexp pattern match somewhere in a string. Run from an offset.
 
@@ -401,7 +474,7 @@ excluded from the results. This argument is ignored if `all` is `nil`.
     ("1" "2" "abc" "3")
 
 
-- [function] **SPLIT-RE** *PATTERN S &KEY (START 0) (END (LENGTH S)) (OFFSET 0) ALL COALESCE-SEPS*
+- [function] **SPLIT-RE** *PATTERN S &KEY START END OFFSET ALL COALESCE-SEPS*
 
     Split a string into one or more strings by pattern match.
 
@@ -426,7 +499,7 @@ then the pattern is globally replaced.
 *NOTE: The string returned by `REPLACE-RE` is a completely new
  string. This is true even if `pattern` isn't found in the string.*
 
-- [function] **REPLACE-RE** *PATTERN WITH S &KEY (START 0) (END (LENGTH S)) (OFFSET 0) ALL*
+- [function] **REPLACE-RE** *PATTERN WITH S &KEY START END OFFSET ALL*
 
     Replace patterns found within a string with a new value.
 
@@ -493,10 +566,14 @@ While in the body of the macro, `$$` will be bound to the
   [74de]: #x-28CL-STRING-MATCH-3A-40PRE-PATTERN-SCANNING-SECTION-20MGL-PAX-3ASECTION-29 "Pattern Scanning"
   [7a26]: #x-28CL-STRING-MATCH-3A-40PRE-GROUPS-SECTION-20MGL-PAX-3ASECTION-29 "Groups"
   [82cb]: #x-28CL-STRING-MATCH-3A-40BOYER-MOORE-SECTION-20MGL-PAX-3ASECTION-29 "Boyer-Moore algorithm"
+  [8cda]: #x-28CL-STRING-MATCH-3A-40AHO-CORASICK-TRIE-SECTION-20MGL-PAX-3ASECTION-29 "Building a Trie"
   [8daa]: #x-28CL-STRING-MATCH-3A-40SINGLE-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29 "Single pattern search"
+  [b052]: #x-28CL-STRING-MATCH-3A-40AHO-CORASICK-BASIC-SECTION-20MGL-PAX-3ASECTION-29 "Basic implementation"
   [c54a]: #x-28CL-STRING-MATCH-3A-40PRE-COMPILING-PATTERNS-SECTION-20MGL-PAX-3ASECTION-29 "Compiling Patterns"
   [df99]: #x-28CL-STRING-MATCH-3A-40REGEXP-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29 "Regular expressions"
   [dff8]: #x-28CL-STRING-MATCH-3A-40SHIFT-OR-SECTION-20MGL-PAX-3ASECTION-29 "Shift-OR algorithm"
+  [e1ba]: #x-28CL-STRING-MATCH-3A-40AHO-CORASICK-COMPILED-SECTION-20MGL-PAX-3ASECTION-29 "Compiled to native code"
+  [ee19]: #x-28CL-STRING-MATCH-3A-40AHO-CORASICK-TABAC-SECTION-20MGL-PAX-3ASECTION-29 "Based on tables"
   [f81a]: #x-28CL-STRING-MATCH-3A-40PRE-WITH-RE-MATCH-SECTION-20MGL-PAX-3ASECTION-29 "The \\`with-re-match\\` Macro"
   [ffe3]: #x-28CL-STRING-MATCH-3A-40MULTI-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29 "Multiple pattern search"
 

@@ -1,6 +1,6 @@
 ;;; -*- package: CL-USER; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2017 Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2017,2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -78,4 +78,10 @@
                    [MGL-PAX](https://github.com/melisgl/mgl-pax)\\]~%"))
 ;; (update-md)
 
+#|
+For whatever reason Clozure CL produces better results. See:
+
+lx86cl --eval '(ql:quickload :cl-string-match)' --eval '(cl-string-match::update-md)' --eval '(ccl:quit)'
+
+|#
 ;; EOF
