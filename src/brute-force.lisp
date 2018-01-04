@@ -30,7 +30,8 @@
 ;; --------------------------------------------------------
 
 (defsection @brute-force-section (:title "Brute force")
-  "A Brute-force algorithm is one of the simpliest but less robust among
+  "A Brute-force substring search implementation.
+Brute-force algorithm is one of the simpliest but less robust among
 the substring search algorithms.
 
 CL-STRING-MATCH offers a code template for application specific
@@ -38,6 +39,13 @@ sequence and data types: DEFINE-BRUTE-MATCHER and two pre-defined
 brute search functions, one for a standard Lisp
 string (STRING-CONTAINS-BRUTE) and another for unsigned-byte (8 bits
 per char) strings (STRING-CONTAINS-BRUTE-UB).
+
+Brute-force substring search requires O(n x m) character compares to
+search for a pattern of length m in a text of length n, in the worst
+case.
+
+Algorithm described in: Chapter 5, p. 760 in 'Algorithms', Robert
+  Sedgewick and Kevin Wayne. 4th
 "
   (define-brute-matcher macro)
   (string-contains-brute function)
@@ -50,18 +58,26 @@ per char) strings (STRING-CONTAINS-BRUTE-UB).
 				  (key-get 'char)
 				  (key-cmp/= 'char/=)
 				  (data-type 'simple-string))
+  "Expands into a function definition performing a brute search.
+
+The function will be named STRING-CONTAINS-BRUTE suffixed with the
+VARIANT-TAG.
+
+KEY-GET is the getter function of two elements: sequence and index of
+element within this sequence.
+
+KEY-CMP/= is comparator, that given two elements returns T when they
+are not equal.
+
+DATA-TYPE is the type of the sequence over which the search is
+performed."
 
   (let ((matcher-name (format-name "STRING-CONTAINS-BRUTE~A" variant-tag)))
     `(progn
        (defun ,matcher-name (pat txt &key (start1 0) end1 (start2 0) end2)
-	 "A Brute-force substring search implementation.
-
-Brute-force substring search requires O(N x M) character compares to
-search for a pattern of length M in a text of length N, in the worst
-case.
-
-Algorithm described in: Chapter 5, p. 760 in
-  'Algorithms', Robert Sedgewick and Kevin Wayne. 4th"
+	 "Search for the given substring PAT in the given text
+TXT. Search can optionally be performed over fragments delimeted by
+START1, END1 for the pattern and START2, END2 for the text."
 
 	 (declare #.*standard-optimize-settings*)
 
@@ -73,6 +89,7 @@ Algorithm described in: Chapter 5, p. 760 in
 	 (check-type end2 (or null fixnum))
 
          (iter
+           (declare (iterate:declare-variables))
            (with pat-len = (length pat))
            (with txt-len = (length txt))
            ;; we don't check if the start and end parameters are valid

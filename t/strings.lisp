@@ -8,9 +8,15 @@
 
 ;; --------------------------------------------------------
 
+(defparameter *test-txt* 
+  (asdf:system-relative-pathname
+   :cl-string-match "t/test.txt"))
+
+;; --------------------------------------------------------
+
 (define-test test-ub-read-line
   (:tag :contrib :ascii-strings)
-  (with-open-file (in "test.txt"
+  (with-open-file (in *test-txt*
 		      :direction :input
 		      :element-type 'ascii:ub-char)
     (assert-equal 5
@@ -25,7 +31,7 @@
 
 (define-test test-ub-read-line-string
   (:tag :contrib :ascii-strings)
-  (with-open-file (in "test.txt"
+  (with-open-file (in *test-txt*
 		      :direction :input
 		      :element-type 'ascii:ub-char)
     (let ((reader (ascii:make-ub-line-reader :stream in)))

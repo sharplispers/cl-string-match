@@ -1,6 +1,6 @@
 ;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2015, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2015, 2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -46,14 +46,28 @@ Pekka Kilpelainen. University of Kuopio, Department of Computer
 Science
 
 "
+  (@aho-corasick-trie-section section)
+  (@aho-corasick-basic-section section)
+  (@aho-corasick-tabac-section section)
+  (@aho-corasick-compiled-section section))
+
+;; --------------------------------------------------------
+
+(defsection @aho-corasick-trie-section (:title "Building a Trie")
   (empty-trie function)
   (trie-add-keyword function)
   (trie-contains function)
   (trie-contains-prefix function)
-  (trie-build function)
+  (trie-build function))
+
+(defsection @aho-corasick-basic-section (:title "Basic implementation")
   (initialize-ac function)
   (search-ac function)
   (string-contains-ac function))
+
+(defsection @aho-corasick-tabac-section (:title "Based on tables")
+  (initialize-tabac function)
+  (search-tabac function))
 
 ;; --------------------------------------------------------
 
@@ -81,8 +95,7 @@ Slots:
   label		      ; character attributed to this node
   mark		      ; this is essentially an output function
   (fail nil :type (or null trie-node))	; fail transition
-  (depth 0 :type fixnum)
-  )
+  (depth 0 :type fixnum))
 
 ;; --------------------------------------------------------
 
@@ -147,17 +160,17 @@ Store identifier i of Pi at the terminal node of the path."
 	     ;; the path continues further
 	     (setf node child-node))
      ;; store the keyword index
-     :finally (setf (trie-node-mark node) idx)))
+     :finally (setf (trie-node-mark node) (list idx))))
 
 ;; --------------------------------------------------------
 
-(defmacro map-trie-children ((parent child) &body body)
+(defmacro do-trie-children ((parent child) &body body)
   "Perform the given BODY on the children of the given PARENT. The
 child node is bound to the CHILD variable.
 
 Example:
 
-  (map-trie-children (node child)
+  (do-trie-children (node child)
       (push child stack))
 "
   (let ((key (gensym)))
@@ -180,7 +193,7 @@ handler function on each node."
       (while stack)
       (for node = (pop stack))
       (funcall handler node)
-      (map-trie-children (node child)
+      (do-trie-children (node child)
 	(push child stack)))))
 
 ;; --------------------------------------------------------
@@ -196,7 +209,7 @@ handler function on each node.."
       (until (jpl-queues:empty? queue))
       (for node = (jpl-queues:dequeue queue))
       (funcall handler node)
-      (map-trie-children (node child)
+      (do-trie-children (node child)
 	(jpl-queues:enqueue child queue)))))
 
 ;; --------------------------------------------------------
@@ -220,7 +233,7 @@ node [shape = circle];~%")
 	 (format stream "nd_~a -> nd_~a [style=dashed,weight=1,arrowhead=open,constraint=false,penwidth=0.6];~%"
 		 (trie-node-id node)
 		 (trie-node-id (trie-node-fail node))))
-       (map-trie-children (node child)
+       (do-trie-children (node child)
 	 (format stream "nd_~a -> nd_~a [label=\"~a\"];~%"
 		 (trie-node-id node)
 		 (trie-node-id child)
@@ -232,7 +245,13 @@ node [shape = circle];~%")
 
 (defun trie-dump-dot-file (trie fname)
   "Dumps output of the TRIE-DUMP-DOT function to the file with the
-specified file name."
+specified file name.
+
+Use Graphviz to render it:
+
+    $ dot -Tpng -o trie.png trie.dot
+
+Where `trie.dot` is the file name of the dot file."
 
   (with-open-file (out fname
 		       :direction :output
@@ -248,7 +267,7 @@ specified file name."
 ROOT is the root node (optional)."
   ;; (declare #.*standard-optimize-settings*)
   (when trie
-    (format stream "~&~v@TNode[~A] ~A ~A; depth: [~a] fail: [~a]"
+    (format stream "~&~v@TNode[~A] ~A; mark: [~A]; depth: [~a] fail: [~a]"
 	    padding
 	    (trie-node-id trie)
 	    (trie-node-label trie)
@@ -349,7 +368,7 @@ Traverses the trie in the breadth-first-order (BFO)"
     (setf (trie-node-fail root) root)
 
     ;; immediate children of the root also fail to the root
-    (map-trie-children (root child)
+    (do-trie-children (root child)
       (setf (trie-node-fail child) root)
       (jpl-queues:enqueue child queue))
 
@@ -360,7 +379,7 @@ Traverses the trie in the breadth-first-order (BFO)"
       ;; let r be the next state in queue
       (for r = (jpl-queues:dequeue queue))
       ;; map children of this r
-      (map-trie-children (r child)
+      (do-trie-children (r child)
 	;; child is S
 	(let* ((state (trie-node-fail r))  ; state <- f(r),
 	       (a (trie-node-label child)) ; g(r,a)=s
@@ -391,14 +410,8 @@ Traverses the trie in the breadth-first-order (BFO)"
 		fail-node)
 
 	  ;; output(s) <- output(s) U output(f(s))
-
-	  ;; IMPORTANT NOTE: we don't handle concatenation of outputs
-	  ;; - our focus is matching just one pattern. Unlike the
-	  ;; original algorithm that will output the string that is
-	  ;; matched by all patterns.
-	  #+ignore
 	  (setf (trie-node-mark child)
-		(concatenate 'list
+		(append
 			     (trie-node-mark child)
 			     (trie-node-mark fail-node))))))
 
@@ -423,37 +436,64 @@ text. It can deal either with a single pattern or a list of patterns."
 ;; --------------------------------------------------------
 
 (defun search-ac (trie txt &key greedy)
-  "Looks for patterns that are indexed in the given trie and returns two values:
-start position of the first matching pattern and its index."
+  "Looks for patterns that are indexed in the given trie and returns
+two multiple-value values: start position of the first matching
+pattern and its mark.
+
+If GREEDY is T then instead of returning upon first match the
+algorithm continues it search until the end and returns a list of all
+marks that matched.
+
+So, for example:
+
+```lisp
+(let ((idx (initialize-ac '(\"atatata\" \"tatat\" \"acgatat\"))))
+      (search-ac idx \"agatacgatatata\"))
+;; => 4 (2)
+```
+
+means that the third pattern matched starting from position
+4. Function returns immediately after it found this match. On the other hand:
+
+```lisp
+(let ((idx (initialize-ac '(\"atatata\" \"tatat\" \"acgatat\"))))
+      (search-ac idx \"agatacgatatata\" :greedy T))
+;; => (2 1 0)
+```
+Discovers all matching patterns, but it doesn't report where the
+matching excerpts start. Function runs till it reaches end of text.
+"
 
   (declare #.*standard-optimize-settings*)
   (check-type trie trie-node)
   (check-type txt simple-string)
 
   (iter
-    (with match-len = 0)
+    (declare (iterate:declare-variables))
     (with node = trie)
     (for c in-string txt)
-    (for pos from 0 below (length txt))
-    (for new-node first (trie-find-child trie c) then (trie-find-child node c))
-    (if new-node
-	;; we've got a forward transition
-	(progn
-	  (setf node new-node)
-	  (when (trie-node-mark node)
-	    ;; if this node has a mark this means that we've
-	    ;; reached an end of some pattern
-	    ;; (format t "~a ~a~%" (- pos match-len) (trie-node-mark node))
-	    (if greedy
-		(collect (list pos (trie-node-mark node)))
-		(return (values (- pos match-len) (trie-node-mark node)))))
-	  (incf match-len))
-	;; perform a fail transition
-	(progn
-	  (setf node (trie-node-fail node)
-		;; and update index of the last non-matching
-		;; character
-		match-len 0)))))
+    (for (the fixnum pos) from 1 to (length txt))
+
+    (for new-node = (trie-find-child node c))
+
+    ;; follow a fail until we reach the root (label is null)
+    (iter (while (and (not (null (trie-node-label node)))
+                      (null new-node)))
+          (setf node (trie-node-fail node)
+                new-node (trie-find-child node c)))
+
+    (when new-node
+      ;; we've got a forward transition
+      (progn
+        ;; (format t "transition to: ~a[~a]~%"  (trie-node-label new-node) (trie-node-id new-node))
+        (setf node new-node)
+        (when (trie-node-mark node)
+          ;; if this node has a mark this means that we've
+          ;; reached an end of some pattern
+          (if greedy
+              (appending (trie-node-mark node))
+              (return (values (- pos (trie-node-depth node))
+                              (trie-node-mark node)))))))))
 
 ;; --------------------------------------------------------
 
@@ -465,20 +505,11 @@ first occurence."
   (check-type pat simple-string)
   (check-type txt simple-string)
 
-  (if (= (length pat) 0)
+  (if (and (= (length pat) 0)
+           (= (length txt) 0))
       0
-      (let* ((trie (trie-build (list pat)))
-	     (res
-	      (loop
-		 :for c :across txt
-		 :for j :from 1 :to (length txt)
-		 :for node = (trie-find-child trie c) :then (trie-find-child node c)
-		 :do (if node
-			 (if (trie-node-mark node)
-			     (return (- j (length pat))))
-			 (setf node (trie-find-child trie c)))
-		 :unless node :do (setf node trie))))
-	(if res res nil))))
+      (let ((trie (initialize-ac (list pat))))
+        (search-ac trie txt))))
 
 ;; --------------------------------------------------------
 ;; TABULAR IMPLEMENTATION OF THE Aho-Corasick DFA
@@ -541,7 +572,7 @@ for the Aho-Corasick automata."
 	 (let ((trans (make-array +ac-alphabet+
 				  :initial-element (trie-node-id (trie-node-fail node))
 				  :element-type 'fixnum)))
-	   (map-trie-children (node child)
+	   (do-trie-children (node child)
 	     (setf (aref trans (char-code (trie-node-label child)))
 		   (trie-node-id child)))
 	   (setf (aref (tabac-trans idx) (trie-node-id node))

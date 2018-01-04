@@ -1,6 +1,6 @@
 ;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2017, Victor Anyakin <anyakinvictor@yahoo.com> All
+;; Copyright (c) 2017, 2018 Victor Anyakin <anyakinvictor@yahoo.com> All
 ;; rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,15 @@
 
 ;; --------------------------------------------------------
 
+(defsection @aho-corasick-compiled-section (:title "Compiled to native code")
+  "There is a yet another way to implement the Aho-Corasick algorithm:
+translate the DFA defined by the Trie into a computer program and
+compile it to machine code."
+  (trie->compiled-ac function)
+  (search-compiled-ac function))
+
+;; --------------------------------------------------------
+
 (defun make-lambda-ac (trie)
   "Writes lambda function performing search over the given trie.
 
@@ -69,7 +78,7 @@ dispatched in case forms depending on the current character."
 
              (dispatch-node (node)
                (let ((cases nil))
-                 (map-trie-children
+                 (do-trie-children
                      (node child)
                    (push
                     `(,(trie-node-label child)
@@ -88,7 +97,7 @@ dispatched in case forms depending on the current character."
                         ;; successfull match: return beginning of the
                         ;; matching pattern in the string and the mark
                         (values
-                         (- (file-position ,strio) ,match-len)
+                         (+ (- (file-position ,strio) ,(trie-node-depth node)) 1)
                          ,(trie-node-mark node)))
                      dispatches)
                (push
@@ -120,6 +129,12 @@ dispatched in case forms depending on the current character."
 ;; --------------------------------------------------------
 
 (defun search-compiled-ac (search-function txt)
+  "Using a compiled trie, given as the SEARCH-FUNCTION, look for
+matches in the given text TXT.
+
+Returns start of the matching fragment and the matching mark from the
+given trie."
+
   (funcall search-function txt))
 
 ;; EOF
