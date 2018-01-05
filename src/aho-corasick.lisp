@@ -410,10 +410,14 @@ Traverses the trie in the breadth-first-order (BFO)"
 		fail-node)
 
 	  ;; output(s) <- output(s) U output(f(s))
+
+          ;; This is done because the patterns recognized at f (u) (if
+          ;; any), and only those, are proper suffixes of L(u), and
+          ;; shall thus be recognized at state u also.
 	  (setf (trie-node-mark child)
 		(append
-			     (trie-node-mark child)
-			     (trie-node-mark fail-node))))))
+                 (trie-node-mark child)
+                 (trie-node-mark fail-node))))))
 
     ;; done, return reference to the trie
     trie))
@@ -425,7 +429,8 @@ Traverses the trie in the breadth-first-order (BFO)"
 
 (defun initialize-ac (patterns)
   "Returns a Trie that is used to look for the given patterns in the
-text. It can deal either with a single pattern or a list of patterns."
+text. It can deal either with a single pattern or a list of patterns.
+The returned trie will have failure function computed for its nodes."
 
   (declare #.*standard-optimize-settings*)
   (let ((trie (trie-build (if (listp patterns)
@@ -446,23 +451,20 @@ marks that matched.
 
 So, for example:
 
-```lisp
-(let ((idx (initialize-ac '(\"atatata\" \"tatat\" \"acgatat\"))))
-      (search-ac idx \"agatacgatatata\"))
-;; => 4 (2)
-```
+    (defvar idx (initialize-ac '(\"atatata\" \"tatat\" \"acgatat\")))
+    (search-ac idx \"agatacgatatata\")
+    ;; => 4 (2)
 
 means that the third pattern matched starting from position
-4. Function returns immediately after it found this match. On the other hand:
+4. Function returns immediately after it found this match. On the
+other hand:
 
-```lisp
-(let ((idx (initialize-ac '(\"atatata\" \"tatat\" \"acgatat\"))))
-      (search-ac idx \"agatacgatatata\" :greedy T))
-;; => (2 1 0)
-```
+    (search-ac idx \"agatacgatatata\" :greedy T)
+    ;; => (2 1 0)
+
 Discovers all matching patterns, but it doesn't report where the
-matching excerpts start. Function runs till it reaches end of text.
-"
+matching fragments are. Function runs till it reaches the end of
+text."
 
   (declare #.*standard-optimize-settings*)
   (check-type trie trie-node)
@@ -524,16 +526,16 @@ Slots:
 
 * `start` - initial state
 * `trans` - a table of transition tables
-* `final` - marks final states
+* `final` - marks final states. this array contains values of the
+  output function (marks)
 * `match-len` - stores length of the keyword corresponding to the final state"
 
   ;; initial state
   (start -1 :type fixnum)
   ;; transitions
   (trans nil :type (or null (simple-array (or null (simple-array fixnum)))))
-  ;; final states
-  (final (make-array 0 :element-type 'fixnum)
-	 :type (simple-array fixnum))
+  ;; final states, 
+  (final (make-array 0 :element-type '(or null list)))
   ;; array that stores corresponding pattern length
   (match-len (make-array 0 :element-type 'fixnum)
 	     :type (simple-array fixnum)))
@@ -554,8 +556,8 @@ for the Aho-Corasick automata."
 				  :initial-element nil
 				  :element-type '(or null (simple-array fixnum)))
 	       :final (make-array (+ nodes-count 1)
-				  :initial-element -1
-				  :element-type 'fixnum))))
+				  :initial-element nil
+				  :element-type '(or null list)))))
     (trie-traverse-dfo
      trie
      #'(lambda (node)
@@ -615,17 +617,16 @@ patterns."
     (declare (type base-char c))
     (for (the fixnum pos) from 0 below (the fixnum (length txt)))
     (for (the fixnum state)
-      first (tabac-transition idx (tabac-start idx) c)
-      then (tabac-transition idx state c))
+         first (tabac-transition idx (tabac-start idx) c)
+         then (tabac-transition idx state c))
     (declare (type fixnum state)
 	     (type fixnum pos))
     (if (= state (the fixnum (tabac-start idx)))
 	(progn
 	  (setf state (the fixnum (tabac-transition idx state c)))))
-    (when (>= (the fixnum (aref (tabac-final idx) state))
-	      0)
+    (when (aref (tabac-final idx) state)
       (return (values (the fixnum (+ 1 (- pos (aref (tabac-match-len idx) state))))
-		      (the fixnum (aref (tabac-final idx) state)))))))
+		      (aref (tabac-final idx) state))))))
 
 ;; --------------------------------------------------------
 

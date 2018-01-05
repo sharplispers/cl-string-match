@@ -41,6 +41,7 @@
    :string-contains-sor
    :string-contains-ac
    :string-contains-tabac
+   :string-contains-cac
    :initialize-bm
    :initialize-bmh
    :initialize-rk

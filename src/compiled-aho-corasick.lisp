@@ -63,8 +63,7 @@ dispatched in case forms depending on the current character."
         (dispatches nil)
         (str (gensym "arg"))
         (strio (gensym "strio"))
-        (main-block (gensym "main-block"))
-        (match-len (gensym "match-len")))
+        (main-block (gensym "main-block")))
 
     ;; create a dictionary binding node-ids to tag symbols
     (trie-traverse-bfo
@@ -82,7 +81,8 @@ dispatched in case forms depending on the current character."
                      (node child)
                    (push
                     `(,(trie-node-label child)
-                       (incf ,match-len)
+                       ;; forward transition, consume a character
+                       (read-char ,strio nil :eof)
                        (go ,(node-id->tag child)))
                     cases))
                  cases)))
@@ -91,40 +91,46 @@ dispatched in case forms depending on the current character."
       (trie-traverse-dfo
        trie
        #'(lambda (node)
-           (push (node-id->tag node) dispatches)
+           (push (node-id->tag node) dispatches) ; tag label
            (if (trie-node-mark node)
-               (push `(return-from ,main-block
-                        ;; successfull match: return beginning of the
-                        ;; matching pattern in the string and the mark
-                        (values
-                         (+ (- (file-position ,strio) ,(trie-node-depth node)) 1)
-                         ,(trie-node-mark node)))
-                     dispatches)
                (push
-                `(case (read-char ,strio nil #\Nul)
+                `(return-from ,main-block
+                   ;; successfull match: return beginning of the
+                   ;; matching pattern in the string and the mark
+                   (values
+                    (- (file-position ,strio) ,(trie-node-depth node))
+                    (list ,@(trie-node-mark node))))
+                dispatches)
+               (push
+                `(case (peek-char nil ,strio nil :eof)
                    ,@(dispatch-node node)
-                   (#\Nul (return-from ,main-block nil))
+                   (:eof (return-from ,main-block nil))
                    ;; when nothing matches, fallback to the failing
-                   ;; transition, reset match-len counter
+                   ;; transition
                    (otherwise
-                    (setf ,match-len 0)
+                    ;; normal nodes don't consume chars by themselves,
+                    ;; only upon a forward transition, but the root
+                    ;; node fails on itself, therefore fail transition
+                    ;; must consume a character to step over the text
+                    ,(unless (trie-node-label node)
+                             `(read-char ,strio nil :eof))
                     (go ,(node-id->tag (trie-node-fail node)))))
                 dispatches)))))
 
     ;; assemble it all into one piece
     `(lambda (,str)
        (block ,main-block
-         (let ((,match-len 0))
-           (with-input-from-string (,strio ,str)
-             (tagbody ,@(reverse dispatches))))))))
+         (with-input-from-string (,strio ,str)
+           (tagbody ,@(reverse dispatches)))))))
 
 ;; --------------------------------------------------------
 
 (defun trie->compiled-ac (trie)
   "Returns a compiled function for the given Aho-Corasick trie."
   (check-type trie trie-node)
-
-  (compile nil (make-lambda-ac trie)))
+  (let ((f (make-lambda-ac trie)))
+    ;; (format t "~%~%function:~%~a~%~%" f)
+    (compile nil f)))
 
 ;; --------------------------------------------------------
 
@@ -136,5 +142,25 @@ Returns start of the matching fragment and the matching mark from the
 given trie."
 
   (funcall search-function txt))
+
+;; --------------------------------------------------------
+
+(defun string-contains-cac (pat txt)
+  "Looks for the given pattern in the text and returns index of the
+first occurence. Uses compiled Aho-Corasick search function over a
+trie."
+
+  (declare #.*standard-optimize-settings*)
+  (check-type pat simple-string)
+  (check-type txt simple-string)
+
+  (cond
+    ((= 0 (length pat))
+     0)
+    ((= 0 (length txt))
+     nil)
+    (t
+     (search-compiled-ac (trie->compiled-ac (initialize-ac pat))
+                         txt))))
 
 ;; EOF

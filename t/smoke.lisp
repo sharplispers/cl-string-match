@@ -30,7 +30,8 @@
     sm:string-contains-kmp
     sm:string-contains-sor
     sm:string-contains-ac
-    sm:string-contains-tabac))
+    sm:string-contains-tabac
+    sm:string-contains-cac))
 
 ;; --------------------------------------------------------
 
@@ -119,26 +120,24 @@ and the text works."
          (ctrie3 (trie->compiled-ac trie3)))
 
     (assert-equal 0 (search-ac trie "she"))
-    ;; (assert-equal 0 (search-compiled-ac ctrie "she"))
+    (assert-equal 0 (search-compiled-ac ctrie "she"))
     (assert-equal 1 (search-ac trie "_she"))
-    ;; (assert-equal 1 (search-compiled-ac ctrie "_she"))
+    (assert-equal 1 (search-compiled-ac ctrie "_she"))
     (assert-equal nil (search-ac trie "_sh_"))
-    ;; (assert-equal nil (search-compiled-ac ctrie "_sh_"))
+    (assert-equal nil (search-compiled-ac ctrie "_sh_"))
     (assert-equal 0 (search-ac trie2 "annual_announce"))
-    ;; (assert-equal 0 (search-compiled-ac ctrie2 "annual_announce"))
+    (assert-equal 0 (search-compiled-ac ctrie2 "annual_announce"))
     (assert-equal 4 (search-ac trie3 "agatacgatatatac"))
-    ;; (assert-equal 8 (search-compiled-ac ctrie3 "agatacgatatatac"))
+    (assert-equal 4 (search-compiled-ac ctrie3 "agatacgatatatac"))
 
     (multiple-value-bind (pos idx)
         (search-ac trie "___his")
       (assert-equal 3 pos)
-      (assert-equal 2 idx))
-    #+ignore
+      (assert-equal '(2) idx))
     (multiple-value-bind (pos idx)
         (search-compiled-ac ctrie "___his")
       (assert-equal 3 pos)
-      (assert-equal 2 idx))
-
+      (assert-equal '(2) idx))
     (multiple-value-bind (pos idx)
         (search-ac trie "___h_s")
       (assert-equal nil pos)
