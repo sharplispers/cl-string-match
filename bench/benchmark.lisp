@@ -43,7 +43,7 @@
 
 ;; --------------------------------------------------------
 
-(defconstant +times+ (* 10 100))
+(defconstant +times+ (* 1000 100))
 
 ;; some algorithms process needle from the end to start, other
 ;; algorithms go in the opposite direction. The mismatching symbol is
@@ -98,7 +98,7 @@ Returns: the amount of elapsed time."
     (loop :repeat +times+ :do (setf ret (apply function args)))
     (setf elapsed (/ (- (get-internal-run-time) start)
                      (float internal-time-units-per-second 1d0)))
-    ;; (log-msg (format nil "~a	~3$~%" len elapsed))
+    (log-msg (format nil "~a	~3$~%" len elapsed))
     elapsed))
 
 
@@ -255,7 +255,7 @@ with 20 different characters."
 		       :direction :output
 		       :if-exists :supersede)
     (declare (ignore out)))
-
+  (format t "RUNNING BENCHMARKS~%")
   (run-search)
   (run-brute-force)
   (run-boyer-moore)
