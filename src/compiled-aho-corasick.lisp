@@ -45,7 +45,8 @@
 translate the DFA defined by the Trie into a computer program and
 compile it to machine code."
   (trie->compiled-ac function)
-  (search-compiled-ac function))
+  (search-compiled-ac function)
+  (string-contains-cac function))
 
 ;; --------------------------------------------------------
 
@@ -126,7 +127,16 @@ dispatched in case forms depending on the current character."
 ;; --------------------------------------------------------
 
 (defun trie->compiled-ac (trie)
-  "Returns a compiled function for the given Aho-Corasick trie."
+  "Returns a compiled function for the given Aho-Corasick trie.
+
+Should be used together with the INITIALIZE-AC function:
+
+    (trie->compiled-ac (initialize-ac '(\"abc\")))
+    ;; => #<FUNCTION (LAMBDA (#:|arg1315|)) {100468194B}>
+
+Compiled function then can be used with the SEARCH-COMPILED-AC
+function to search for matches in the text."
+
   (check-type trie trie-node)
   (let ((f (make-lambda-ac trie)))
     ;; (format t "~%~%function:~%~a~%~%" f)
