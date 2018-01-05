@@ -258,6 +258,7 @@ Science
 
     Returns a Trie that is used to look for the given patterns in the
     text. It can deal either with a single pattern or a list of patterns.
+    The returned trie will have failure function computed for its nodes.
 
 - [function] **SEARCH-AC** *TRIE TXT &KEY GREEDY*
 
@@ -271,23 +272,20 @@ Science
     
     So, for example:
     
-    ```lisp
-    (let ((idx (initialize-ac '("atatata" "tatat" "acgatat"))))
-          (search-ac idx "agatacgatatata"))
-    ;; => 4 (2)
-    ```
+        (defvar idx (initialize-ac '("atatata" "tatat" "acgatat")))
+        (search-ac idx "agatacgatatata")
+        ;; => 4 (2)
     
     means that the third pattern matched starting from position
-    4. Function returns immediately after it found this match. On the other hand:
+    4. Function returns immediately after it found this match. On the
+    other hand:
     
-    ```lisp
-    (let ((idx (initialize-ac '("atatata" "tatat" "acgatat"))))
-          (search-ac idx "agatacgatatata" :greedy T))
-    ;; => (2 1 0)
-    ```
+        (search-ac idx "agatacgatatata" :greedy T)
+        ;; => (2 1 0)
     
     Discovers all matching patterns, but it doesn't report where the
-    matching excerpts start. Function runs till it reaches end of text.
+    matching fragments are. Function runs till it reaches the end of
+    text.
 
 - [function] **STRING-CONTAINS-AC** *PAT TXT*
 
