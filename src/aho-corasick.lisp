@@ -142,7 +142,9 @@ constructor derieved from the `TRIE-NODE` struct."
 If the path ends before Pi, continue it by adding new edges and nodes
 for the remaining characters of Pi.
 
-Store identifier i of Pi at the terminal node of the path."
+Store identifier IDX of Pi at the terminal node of the path.
+
+Thus IDX is associated with the given keyword KW in the TRIE."
 
   (declare #.*standard-optimize-settings*)
   (check-type kw simple-string)
@@ -168,11 +170,14 @@ Store identifier i of Pi at the terminal node of the path."
   "Perform the given BODY on the children of the given PARENT. The
 child node is bound to the CHILD variable.
 
-Example:
+For example, the following code:
 
   (do-trie-children (node child)
       (push child stack))
-"
+
+will push all child nodes of the given `node` unto a `stack` (which is
+defined elsewhere)."
+
   (let ((key (gensym)))
     `(maphash
       #'(lambda (,key ,child)
@@ -200,7 +205,7 @@ handler function on each node."
 
 (defun trie-traverse-bfo (trie handler)
   "Traverse the trie in the Breadth-First-Order and call the given
-handler function on each node.."
+handler function on each node."
   (check-type handler function)
 
   (let ((queue (make-instance 'jpl-queues:unbounded-fifo-queue)))
@@ -534,7 +539,7 @@ Slots:
   (start -1 :type fixnum)
   ;; transitions
   (trans nil :type (or null (simple-array (or null (simple-array fixnum)))))
-  ;; final states, 
+  ;; final states,
   (final (make-array 0 :element-type '(or null list)))
   ;; array that stores corresponding pattern length
   (match-len (make-array 0 :element-type 'fixnum)
