@@ -51,6 +51,16 @@ It uses only the \"Bad character skip\" rule, and does not use the
   (search-bmh8 function)
   (string-contains-bmh8 function))
 
+;; Apparently PostgreSQL uses BMH to search for substrings. Their
+;; implementation accounts for wide characters and does some other
+;; nice tricks to improve performance.
+;;
+;; The sources are located at: https://github.com/postgres/postgres/blob/master/src/backend/utils/adt/varlena.c#L1107
+;;
+;; Added by a patch: https://git.postgresql.org/gitweb/?p=postgresql.git;a=commit;h=e6a310b281cdca002ba02d419d4c361f90626d99
+;;
+;; Thanks for a tip from Dmitri Fontaine: https://twitter.com/tapoueh/status/951388333514649601
+
 ;; --------------------------------------------------------
 
 (defmacro define-bmh-matcher (variant-tag

@@ -25,38 +25,58 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-;; TODO: Commentz-Walter algorithm implementation
-;;
-;; NIST Definition: A multiple string matching algorithm that compares
-;; from the end of the pattern, like Boyer-Moore, using a finite state
-;; machine, like Aho-Corasick.
-;;
-;; devoted to the backward pattern matching of a finite set of
-;; patterns. It uses:
-;;
-;; * multi bad character shift (MBCS, see Section 8.2.1),
-;; * multi good suffix shift (MGSS, see Section 8.2.2), and
-;; * reduced multi good prefix shift (RMGPS, see Section 8.2.3.2).
-;;
-;; The basic principle of CW algorithm is based on the selection of
-;; the longer shift from MBCS and MGSS shifts.
-;;
-;; Replace shift step:
-;;
-;; I := I + 1;
-;; by statement
-;; I := I + min(LMIN, min(RMGPS[I], max(MBCS[TEXT[I + J]], MGSS[J])));
-;;
-;; where RMGPS is reduced multi good prefix shift, MBCS is multi bad char-
-;; acter shift and MGSS is multi good suffix shift.
 
 (in-package :cl-string-match)
 
 ;; --------------------------------------------------------
 
+(defsection @commentz-walter-section (:title "Commentz-Walter algorithm")
+  "Commentz-Walter algorithm is a multiple string matching algorithm
+that compares from the end of the pattern, like Boyer-Moore, using a
+finite state machine, like Aho-Corasick (NIST Definition).
+
+Author calls her new algorithm as \"Algorithm B\".
+
+Works with the backward pattern matching of a finite set of
+patterns. It uses:
+
+* multi bad character shift (MBCS, see Section 8.2.1),
+* multi good suffix shift (MGSS, see Section 8.2.2), and
+* reduced multi good prefix shift (RMGPS, see Section 8.2.3.2).
+
+The basic principle of the Commentz-Walter algorithm is based on the
+selection of the longer shift from MBCS and MGSS shifts.
+
+Replace shift step:
+
+I := I + 1;
+by statement
+I := I + min(LMIN, min(RMGPS[I], max(MBCS[TEXT[I + J]], MGSS[J])));
+
+where RMGPS is reduced multi good prefix shift, MBCS is multi bad
+character shift and MGSS is multi good suffix shift.
+
+Section 8.2.4 Commentz–Walter algorithm, from Text Searching
+[Algorithms Volume II: Backward String
+Matching](http://www.stringology.org/athens/TextSearchingAlgorithms/tsa-lectures-2.pdf),
+by Bořivoj Melichar.
+
+Practical applications of this algorithm are not obvious, some
+experiments show that the Commentz-Walter algorithm does not offer
+significant performance benefits compared to the Aho-Corasick
+algorithm."
+
+  (initialize-cw function)
+  (search-cw function)
+  (string-contains-cw function))
+
+;; --------------------------------------------------------
+
 (defstruct (cw)
-  lmin ;; minimal length of a pattern
-  bad-shift ;; bad character shift table
+  "Dictionary for the Commentz-Walter algorithm."
+  ;; length of the shortest pattern, Commentz-Walter calls it *wmin*
+  (lmin MOST-POSITIVE-FIXNUM :type fixnum)
+  bad-shift  ;; bad character shift table
   good-shift ;;
   trie)
 
@@ -78,13 +98,22 @@
 ;; (initialize-cw '("cdabcd" "eabcdaec" "deccec"))
 (defun initialize-cw (patterns)
   "Initialize Commentz-Walter automata for the given set of patterns."
-  ;; it is not optimal in the current version, just making it
-  ;; work. besides it is intended to run once
-  (let ((idx (make-cw)))
-    (setf (cw-trie idx)
-	  (trie-build (map 'list #'reverse patterns) :constructor #'make-cw-node))
-    (setf (cw-lmin idx)
-	  (loop for pat in patterns minimize (length pat)))
+
+  (let ((idx (make-cw :trie (empty-trie))))
+    ;; first fill the trie with reversed patterns and remember length
+    ;; of the shortest one
+    (iter
+      (for pattern in patterns)
+      (counting pattern into pat-no)
+      (trie-add-keyword (cw-trie idx)
+                        (reverse pattern)
+                        pat-no
+                        :constructor #'make-cw-node)
+      (setf (cw-lmin idx)
+            (min (cw-lmin idx)
+                 (length pattern))))
+
+
 
     #+ignore
     (loop :for j :from 0 :below pat-len

@@ -122,7 +122,8 @@
 
    ;; UTILITIES
    :prefixed-with
-   :suffixed-with))
+   :suffixed-with
+   :same-prefix))
 
 ;; --------------------------------------------------------
 

@@ -64,6 +64,7 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
 			 (:file "shift-or")
 			 (:file "aho-corasick")
                          (:file "compiled-aho-corasick")
+                         (:file "commentz-walter")
 			 (:file "suffix-tree")
 			 (:file "pre")
 			 (:file "doc"))))

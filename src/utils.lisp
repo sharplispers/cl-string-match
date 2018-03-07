@@ -1,6 +1,6 @@
 ;;; -*- package: CL-STRING-MATCH; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2015, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2015, 2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,16 @@
 
 ;; --------------------------------------------------------
 
+(defsection @util-functions (:title "Utility functions")
+  "The CL-STRING-MATCH library also provides a number of functions
+  that while being potentially useful are not exactly string matching
+  functions."
+  (prefixed-with function)
+  (suffixed-with function)
+  (same-prefix macro))
+
+;; --------------------------------------------------------
+
 (defun prefixed-with (txt pref)
   "Returns T if the given string `TXT` is prefixed (starts with) the
 given prefix `PREF`."
@@ -46,5 +56,47 @@ given prefix `PREF`."
 given suffix `SUFF`."
   (when (>= (length txt) (length suff))
     (string= txt suff :start1 (- (length txt) (length suff)))))
+
+;; --------------------------------------------------------
+
+(defmacro same-prefix (str1 str2 prefix-length)
+  "Generates a logical expression that evaluates to T when the first
+PREFIX-LENGTH characters of the two given strings are the same.
+
+The same could be achieved with the STRING= function, but the
+generated code differs in that it is an unrolled loop and therefore
+might give a performance gain compared to a more general function.
+
+The macro does not attempt to save given strings to variables,
+therefore it works best when it is given two string variables, and not
+string literals.
+
+Example usage:
+
+```lisp
+(defconstant +time-stamp-length+ 5)
+(same-prefix prev-line next-line #.+time-stamp-length+)
+```
+
+will expand into:
+
+```lisp
+(AND (>= (LENGTH PREV-LINE) 5) (>= (LENGTH NEXT-LINE) 5)
+     (CHAR= (CHAR PREV-LINE 0) (CHAR NEXT-LINE 0))
+     (CHAR= (CHAR PREV-LINE 1) (CHAR NEXT-LINE 1))
+     (CHAR= (CHAR PREV-LINE 2) (CHAR NEXT-LINE 2))
+     (CHAR= (CHAR PREV-LINE 3) (CHAR NEXT-LINE 3))
+     (CHAR= (CHAR PREV-LINE 4) (CHAR NEXT-LINE 4)))
+```
+
+"
+
+  `(and (>= (length ,str1) ,prefix-length)
+        (>= (length ,str2) ,prefix-length)
+        ,@(iter (for i from 0 below prefix-length)
+                (collect `(char= (char ,str1 ,i)
+                                 (char ,str2 ,i))))))
+
+;; (same-prefix prev-line next-line 5)
 
 ;; EOF
