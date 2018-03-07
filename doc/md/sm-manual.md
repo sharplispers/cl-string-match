@@ -25,9 +25,91 @@
         - 4.1.5 Replacing by Pattern
         - 4.1.6 Groups
         - 4.1.7 The `with-re-match` Macro
+- 5 Utility functions
 
 ###### \[in package CL-STRING-MATCH\]
 `CL-STRING-MATCH` String and pattern matching library reference.
+
+`CL-STRING-MATCH` [![Quickdocs](http://quickdocs.org/badge/cl-string-match.svg)](http://quickdocs.org/cl-string-match/) is supported by Quicklisp and is known by its system name:
+
+```lisp
+(ql:quickload :cl-string-match)
+```
+
+`CL-STRING-MATCH` exports functions in `cl-string-match` package (that
+is also nicknamed as `sm`).
+
+Shortcut functions search given pattern `pat` in text `txt`. They are
+usually much slower (because they build index structures every time
+they are called) but are easier to use:
+
+- `string-contains-brute` *pat* *txt* — Brute-force
+
+- `string-contains-bm` *pat* *txt* — Boyer-Moore
+
+- `string-contains-bmh` *pat* *txt* — Boyer-Moore-Horspool
+
+- `string-contains-kmp` *pat* *txt* — Knuth-Morris-Pratt
+
+- `string-contains-ac` *pat* *txt* — Aho-Corasick
+
+- `string-contains-rk` *pat* *txt* — Rabin-Karp
+
+A more robust approach is to use pre-calculated index data that is
+processed by a pair of `initialize` and `search` functions:
+
+- `initialize-bm` *pat* and `search-bm` *bm* *txt*
+
+- `initialize-bmh` *pat* and `search-bmh` *bm* *txt*
+
+- `initialize-bmh8` *pat* and `search-bmh8` *bm* *txt*
+
+- `initialize-rk` *pat* and `search-rk` *rk* *txt*
+
+- `initialize-kmp` *pat* and `search-kmp` *kmp* *txt*
+
+- `initialize-ac` *pat* and `search-ac` *ac* *txt*. `initialize-ac`
+  can accept a list of patterns that are compiled into a trie.
+
+Brute-force algorithm does not use pre-calculated data and therefore
+has no "initialize" function.
+
+Boyer-Moore-Horspool implementation (the `-BMH` and `-BMH8` functions)
+also accepts `:start2` and `:end2` keywords for the "search" and
+"contains" functions.
+
+Following example looks for a given substring *pat* in a given line of
+text *txt* using Boyer-Moore-Horspool algorithm implementation:
+
+```lisp
+(let ((idx (initialize-bmh "abc")))
+  (search-bmh idx "ababcfbgsldkj"))
+```
+
+Counting all matches of a given pattern in a string:
+
+```lisp
+(loop with str = "____abc____abc____ab"
+      with pat = "abc"
+      with idx = (sm:initialize-bmh8 pat)
+      with z = 0 with s = 0 while s do
+       (when (setf s (sm:search-bmh8 idx str :start2 s))
+	 (incf z) (incf s (length pat)))
+     finally (return z))
+```
+
+It should be noted that Boyer-Moore-Horspool (`bmh`) implementation
+can offer an order of magnitude boost to performance compared to the
+standard `search` function.
+
+However, some implementations create a "jump table" that can be the
+size of the alphabet (over 1M `CHAR-CODE-LIMIT` on implementations
+supporting Unicode) and thus consume a significant chunk of
+memory. There are different solutions to this problem and at the
+moment a version for the `ASCII` strings is offered: `initialize-bmh8`
+*pat* and `search-bmh8` *bm* *txt* as well as `string-contains-bmh8`
+*pat* *txt* work for strings with characters inside the 256 char code
+limit.
 
 ## 1 cl-string-match ASDF System Details
 
@@ -210,7 +292,8 @@ implementations offered by this library (`BMH` first of all).
 
 ## 3 Multiple pattern search
 
-Looking for multiple patterns in a string
+Multiple pattern search algorithms look for for multiple patterns
+in a string at once.
 
 ### 3.1 Aho-Corasick algorithm
 
@@ -236,7 +319,9 @@ Science
     If the path ends before Pi, continue it by adding new edges and nodes
     for the remaining characters of Pi.
     
-    Store identifier i of Pi at the terminal node of the path.
+    Store identifier `IDX` of Pi at the terminal node of the path.
+    
+    Thus `IDX` is associated with the given keyword `KW` in the `TRIE`.
 
 - [function] **TRIE-CONTAINS** *TRIE S*
 
@@ -308,9 +393,21 @@ There is a yet another way to implement the Aho-Corasick algorithm:
 translate the DFA defined by the Trie into a computer program and
 compile it to machine code.
 
+Based on
+[description](http://gigamonkeys.wordpress.com/2007/07/27/compiling-queries-without-eval/)
+how to create compiled functions on the fly by Peter Seibel.
+
 - [function] **TRIE-\>COMPILED-AC** *TRIE*
 
     Returns a compiled function for the given Aho-Corasick trie.
+    
+    Should be used together with the `INITIALIZE-AC` function:
+    
+        (trie->compiled-ac (initialize-ac '("abc")))
+        ;; => #<FUNCTION (LAMBDA (#:|arg1315|)) {100468194B}>
+    
+    Compiled function then can be used with the `SEARCH-COMPILED-AC`
+    function to search for matches in the text.
 
 - [function] **SEARCH-COMPILED-AC** *SEARCH-FUNCTION TXT*
 
@@ -320,9 +417,15 @@ compile it to machine code.
     Returns start of the matching fragment and the matching mark from the
     given trie.
 
+- [function] **STRING-CONTAINS-CAC** *PAT TXT*
+
+    Looks for the given pattern in the text and returns index of the
+    first occurence. Uses compiled Aho-Corasick search function over a
+    trie.
+
 ## 4 Regular expressions
 
-Parsing and interpreting regular expressions
+Parsing and interpreting regular expressions.
 
 ### 4.1 Portable RE by Massung
 
@@ -551,6 +654,54 @@ While in the body of the macro, `$$` will be bound to the
 
     Intern match symbols to execute a body.
 
+## 5 Utility functions
+
+The `CL-STRING-MATCH` library also provides a number of functions
+that while being potentially useful are not exactly string matching
+functions.
+
+- [function] **PREFIXED-WITH** *TXT PREF*
+
+    Returns `T` if the given string `TXT` is prefixed (starts with) the
+    given prefix `PREF`.
+
+- [function] **SUFFIXED-WITH** *TXT SUFF*
+
+    Returns `T` if the given string `TXT` is suffixed (ends with) the
+    given suffix `SUFF`.
+
+- [macro] **SAME-PREFIX** *STR1 STR2 PREFIX-LENGTH*
+
+    Generates a logical expression that evaluates to `T` when the first
+    `PREFIX-LENGTH` characters of the two given strings are the same.
+    
+    The same could be achieved with the `STRING=` function, but the
+    generated code differs in that it is an unrolled loop and therefore
+    might give a performance gain compared to a more general function.
+    
+    The macro does not attempt to save given strings to variables,
+    therefore it works best when it is given two string variables, and not
+    string literals.
+    
+    Example usage:
+    
+    ```lisp
+    (defconstant +time-stamp-length+ 5)
+    (same-prefix prev-line next-line #.+time-stamp-length+)
+    ```
+    
+    will expand into:
+    
+    ```lisp
+    (AND (>= (LENGTH PREV-LINE) 5) (>= (LENGTH NEXT-LINE) 5)
+         (CHAR= (CHAR PREV-LINE 0) (CHAR NEXT-LINE 0))
+         (CHAR= (CHAR PREV-LINE 1) (CHAR NEXT-LINE 1))
+         (CHAR= (CHAR PREV-LINE 2) (CHAR NEXT-LINE 2))
+         (CHAR= (CHAR PREV-LINE 3) (CHAR NEXT-LINE 3))
+         (CHAR= (CHAR PREV-LINE 4) (CHAR NEXT-LINE 4)))
+    ```
+
+
   [03b3]: #x-28-22cl-string-match-22-20ASDF-2FSYSTEM-3ASYSTEM-29 "(\"cl-string-match\" ASDF/SYSTEM:SYSTEM)"
   [079c]: #x-28CL-STRING-MATCH-3A-40BOYER-MOORE-HORSPOOL-SECTION-20MGL-PAX-3ASECTION-29 "Boyer-Moore-Horspool algorithm"
   [182a]: #x-28CL-STRING-MATCH-3A-40KNUTH-MORRIS-PRATT-SECTION-20MGL-PAX-3ASECTION-29 "Knuth-Morris-Pratt algorithm"
@@ -567,6 +718,7 @@ While in the body of the macro, `$$` will be bound to the
   [8cda]: #x-28CL-STRING-MATCH-3A-40AHO-CORASICK-TRIE-SECTION-20MGL-PAX-3ASECTION-29 "Building a Trie"
   [8daa]: #x-28CL-STRING-MATCH-3A-40SINGLE-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29 "Single pattern search"
   [b052]: #x-28CL-STRING-MATCH-3A-40AHO-CORASICK-BASIC-SECTION-20MGL-PAX-3ASECTION-29 "Basic implementation"
+  [c49c]: #x-28CL-STRING-MATCH-3A-40UTIL-FUNCTIONS-20MGL-PAX-3ASECTION-29 "Utility functions"
   [c54a]: #x-28CL-STRING-MATCH-3A-40PRE-COMPILING-PATTERNS-SECTION-20MGL-PAX-3ASECTION-29 "Compiling Patterns"
   [df99]: #x-28CL-STRING-MATCH-3A-40REGEXP-PATTERN-SEARCH-20MGL-PAX-3ASECTION-29 "Regular expressions"
   [dff8]: #x-28CL-STRING-MATCH-3A-40SHIFT-OR-SECTION-20MGL-PAX-3ASECTION-29 "Shift-OR algorithm"

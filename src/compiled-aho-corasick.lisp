@@ -30,9 +30,6 @@
 ;;; function is created at the run-time and compiled using "compile"
 ;;; Lisp function.
 ;;
-;; Based on description how to create compiled functions on the fly by
-;; Peter Seibel:
-;; http://gigamonkeys.wordpress.com/2007/07/27/compiling-queries-without-eval/
 ;;
 ;; Bitbucket ticket: #40
 
@@ -43,19 +40,27 @@
 (defsection @aho-corasick-compiled-section (:title "Compiled to native code")
   "There is a yet another way to implement the Aho-Corasick algorithm:
 translate the DFA defined by the Trie into a computer program and
-compile it to machine code."
+compile it to machine code.
+
+Based on
+[description](http://gigamonkeys.wordpress.com/2007/07/27/compiling-queries-without-eval/)
+how to create compiled functions on the fly by Peter Seibel.
+"
   (trie->compiled-ac function)
   (search-compiled-ac function)
   (string-contains-cac function))
 
 ;; --------------------------------------------------------
 
+;; see also a somewhat related but a different task:
+;; https://github.com/pkhuong/string-case
+
 (defun make-lambda-ac (trie)
-  "Writes lambda function performing search over the given trie.
+  "Writes lambda function performing search over the given TRIE.
 
 That function can later be compiled into native code and
 funcall-ed. The generated function accepts a single string and returns
-matching mark from the given trie.
+matching mark from the given TRIE.
 
 Generated function is essentially a giant tagbody with jumps
 dispatched in case forms depending on the current character."
