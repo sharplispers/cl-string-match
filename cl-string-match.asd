@@ -43,7 +43,7 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
   :license "BSD"
   :author "Vityok https://bitbucket.org/vityok"
   :homepage "https://bitbucket.org/vityok/cl-string-match"
-  :version "2018.01.02"
+  :version "2018.03.19"
   :depends-on (:alexandria
 	       :ascii-strings
 	       :yacc	; Portable RE

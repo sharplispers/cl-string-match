@@ -285,6 +285,16 @@ and the text works."
 
 ;; --------------------------------------------------------
 
+(define-test fibonacci-word-test
+    "Test Fibonacci word generation."
+
+  (assert-equal (fib-word 2 "0" "01") "010")
+  (assert-equal (fib-word 3 "0" "01") "01001")
+  (assert-equal (fib-word 4 "0" "01") "01001010")
+  (assert-equal (fib-word 5 "0" "01") "0100101001001"))
+
+;; --------------------------------------------------------
+
 (setf lisp-unit:*print-summary* T
       lisp-unit:*print-failures* T
       lisp-unit:*print-errors* T)

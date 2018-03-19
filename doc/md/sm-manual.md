@@ -1,4 +1,4 @@
-# CL-STRING-MATCH Manual
+# CL-STRING-MATCH API Reference
 
 ## Table of Contents
 
@@ -113,7 +113,7 @@ limit.
 
 ## 1 cl-string-match ASDF System Details
 
-- Version: 2018.1.2
+- Version: 2018.3.19
 - Description: Provides implementations of the standard sub-string search (string
 matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc.
 - Licence: BSD
@@ -701,6 +701,19 @@ functions.
          (CHAR= (CHAR PREV-LINE 4) (CHAR NEXT-LINE 4)))
     ```
 
+
+- [function] **FIB-WORD** *N S0 S1*
+
+    A simple generation of Fibonacci strings (or words).
+    
+    A Fibonacci word is the concatenation of the previous sequence and the
+    one before that. Or, S\_n = S*{n-1} U S*{n-2}.
+    
+    This function provides a very simple and straightforward
+    implementation without memoization or any kind of optimization.
+    
+    `N` should be equal 2 or greater as there is really no way to compute a
+    Fibonacci word of smaller order.
 
   [03b3]: #x-28-22cl-string-match-22-20ASDF-2FSYSTEM-3ASYSTEM-29 "(\"cl-string-match\" ASDF/SYSTEM:SYSTEM)"
   [079c]: #x-28CL-STRING-MATCH-3A-40BOYER-MOORE-HORSPOOL-SECTION-20MGL-PAX-3ASECTION-29 "Boyer-Moore-Horspool algorithm"

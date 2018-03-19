@@ -123,7 +123,8 @@
    ;; UTILITIES
    :prefixed-with
    :suffixed-with
-   :same-prefix))
+   :same-prefix
+   :fib-word))
 
 ;; --------------------------------------------------------
 
