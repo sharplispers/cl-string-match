@@ -35,11 +35,13 @@
 
 (defsection @util-functions (:title "Utility functions")
   "The CL-STRING-MATCH library also provides a number of functions
-  that while being potentially useful are not exactly string matching
-  functions."
+that while being potentially useful are not exactly string matching
+functions."
+
   (prefixed-with function)
   (suffixed-with function)
-  (same-prefix macro))
+  (same-prefix macro)
+  (fib-word function))
 
 ;; --------------------------------------------------------
 
@@ -98,5 +100,35 @@ will expand into:
                                  (char ,str2 ,i))))))
 
 ;; (same-prefix prev-line next-line 5)
+
+;; --------------------------------------------------------
+
+;;; Fibonacci word
+
+(defun fib-word (n s0 s1)
+  "A simple generation of Fibonacci strings (or words).
+
+A Fibonacci word is the concatenation of the previous sequence and the
+one before that. Or, S_n = S_{n-1} U S_{n-2}.
+
+This function provides a very simple and straightforward
+implementation without memoization or any kind of optimization.
+
+N should be equal 2 or greater as there is really no way to compute a
+Fibonacci word of smaller order."
+
+  (cond
+    ((= n 0) s0)
+    ((= n 1) s1)
+    (t
+     (let ((s-n ""))
+       (iter
+         (with s-n2 = s0)
+         (with s-n1 = s1)
+         (for i from 1 below n)
+         (setf s-n (concatenate 'string s-n1 s-n2))
+         (setf s-n2 s-n1
+               s-n1 s-n))
+       s-n))))
 
 ;; EOF
