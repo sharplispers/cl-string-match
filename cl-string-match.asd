@@ -1,6 +1,6 @@
 ;;; -*- package: CLSTRINGMATCH.SYSTEM; Syntax: Common-lisp; Base: 10 -*-
 
-;; Copyright (c) 2013, Victor Anyakin <anyakinvictor@yahoo.com>
+;; Copyright (c) 2013-2018 Victor Anyakin <anyakinvictor@yahoo.com>
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
