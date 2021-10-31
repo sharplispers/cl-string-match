@@ -49,7 +49,7 @@ matching) algorithms: brute-force, Boyer-Moore, Rabin-Karp, etc."
 	       :yacc	; Portable RE
 	       :jpl-queues	; Aho-Corasick
 	       :iterate	; at least Aho-Corasick
-	       :mgl-pax ; to generate docs
+	       :mgl-pax/document ; to generate docs
 	       )
   :components ((:module "src"
 			:serial T
